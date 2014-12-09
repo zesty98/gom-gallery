@@ -2,6 +2,8 @@ package com.gomdev.gallery;
 
 import java.lang.ref.WeakReference;
 
+import com.gomdev.gallery.ImageManager.BitmapWorkerTask;
+
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;

@@ -1,5 +1,12 @@
 package com.gomdev.gallery;
 
+import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -9,11 +16,14 @@ import com.gomdev.gles.GLESUtils;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Bitmap.Config;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.LruCache;
@@ -23,6 +33,8 @@ public class ImageManager {
     static final String CLASS = "ImageManager";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
+
+    private static final int DISK_CACHE_INDEX = 0;
 
     private static ImageManager sImageManager = null;
     private static Bitmap sPlaceHolderThumbnail = null;
@@ -48,6 +60,12 @@ public class ImageManager {
 
     private LruCache<String, Bitmap> mMemoryCache;
 
+    private DiskLruCache mDiskLruCache;
+    private final Object mDiskCacheLock = new Object();
+    private boolean mDiskCacheStarting = true;
+    private static final int DISK_CACHE_SIZE = 1024 * 1024 * 10; // 10MB
+    private static final String DISK_CACHE_SUBDIR = "thumbnails";
+
     private ImageManager(Context context) {
         mContext = context;
 
@@ -69,6 +87,9 @@ public class ImageManager {
             }
         };
 
+        File cacheDir = getDiskCacheDir(mContext, DISK_CACHE_SUBDIR);
+        new InitDiskCacheTask().execute(cacheDir);
+
         loadFolderInfo();
 
         for (BucketInfo bucketInfo : mBuckets) {
@@ -85,14 +106,116 @@ public class ImageManager {
         }
     }
 
-    public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+    class InitDiskCacheTask extends AsyncTask<File, Void, Void> {
+        @Override
+        protected Void doInBackground(File... params) {
+            synchronized (mDiskCacheLock) {
+                int versionCode = GalleryContext.getInstance().getVersionCode();
+                File cacheDir = params[0];
+                try {
+                    mDiskLruCache = DiskLruCache.open(cacheDir, versionCode, 1,
+                            DISK_CACHE_SIZE);
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                mDiskCacheStarting = false; // Finished initialization
+                mDiskCacheLock.notifyAll(); // Wake any waiting threads
+            }
+            return null;
+        }
+    }
+
+    public void addBitmapToCache(String key, Bitmap bitmap) {
         if (getBitmapFromMemCache(key) == null) {
             mMemoryCache.put(key, bitmap);
+        }
+
+        // Also add to disk cache
+        synchronized (mDiskCacheLock) {
+            // Add to disk cache
+            if (mDiskLruCache != null) {
+                OutputStream out = null;
+                try {
+                    DiskLruCache.Snapshot snapshot = mDiskLruCache.get(key);
+                    if (snapshot == null) {
+                        final DiskLruCache.Editor editor = mDiskLruCache
+                                .edit(key);
+                        if (editor != null) {
+                            out = editor.newOutputStream(DISK_CACHE_INDEX);
+                            bitmap.compress(
+                                    CompressFormat.JPEG, 70, out);
+                            editor.commit();
+                            out.close();
+                        }
+                    } else {
+                        snapshot.getInputStream(DISK_CACHE_INDEX).close();
+                    }
+                } catch (final IOException e) {
+                    Log.e(TAG, "addBitmapToCache - " + e);
+                } catch (Exception e) {
+                    Log.e(TAG, "addBitmapToCache - " + e);
+                } finally {
+                    try {
+                        if (out != null) {
+                            out.close();
+                        }
+                    } catch (IOException e) {
+                    }
+                }
+            }
         }
     }
 
     public Bitmap getBitmapFromMemCache(String key) {
         return mMemoryCache.get(key);
+    }
+
+    public Bitmap getBitmapFromDiskCache(String key) {
+        Bitmap bitmap = null;
+
+        synchronized (mDiskCacheLock) {
+            while (mDiskCacheStarting) {
+                try {
+                    mDiskCacheLock.wait();
+                } catch (InterruptedException e) {
+                }
+            }
+            if (mDiskLruCache != null) {
+                InputStream inputStream = null;
+                try {
+                    final DiskLruCache.Snapshot snapshot = mDiskLruCache
+                            .get(key);
+                    if (snapshot != null) {
+                        if (BuildConfig.DEBUG) {
+                            Log.d(TAG, "Disk cache hit");
+                        }
+                        inputStream = snapshot.getInputStream(DISK_CACHE_INDEX);
+                        if (inputStream != null) {
+                            FileDescriptor fd = ((FileInputStream) inputStream)
+                                    .getFD();
+
+                            // Decode bitmap, but we don't want to sample so
+                            // give
+                            // MAX_VALUE as the target dimensions
+                            bitmap = decodeSampledBitmapFromDescriptor(
+                                    fd, Integer.MAX_VALUE,
+                                    Integer.MAX_VALUE);
+                        }
+                    }
+                } catch (final IOException e) {
+                    Log.e(TAG, "getBitmapFromDiskCache - " + e);
+                } finally {
+                    try {
+                        if (inputStream != null) {
+                            inputStream.close();
+                        }
+                    } catch (IOException e) {
+                    }
+                }
+            }
+            return bitmap;
+        }
     }
 
     private void loadFolderInfo() {
@@ -214,6 +337,9 @@ public class ImageManager {
 
         if (bitmap != null) {
             imageView.setImageBitmap(bitmap);
+            if (DEBUG) {
+                Log.d(TAG, "memory cache hit " + imageInfo.getImagePath());
+            }
         } else {
 
             if (cancelPotentialWork(imageInfo, imageView)) {
@@ -350,6 +476,25 @@ public class ImageManager {
         return bitmap;
     }
 
+    public static Bitmap decodeSampledBitmapFromDescriptor(
+            FileDescriptor fileDescriptor, int reqWidth, int reqHeight) {
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth,
+                reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+
+        return BitmapFactory
+                .decodeFileDescriptor(fileDescriptor, null, options);
+    }
+
     public static int calculateInSampleSize(
             BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image
@@ -372,5 +517,96 @@ public class ImageManager {
         }
 
         return inSampleSize;
+    }
+
+    // Creates a unique subdirectory of the designated app cache directory.
+    // Tries to use external
+    // but if not mounted, falls back on internal storage.
+    public static File getDiskCacheDir(Context context, String uniqueName) {
+        // Check if media is mounted or storage is built-in, if so, try and use
+        // external cache dir
+        // otherwise use internal cache dir
+        final String cachePath =
+                Environment.MEDIA_MOUNTED.equals(Environment
+                        .getExternalStorageState()) ||
+                        !Environment.isExternalStorageRemovable() ? context
+                        .getExternalCacheDir().getPath() :
+                        context.getCacheDir().getPath();
+
+        return new File(cachePath + File.separator + uniqueName);
+    }
+
+    class BitmapWorkerTask extends AsyncTask<ImageInfo, Void, Bitmap> {
+
+        private final WeakReference<ImageView> mImageViewReference;
+        private ImageInfo mImageInfo = null;
+        private boolean mNeedThumbnail = true;
+
+        private int mRequestWidth = 0;
+        private int mRequestHeight = 0;
+
+        public BitmapWorkerTask(ImageView imageView) {
+            mNeedThumbnail = true;
+            mImageViewReference = new WeakReference<ImageView>(imageView);
+        }
+
+        public BitmapWorkerTask(ImageView imageView, int requestWidth,
+                int requestHeight) {
+            mNeedThumbnail = false;
+            mRequestWidth = requestWidth;
+            mRequestHeight = requestHeight;
+            mImageViewReference = new WeakReference<ImageView>(imageView);
+        }
+
+        // Decode image in background.
+        @Override
+        protected Bitmap doInBackground(ImageInfo... params) {
+            mImageInfo = params[0];
+
+            ImageManager mImageManager = ImageManager.getInstance();
+            Bitmap bitmap = null;
+            if (mNeedThumbnail == true) {
+                String imageKey = String.valueOf(mImageInfo.getImageID());
+
+                bitmap = getBitmapFromDiskCache(imageKey);
+
+                if (bitmap == null) {
+                    bitmap = mImageManager.getThumbnail(mImageInfo, true);
+                } else {
+                    if (DEBUG) {
+                        Log.d(TAG,
+                                "disk cache hit " + mImageInfo.getImagePath());
+                    }
+                }
+
+                mImageManager.addBitmapToCache(imageKey, bitmap);
+            } else {
+                bitmap = mImageManager.getBitmap(mImageInfo, mRequestWidth,
+                        mRequestHeight, true);
+            }
+
+            return bitmap;
+        }
+
+        // Once complete, see if ImageView is still around and set bitmap.
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            if (isCancelled()) {
+                bitmap = null;
+            }
+
+            if (mImageViewReference != null && bitmap != null) {
+                final ImageView imageView = mImageViewReference.get();
+                final BitmapWorkerTask bitmapWorkerTask =
+                        ImageManager.getBitmapWorkerTask(imageView);
+                if (this == bitmapWorkerTask && imageView != null) {
+                    imageView.setImageBitmap(bitmap);
+                }
+            }
+        }
+
+        public ImageInfo getData() {
+            return mImageInfo;
+        }
     }
 }
