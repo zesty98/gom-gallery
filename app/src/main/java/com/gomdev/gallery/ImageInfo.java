@@ -50,11 +50,6 @@ public class ImageInfo {
 
     @Override
     public String toString() {
-        StringBuilder sbuf = new StringBuilder();
-        sbuf.append("position=").append(mPosition).append("\n");
-        sbuf.append("id=").append(mImageID).append("\n");
-        sbuf.append("bucketName=").append(mBucketName).append("\n");
-        sbuf.append("imagePath=").append(mImagePath).append("\n");
-        return sbuf.toString();
+        return "position=" + mPosition + "\n" + "id=" + mImageID + "\n" + "bucketName=" + mBucketName + "\n" + "imagePath=" + mImagePath + "\n";
     }
 }

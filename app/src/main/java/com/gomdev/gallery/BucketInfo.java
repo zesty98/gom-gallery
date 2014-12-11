@@ -10,7 +10,7 @@ public class BucketInfo {
     private final int mID;
     private String mPath;
     private String mName;
-    private ArrayList<ImageInfo> mImageInfos = new ArrayList<ImageInfo>();
+    private ArrayList<ImageInfo> mImageInfos = new ArrayList<>();
 
     public BucketInfo(int id) {
         mID = id;
@@ -21,20 +21,12 @@ public class BucketInfo {
         return mID;
     }
 
-    public void setPath(String path) {
-        mPath = path;
-    }
-
-    public String getPath() {
-        return mPath;
+    public String getName() {
+        return mName;
     }
 
     public void setName(String name) {
         mName = name;
-    }
-
-    public String getName() {
-        return mName;
     }
 
     public void add(ImageInfo imageInfo) {
@@ -47,9 +39,5 @@ public class BucketInfo {
 
     public int getNumOfImageInfos() {
         return mImageInfos.size();
-    }
-
-    public ArrayList<ImageInfo> getImageInfos() {
-        return mImageInfos;
     }
 }

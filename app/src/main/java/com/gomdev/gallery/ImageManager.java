@@ -35,7 +35,7 @@ public class ImageManager {
     private ImageCache mImageCache = null;
     private int mNumOfImages = 0;
     private int mNumOfBuckets = 0;
-    private ArrayList<BucketInfo> mBuckets = new ArrayList<BucketInfo>();
+    private ArrayList<BucketInfo> mBuckets = new ArrayList<>();
 
     private ImageManager(Context context) {
         mContext = context;
@@ -144,8 +144,7 @@ public class ImageManager {
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;
 
-        Bitmap bitmap = BitmapFactory.decodeFile(path, options);
-        return bitmap;
+        return BitmapFactory.decodeFile(path, options);
     }
 
     public static Bitmap decodeSampledBitmapFromDescriptor(
@@ -217,7 +216,7 @@ public class ImageManager {
 
         mNumOfImages = cursor.getCount();
 
-        Set<Integer> buckets = new HashSet<Integer>();
+        Set<Integer> buckets = new HashSet<>();
 
         if (cursor.moveToFirst() == true) {
             do {
@@ -348,8 +347,7 @@ public class ImageManager {
 
         Bitmap bitmap = MediaStore.Images.Thumbnails.getThumbnail(
                 mContext.getContentResolver(), imageID,
-                MediaStore.Images.Thumbnails.MINI_KIND,
-                (BitmapFactory.Options) null);
+                MediaStore.Images.Thumbnails.MINI_KIND, null);
 
         if (bitmap == null) {
             bitmap = decodeSampledBitmap(imageInfo, 512, 512);
@@ -392,7 +390,7 @@ public class ImageManager {
 
         public BitmapWorkerTask(ImageView imageView) {
             mNeedThumbnail = true;
-            mImageViewReference = new WeakReference<ImageView>(imageView);
+            mImageViewReference = new WeakReference<>(imageView);
         }
 
         public BitmapWorkerTask(ImageView imageView, int requestWidth,
@@ -400,7 +398,7 @@ public class ImageManager {
             mNeedThumbnail = false;
             mRequestWidth = requestWidth;
             mRequestHeight = requestHeight;
-            mImageViewReference = new WeakReference<ImageView>(imageView);
+            mImageViewReference = new WeakReference<>(imageView);
         }
 
         // Decode image in background.
@@ -409,7 +407,7 @@ public class ImageManager {
             mImageInfo = params[0];
 
             ImageManager mImageManager = ImageManager.getInstance();
-            Bitmap bitmap = null;
+            Bitmap bitmap;
             if (mNeedThumbnail == true) {
                 String imageKey = String.valueOf(mImageInfo.getImageID());
                 bitmap = mImageCache.getBitmapFromDiskCache(imageKey);

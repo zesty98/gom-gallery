@@ -39,7 +39,7 @@ public class MainActivity extends Activity {
 
         ImageManager.newInstance(this);
 
-        PackageInfo packageInfo = null;
+        PackageInfo packageInfo;
         try {
             packageInfo = this.getPackageManager().getPackageInfo(
                     this.getPackageName(), 0);

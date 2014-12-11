@@ -159,8 +159,6 @@ public class ImageCache {
                     } else {
                         snapshot.getInputStream(DISK_CACHE_INDEX).close();
                     }
-                } catch (final IOException e) {
-                    Log.e(TAG, "addBitmapToCache - " + e);
                 } catch (Exception e) {
                     Log.e(TAG, "addBitmapToCache - " + e);
                 } finally {
@@ -169,6 +167,7 @@ public class ImageCache {
                             out.close();
                         }
                     } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
             }
@@ -193,6 +192,7 @@ public class ImageCache {
                 try {
                     mDiskCacheLock.wait();
                 } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
             if (mDiskLruCache != null) {
@@ -222,6 +222,7 @@ public class ImageCache {
                             inputStream.close();
                         }
                     } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
             }
