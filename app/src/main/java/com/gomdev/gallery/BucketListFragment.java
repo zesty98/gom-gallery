@@ -9,12 +9,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.AdapterView.OnItemClickListener;
 
 public class BucketListFragment extends Fragment {
     public BucketListFragment() {
@@ -22,7 +22,7 @@ public class BucketListFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container,
                 false);
 
@@ -40,7 +40,7 @@ public class BucketListFragment extends Fragment {
 
         gridview.setOnItemClickListener(new OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v,
-                    int position, long id) {
+                                    int position, long id) {
                 ImageManager imageManager = ImageManager.getInstance();
                 BucketInfo bucketInfo = imageManager.getBucketInfo(position);
 

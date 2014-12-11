@@ -24,27 +24,37 @@ public class ImageInfo {
         return mOrientation;
     }
 
-    public void setImageID(long imageID) {
-        mImageID = imageID;
-    }
-
     public long getImageID() {
         return mImageID;
     }
 
-    public void setImagePath(String path) {
-        mImagePath = path;
+    public void setImageID(long imageID) {
+        mImageID = imageID;
     }
 
     public String getImagePath() {
         return mImagePath;
     }
 
-    public void setBucketName(String name) {
-        mBucketName = name;
+    public void setImagePath(String path) {
+        mImagePath = path;
     }
 
     public String getBucketName() {
         return mBucketName;
+    }
+
+    public void setBucketName(String name) {
+        mBucketName = name;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sbuf = new StringBuilder();
+        sbuf.append("position=").append(mPosition).append("\n");
+        sbuf.append("id=").append(mImageID).append("\n");
+        sbuf.append("bucketName=").append(mBucketName).append("\n");
+        sbuf.append("imagePath=").append(mImagePath).append("\n");
+        return sbuf.toString();
     }
 }

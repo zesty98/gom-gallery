@@ -9,11 +9,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.AdapterView.OnItemClickListener;
 
 public class ImageListFragment extends Fragment {
 
@@ -26,7 +26,7 @@ public class ImageListFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container,
                 false);
 
@@ -47,12 +47,12 @@ public class ImageListFragment extends Fragment {
 
         gridview.setOnItemClickListener(new OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v,
-                    int position, long id) {
+                                    int position, long id) {
                 ImageInfo imageInfo = mBucketInfo.get(position);
 
                 GalleryContext galleryContext = GalleryContext.getInstance();
                 galleryContext.setCurrentImageInfo(imageInfo);
-                
+
                 Intent intent = new Intent(getActivity(), com.gomdev.gallery.ImageViewActivity.class);
                 startActivity(intent);
             }

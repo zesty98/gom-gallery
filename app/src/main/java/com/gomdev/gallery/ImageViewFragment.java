@@ -17,13 +17,13 @@ public class ImageViewFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_image_view, container,
                 false);
 
         ImageView imageView = (ImageView) rootView.findViewById(R.id.image);
         ImageInfo imageInfo = GalleryContext.getInstance().getCurrentImageInfo();
-        
+
         DisplayMetrics matric = getActivity().getResources().getDisplayMetrics();
         int width = matric.widthPixels;
         int height = matric.heightPixels;
@@ -45,7 +45,7 @@ public class ImageViewFragment extends Fragment {
 
         public ImageGridAdapter(Context context) {
             mInflater = LayoutInflater.from(context);
-            
+
             mImageManager = ImageManager.getInstance();
 
             mBucketInfo = GalleryContext.getInstance().getCurrentBucketInfo();
