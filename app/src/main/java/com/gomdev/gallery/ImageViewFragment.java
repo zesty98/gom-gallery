@@ -76,7 +76,7 @@ public class ImageViewFragment extends Fragment {
                 layout = (FrameLayout) convertView;
 
             }
-            ImageView imageView = (SquareImageView) layout
+            ImageView imageView = (RecyclingImageView) layout
                     .findViewById(R.id.image);
             ImageInfo imageInfo = mBucketInfo.get(position);
             mImageManager.loadThumbnail(imageInfo, imageView);

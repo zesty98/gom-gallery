@@ -9,7 +9,6 @@ public class ImageInfo {
     private int mOrientation = 0;
     private long mImageID = -1;
     private String mImagePath = null;
-    private String mBucketName = null;
 
     public ImageInfo(int position, int orientation) {
         mPosition = position;
@@ -40,16 +39,8 @@ public class ImageInfo {
         mImagePath = path;
     }
 
-    public String getBucketName() {
-        return mBucketName;
-    }
-
-    public void setBucketName(String name) {
-        mBucketName = name;
-    }
-
     @Override
     public String toString() {
-        return "position=" + mPosition + "\n" + "id=" + mImageID + "\n" + "bucketName=" + mBucketName + "\n" + "imagePath=" + mImagePath + "\n";
+        return "position=" + mPosition + "\n" + "id=" + mImageID + "\n" + "imagePath=" + mImagePath + "\n";
     }
 }

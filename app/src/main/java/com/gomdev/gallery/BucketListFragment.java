@@ -5,6 +5,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,12 +18,33 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 public class BucketListFragment extends Fragment {
+    static final String CLASS = "BucketListFragment";
+    static final String TAG = GalleryConfig.TAG + "_" + CLASS;
+    static final boolean DEBUG = GalleryConfig.DEBUG;
+
+    private OnItemClickListener mOnItemClickListener = new OnItemClickListener() {
+        public void onItemClick(AdapterView<?> parent, View v,
+                                int position, long id) {
+            ImageManager imageManager = ImageManager.getInstance();
+            BucketInfo bucketInfo = imageManager.getBucketInfo(position);
+
+            GalleryContext galleryContext = GalleryContext.getInstance();
+            galleryContext.setCurrrentBucketInfo(bucketInfo);
+
+            Intent intent = new Intent(getActivity(),
+                    com.gomdev.gallery.ImageListActivity.class);
+            startActivity(intent);
+        }
+    };
+
     public BucketListFragment() {
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.d(TAG, "onCreateView()");
+
         View rootView = inflater.inflate(R.layout.fragment_main, container,
                 false);
 
@@ -38,32 +60,19 @@ public class BucketListFragment extends Fragment {
 
         gridview.setColumnWidth(columnWidth);
 
-        gridview.setOnItemClickListener(new OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View v,
-                                    int position, long id) {
-                ImageManager imageManager = ImageManager.getInstance();
-                BucketInfo bucketInfo = imageManager.getBucketInfo(position);
-
-                GalleryContext galleryContext = GalleryContext.getInstance();
-                galleryContext.setCurrrentBucketInfo(bucketInfo);
-
-                Intent intent = new Intent(getActivity(),
-                        com.gomdev.gallery.ImageListActivity.class);
-                startActivity(intent);
-            }
-        });
+        gridview.setOnItemClickListener(mOnItemClickListener);
 
         return rootView;
     }
 
     public class BucketGridAdapter extends BaseAdapter {
-        static final String CLASS = "ImageAdapter";
+        static final String CLASS = "BucketGridAdapter";
         static final String TAG = GalleryConfig.TAG + "_" + CLASS;
         static final boolean DEBUG = GalleryConfig.DEBUG;
 
         private final LayoutInflater mInflater;
-        private ImageManager mImageManager;
-        private int mNumOfBuckets = 0;
+        private final ImageManager mImageManager;
+        private final int mNumOfBuckets;
 
         public BucketGridAdapter(Context context) {
             mInflater = LayoutInflater.from(context);
@@ -96,10 +105,11 @@ public class BucketListFragment extends Fragment {
                 layout = (FrameLayout) convertView;
 
             }
-            ImageView imageView = (SquareImageView) layout
+            ImageView imageView = (RecyclingImageView) layout
                     .findViewById(R.id.image);
             BucketInfo bucketInfo = mImageManager.getBucketInfo(position);
             ImageInfo imageInfo = bucketInfo.get(0);
+
             mImageManager.loadThumbnail(imageInfo, imageView);
 
             TextView textView = (TextView) layout

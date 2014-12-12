@@ -8,6 +8,7 @@ import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
@@ -78,7 +79,7 @@ public class ImageManager {
                 Color.BLACK);
     }
 
-    public static Bitmap rotate(Bitmap b, int degrees) {
+    private static Bitmap rotate(Bitmap b, int degrees) {
         if (degrees != 0 && b != null) {
             Matrix m = new Matrix();
             m.setRotate(degrees,
@@ -97,8 +98,8 @@ public class ImageManager {
         return b;
     }
 
-    public static boolean cancelPotentialWork(ImageInfo imageInfo,
-                                              ImageView imageView) {
+    private static boolean cancelPotentialWork(ImageInfo imageInfo,
+                                               ImageView imageView) {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
 
         if (bitmapWorkerTask != null) {
@@ -117,7 +118,7 @@ public class ImageManager {
         return true;
     }
 
-    public static BitmapWorkerTask getBitmapWorkerTask(ImageView imageView) {
+    private static BitmapWorkerTask getBitmapWorkerTask(ImageView imageView) {
         if (imageView != null) {
             final Drawable drawable = imageView.getDrawable();
             if (drawable instanceof AsyncDrawable) {
@@ -128,8 +129,56 @@ public class ImageManager {
         return null;
     }
 
-    public static Bitmap decodeSampledBitmap(ImageInfo imageInfo,
-                                             int reqWidth, int reqHeight) {
+    private static Bitmap decodeSampledBitmapFromFile(ImageInfo imageInfo,
+                                                      int reqWidth, int reqHeight,
+                                                      ImageCache cache) {
+        String path = imageInfo.getImagePath();
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(path, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth,
+                reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+
+        addInBitmapOptions(options, cache);
+
+        return BitmapFactory.decodeFile(path, options);
+    }
+
+    private static void addInBitmapOptions(BitmapFactory.Options options,
+                                           ImageCache cache) {
+        // inBitmap only works with mutable bitmaps, so force the decoder to
+        // return mutable bitmaps.
+        options.inMutable = true;
+
+        if (cache != null) {
+            // Try to find a bitmap to use for inBitmap.
+            Bitmap inBitmap = cache.getBitmapFromReusableSet(options);
+
+            if (inBitmap != null) {
+                // If a suitable bitmap has been found, set it as the value of
+                // inBitmap.
+                options.inBitmap = inBitmap;
+
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "addInBitmapOptions() inBitmap is found");
+                }
+            } else {
+                if (BuildConfig.DEBUG) {
+                    Log.d(TAG, "addInBitmapOptions() inBitmap is not found");
+                }
+            }
+        }
+    }
+
+    private static Bitmap decodeSampledBitmap(ImageInfo imageInfo,
+                                              int reqWidth, int reqHeight) {
         String path = imageInfo.getImagePath();
 
         // First decode with inJustDecodeBounds=true to check dimensions
@@ -166,11 +215,34 @@ public class ImageManager {
                 .decodeFileDescriptor(fileDescriptor, null, options);
     }
 
+    public static Bitmap decodeSampledBitmapFromDescriptor(
+            FileDescriptor fileDescriptor,
+            int reqWidth, int reqHeight,
+            ImageCache cache) {
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth,
+                reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+
+        addInBitmapOptions(options, cache);
+
+        return BitmapFactory
+                .decodeFileDescriptor(fileDescriptor, null, options);
+    }
+
     // public ImageInfo getImageInfo(int index) {
     // return mAllImages[index];
     // }
 
-    public static int calculateInSampleSize(
+    private static int calculateInSampleSize(
             BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image
         final int height = options.outHeight;
@@ -258,8 +330,6 @@ public class ImageManager {
                 },
                 null);
 
-        String bucketName = null;
-
         int index = 0;
         if (cursor.moveToFirst() == true) {
             do {
@@ -282,8 +352,7 @@ public class ImageManager {
 
                 if (DEBUG) {
                     Log.d(TAG, index + " : imageID=" + imageID + " imagePath="
-                            + imagePath + " orientation=" + orientation
-                            + " bucket=" + bucketName);
+                            + imagePath + " orientation=" + orientation);
                 }
 
                 index++;
@@ -307,10 +376,10 @@ public class ImageManager {
 
     public void loadThumbnail(ImageInfo imageInfo, ImageView imageView) {
         final String imageKey = String.valueOf(imageInfo.getImageID());
-        final Bitmap bitmap = mImageCache.getBitmapFromMemCache(imageKey);
+        final BitmapDrawable value = mImageCache.getBitmapFromMemCache(imageKey);
 
-        if (bitmap != null) {
-            imageView.setImageBitmap(bitmap);
+        if (value != null) {
+            imageView.setImageDrawable(value);
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "Memory cache hit " + imageInfo.getImagePath());
             }
@@ -341,8 +410,8 @@ public class ImageManager {
         }
     }
 
-    public Bitmap getThumbnail(ImageInfo imageInfo,
-                               boolean forcePortrait) {
+    Bitmap getThumbnail(ImageInfo imageInfo,
+                        boolean forcePortrait) {
         long imageID = imageInfo.getImageID();
 
         Bitmap bitmap = MediaStore.Images.Thumbnails.getThumbnail(
@@ -350,7 +419,7 @@ public class ImageManager {
                 MediaStore.Images.Thumbnails.MINI_KIND, null);
 
         if (bitmap == null) {
-            bitmap = decodeSampledBitmap(imageInfo, 512, 512);
+            bitmap = decodeSampledBitmapFromFile(imageInfo, 512, 512, mImageCache);
         }
 
         if (forcePortrait == true) {
@@ -360,8 +429,8 @@ public class ImageManager {
         return bitmap;
     }
 
-    public Bitmap getBitmap(ImageInfo imageInfo, int requestWidth,
-                            int requestHeight, boolean forcePortrait) {
+    Bitmap getBitmap(ImageInfo imageInfo, int requestWidth,
+                     int requestHeight, boolean forcePortrait) {
         int orientation = imageInfo.getOrientation();
         if (orientation == 90 || orientation == 270) {
             int temp = requestWidth;
@@ -371,6 +440,8 @@ public class ImageManager {
 
         Bitmap bitmap = decodeSampledBitmap(imageInfo, requestWidth,
                 requestHeight);
+//        Bitmap bitmap = decodeSampledBitmapFromFile(imageInfo,
+//                requestWidth, requestHeight, mImageCache);
 
         if (forcePortrait == true && orientation != 0) {
             bitmap = rotate(bitmap, orientation);
@@ -379,7 +450,7 @@ public class ImageManager {
         return bitmap;
     }
 
-    class BitmapWorkerTask extends AsyncTask<ImageInfo, Void, Bitmap> {
+    class BitmapWorkerTask extends AsyncTask<ImageInfo, Void, BitmapDrawable> {
 
         private final WeakReference<ImageView> mImageViewReference;
         private ImageInfo mImageInfo = null;
@@ -403,11 +474,12 @@ public class ImageManager {
 
         // Decode image in background.
         @Override
-        protected Bitmap doInBackground(ImageInfo... params) {
+        protected BitmapDrawable doInBackground(ImageInfo... params) {
             mImageInfo = params[0];
 
             ImageManager mImageManager = ImageManager.getInstance();
             Bitmap bitmap;
+            BitmapDrawable value;
             if (mNeedThumbnail == true) {
                 String imageKey = String.valueOf(mImageInfo.getImageID());
                 bitmap = mImageCache.getBitmapFromDiskCache(imageKey);
@@ -420,28 +492,33 @@ public class ImageManager {
                     }
                 }
 
-                mImageCache.addBitmapToCache(imageKey, bitmap);
+                value = new RecyclingBitmapDrawable(mContext.getResources(), bitmap, mImageCache);
+
+                mImageCache.addBitmapToCache(imageKey, value);
             } else {
                 bitmap = mImageManager.getBitmap(mImageInfo, mRequestWidth,
                         mRequestHeight, true);
+
+                value = new BitmapDrawable(mContext.getResources(), bitmap);
             }
 
-            return bitmap;
+
+            return value;
         }
 
         // Once complete, see if ImageView is still around and set bitmap.
         @Override
-        protected void onPostExecute(Bitmap bitmap) {
+        protected void onPostExecute(BitmapDrawable value) {
             if (isCancelled()) {
-                bitmap = null;
+                value = null;
             }
 
-            if (mImageViewReference != null && bitmap != null) {
+            if (mImageViewReference != null && value != null) {
                 final ImageView imageView = mImageViewReference.get();
                 final BitmapWorkerTask bitmapWorkerTask =
                         ImageManager.getBitmapWorkerTask(imageView);
                 if (this == bitmapWorkerTask && imageView != null) {
-                    imageView.setImageBitmap(bitmap);
+                    imageView.setImageDrawable(value);
                 }
             }
         }

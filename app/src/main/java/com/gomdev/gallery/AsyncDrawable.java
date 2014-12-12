@@ -8,7 +8,7 @@ import com.gomdev.gallery.ImageManager.BitmapWorkerTask;
 
 import java.lang.ref.WeakReference;
 
-public class AsyncDrawable extends BitmapDrawable {
+class AsyncDrawable extends BitmapDrawable {
 
     private final WeakReference<BitmapWorkerTask> mBitmapWorkerTaskReference;
 

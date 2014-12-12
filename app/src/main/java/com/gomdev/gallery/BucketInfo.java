@@ -8,7 +8,6 @@ public class BucketInfo {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final int mID;
-    private String mPath;
     private String mName;
     private ArrayList<ImageInfo> mImageInfos = new ArrayList<>();
 

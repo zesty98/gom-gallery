@@ -13,12 +13,12 @@ public class GalleryContext {
 
     private int mVersionCode = 100;
 
-    public static GalleryContext getInstance() {
-        return sGalleryContext;
-    }
-
     private GalleryContext() {
 
+    }
+
+    public static GalleryContext getInstance() {
+        return sGalleryContext;
     }
 
     public void setScreenSize(int width, int height) {
@@ -34,12 +34,12 @@ public class GalleryContext {
         return mHeight;
     }
 
-    public void setGridColumnWidth(int columnWidth) {
-        mGridColumnWidth = columnWidth;
-    }
-
     public int getGridColumnWidth() {
         return mGridColumnWidth;
+    }
+
+    public void setGridColumnWidth(int columnWidth) {
+        mGridColumnWidth = columnWidth;
     }
 
     public void setCurrrentBucketInfo(BucketInfo bucketInfo) {
@@ -50,19 +50,19 @@ public class GalleryContext {
         return mCurrentBucketInfo;
     }
 
-    public void setCurrentImageInfo(ImageInfo imageInfo) {
-        mCurrentImageInfo = imageInfo;
-    }
-
     public ImageInfo getCurrentImageInfo() {
         return mCurrentImageInfo;
     }
 
-    public void setVersionCode(int version) {
-        mVersionCode = version;
+    public void setCurrentImageInfo(ImageInfo imageInfo) {
+        mCurrentImageInfo = imageInfo;
     }
 
     public int getVersionCode() {
         return mVersionCode;
+    }
+
+    public void setVersionCode(int version) {
+        mVersionCode = version;
     }
 }

@@ -13,7 +13,6 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.GridView;
-import android.widget.ImageView;
 
 public class ImageListFragment extends Fragment {
 
@@ -99,7 +98,7 @@ public class ImageListFragment extends Fragment {
                 layout = (FrameLayout) convertView;
 
             }
-            ImageView imageView = (SquareImageView) layout
+            RecyclingImageView imageView = (RecyclingImageView) layout
                     .findViewById(R.id.image);
             ImageInfo imageInfo = mBucketInfo.get(position);
             mImageManager.loadThumbnail(imageInfo, imageView);
