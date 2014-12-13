@@ -78,7 +78,7 @@ public class BucketListFragment extends Fragment {
             mInflater = LayoutInflater.from(context);
 
             mImageManager = ImageManager.getInstance();
-            mNumOfBuckets = mImageManager.getNumOfBucksets();
+            mNumOfBuckets = mImageManager.getNumOfBuckets();
         }
 
         public int getCount() {

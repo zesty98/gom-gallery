@@ -366,7 +366,7 @@ public class ImageManager {
         return mNumOfImages;
     }
 
-    public int getNumOfBucksets() {
+    public int getNumOfBuckets() {
         return mNumOfBuckets;
     }
 
