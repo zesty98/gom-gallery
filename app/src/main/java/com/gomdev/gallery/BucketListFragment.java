@@ -1,14 +1,20 @@
 package com.gomdev.gallery;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
@@ -17,36 +23,54 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.gomdev.gles.GLESUtils;
+
 public class BucketListFragment extends Fragment {
     static final String CLASS = "BucketListFragment";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
-    static final boolean DEBUG = GalleryConfig.DEBUG;
-
     private OnItemClickListener mOnItemClickListener = new OnItemClickListener() {
         public void onItemClick(AdapterView<?> parent, View v,
                                 int position, long id) {
-            ImageManager imageManager = ImageManager.getInstance();
-            BucketInfo bucketInfo = imageManager.getBucketInfo(position);
-
-            GalleryContext galleryContext = GalleryContext.getInstance();
-            galleryContext.setCurrrentBucketInfo(bucketInfo);
-
             Intent intent = new Intent(getActivity(),
                     com.gomdev.gallery.ImageListActivity.class);
-            startActivity(intent);
+            Log.d(TAG, "onItemClick() bucket position=" + (position - GalleryConfig.NUM_OF_COLUMNS));
+            intent.putExtra(GalleryConfig.BUCKET_POSITION, position - GalleryConfig.NUM_OF_COLUMNS);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                // makeThumbnailScaleUpAnimation() looks kind of ugly here as the loading spinner may
+                // show plus the thumbnail image in GridView is cropped. so using
+                // makeScaleUpAnimation() instead.
+                ActivityOptions options =
+                        ActivityOptions.makeScaleUpAnimation(v, 0, 0, v.getWidth(), v.getHeight());
+                getActivity().startActivity(intent, options.toBundle());
+            } else {
+                startActivity(intent);
+            }
         }
     };
+    static final boolean DEBUG = GalleryConfig.DEBUG;
+    private static Bitmap sLoadingBitmap = null;
+
+    static {
+        sLoadingBitmap = GLESUtils.makeBitmap(512, 512, Bitmap.Config.ARGB_8888, Color.BLACK);
+    }
+
+    private ImageManager mImageManager;
 
     public BucketListFragment() {
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.d(TAG, "onCreateView()");
+        if (DEBUG) {
+            Log.d(TAG, "onCreateView()");
+        }
 
         View rootView = inflater.inflate(R.layout.fragment_main, container,
                 false);
+
+        mImageManager = ImageManager.getInstance();
 
         Activity activity = getActivity();
 
@@ -59,10 +83,22 @@ public class BucketListFragment extends Fragment {
         int columnWidth = context.getGridColumnWidth();
 
         gridview.setColumnWidth(columnWidth);
+        adapter.setItemHeight(columnWidth);
 
         gridview.setOnItemClickListener(mOnItemClickListener);
 
         return rootView;
+    }
+
+    @Override
+    public void onResume() {
+        if (DEBUG) {
+            Log.d(TAG, "onResume()");
+        }
+
+        super.onResume();
+
+        mImageManager.setLoadingBitmap(sLoadingBitmap);
     }
 
     public class BucketGridAdapter extends BaseAdapter {
@@ -71,31 +107,73 @@ public class BucketListFragment extends Fragment {
         static final boolean DEBUG = GalleryConfig.DEBUG;
 
         private final LayoutInflater mInflater;
-        private final ImageManager mImageManager;
+
         private final int mNumOfBuckets;
+        private int mItemHeight = 0;
+        private FrameLayout.LayoutParams mImageViewLayoutParams;
+        private int mActionBarHeight = 0;
 
         public BucketGridAdapter(Context context) {
             mInflater = LayoutInflater.from(context);
 
-            mImageManager = ImageManager.getInstance();
             mNumOfBuckets = mImageManager.getNumOfBuckets();
+
+            mImageViewLayoutParams = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+
+            // Calculate ActionBar height
+            TypedValue tv = new TypedValue();
+            if (context.getTheme().resolveAttribute(
+                    android.R.attr.actionBarSize, tv, true)) {
+                mActionBarHeight = TypedValue.complexToDimensionPixelSize(
+                        tv.data, context.getResources().getDisplayMetrics());
+            }
         }
 
+        @Override
         public int getCount() {
-            return mNumOfBuckets;
+            return mNumOfBuckets + GalleryConfig.NUM_OF_COLUMNS;
         }
 
+        @Override
         public Object getItem(int position) {
-            return null;
+            return (position < GalleryConfig.NUM_OF_COLUMNS) ? null : mImageManager.getBucketInfo(position - GalleryConfig.NUM_OF_COLUMNS);
         }
 
+        @Override
         public long getItemId(int position) {
-            return position;
+            return (position < GalleryConfig.NUM_OF_COLUMNS) ? 0 : (position - GalleryConfig.NUM_OF_COLUMNS);
+        }
+
+        @Override
+        public int getViewTypeCount() {
+            return 2;
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            return (position < GalleryConfig.NUM_OF_COLUMNS) ? 1 : 0;
+        }
+
+        @Override
+        public boolean hasStableIds() {
+            return true;
         }
 
         // create a new ImageView for each item referenced by the Adapter
         public View getView(int position, View convertView, ViewGroup parent) {
             FrameLayout layout;
+
+            if (position < GalleryConfig.NUM_OF_COLUMNS) {
+                if (convertView == null) {
+                    convertView = new ImageView(getActivity());
+                }
+                // Set empty view with height of ActionBar
+                convertView.setLayoutParams(new AbsListView.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, mActionBarHeight));
+
+                return convertView;
+            }
 
             if (convertView == null) {
                 layout = (FrameLayout) mInflater.inflate(
@@ -105,10 +183,13 @@ public class BucketListFragment extends Fragment {
                 layout = (FrameLayout) convertView;
 
             }
+
             ImageView imageView = (RecyclingImageView) layout
                     .findViewById(R.id.image);
-            BucketInfo bucketInfo = mImageManager.getBucketInfo(position);
+            BucketInfo bucketInfo = mImageManager.getBucketInfo(position - GalleryConfig.NUM_OF_COLUMNS);
             ImageInfo imageInfo = bucketInfo.get(0);
+
+            imageView.setLayoutParams(mImageViewLayoutParams);
 
             mImageManager.loadThumbnail(imageInfo, imageView);
 
@@ -120,6 +201,16 @@ public class BucketListFragment extends Fragment {
             }
 
             return layout;
+        }
+
+        public void setItemHeight(int height) {
+            if (height == mItemHeight) {
+                return;
+            }
+            mItemHeight = height;
+            mImageViewLayoutParams =
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, mItemHeight);
+            notifyDataSetChanged();
         }
     }
 }

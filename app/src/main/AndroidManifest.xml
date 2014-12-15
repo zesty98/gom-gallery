@@ -37,6 +37,7 @@
             android:name="com.gomdev.gallery.ImageViewActivity"
             android:configChanges="orientation|screenSize"
             android:label="@string/app_name"
+            android:theme="@style/AppTheme.FullScreen"
             android:screenOrientation="portrait" >
         </activity>
     </application>

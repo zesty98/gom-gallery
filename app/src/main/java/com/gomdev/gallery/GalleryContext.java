@@ -42,21 +42,21 @@ public class GalleryContext {
         mGridColumnWidth = columnWidth;
     }
 
-    public void setCurrrentBucketInfo(BucketInfo bucketInfo) {
-        mCurrentBucketInfo = bucketInfo;
-    }
+//    public void setCurrrentBucketInfo(BucketInfo bucketInfo) {
+//        mCurrentBucketInfo = bucketInfo;
+//    }
 
-    public BucketInfo getCurrentBucketInfo() {
-        return mCurrentBucketInfo;
-    }
-
-    public ImageInfo getCurrentImageInfo() {
-        return mCurrentImageInfo;
-    }
-
-    public void setCurrentImageInfo(ImageInfo imageInfo) {
-        mCurrentImageInfo = imageInfo;
-    }
+//    public BucketInfo getCurrentBucketInfo() {
+//        return mCurrentBucketInfo;
+//    }
+//
+//    public ImageInfo getCurrentImageInfo() {
+//        return mCurrentImageInfo;
+//    }
+//
+//    public void setCurrentImageInfo(ImageInfo imageInfo) {
+//        mCurrentImageInfo = imageInfo;
+//    }
 
     public int getVersionCode() {
         return mVersionCode;

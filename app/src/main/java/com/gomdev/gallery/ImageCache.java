@@ -315,7 +315,7 @@ public class ImageCache {
             mReusableBitmaps.add(new SoftReference<>(bitmap));
         }
 
-        if (BuildConfig.DEBUG) {
+        if (DEBUG) {
             Log.d(TAG, "addBitmapToResuableSet() add Bitmap width=" + bitmap.getWidth() + " height=" + bitmap.getHeight() + " size=" + mReusableBitmaps.size());
         }
     }
@@ -442,7 +442,7 @@ public class ImageCache {
                                 int versionCode = GalleryContext.getInstance().getVersionCode();
                                 mDiskLruCache = DiskLruCache.open(
                                         diskCacheDir, versionCode, 1, mCacheParams.mDiskCacheSize);
-                                if (BuildConfig.DEBUG) {
+                                if (DEBUG) {
                                     Log.d(TAG, "Disk cache initialized");
                                 }
                             } catch (final IOException e) {

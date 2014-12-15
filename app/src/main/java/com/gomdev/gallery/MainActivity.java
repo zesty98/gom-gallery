@@ -31,7 +31,7 @@ public class MainActivity extends Activity {
 
         int spacing = getResources().getDimensionPixelSize(
                 R.dimen.gridview_spacing);
-        int columnWidth = (int) ((width - spacing * 4) / 3);
+        int columnWidth = (int) ((width - spacing * (GalleryConfig.NUM_OF_COLUMNS + 1)) / GalleryConfig.NUM_OF_COLUMNS);
 
         GalleryContext context = GalleryContext.getInstance();
         context.setScreenSize(width, height);
