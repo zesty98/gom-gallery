@@ -1,87 +1,104 @@
 package com.gomdev.gallery;
 
-import android.app.Fragment;
-import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 public class ImageViewFragment extends Fragment {
+    static final String CLASS = "ImageViewFragment";
+    static final String TAG = GalleryConfig.TAG + "_" + CLASS;
+    static final boolean DEBUG = GalleryConfig.DEBUG;
+
+    private ImageView mImageView = null;
+
+    private ImageManager mImageManager = null;
+    private ImageInfo mImageInfo = null;
+
+    private int mWidth = 0;
+    private int mHeight = 0;
+
     public ImageViewFragment() {
+    }
+
+    public static ImageViewFragment newInstance(ImageInfo imageInfo) {
+        final ImageViewFragment fragment = new ImageViewFragment();
+
+        final Bundle args = new Bundle();
+        args.putSerializable(GalleryConfig.IMAGE_VIEW_DATA, imageInfo);
+        fragment.setArguments(args);
+
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            mImageInfo = (ImageInfo) getArguments().getSerializable(GalleryConfig.IMAGE_VIEW_DATA);
+
+            Log.d(TAG, "onCreate() image position=" + mImageInfo.getPosition());
+        }
+
+        DisplayMetrics matric = getActivity().getResources().getDisplayMetrics();
+        mWidth = matric.widthPixels / 2;
+        mHeight = matric.heightPixels / 2;
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_image_view, container,
-                false);
+        if (DEBUG) {
+            Log.d(TAG, "onCreateView()");
+        }
 
-        ImageView imageView = (ImageView) rootView.findViewById(R.id.image);
-        ImageInfo imageInfo = GalleryContext.getInstance().getCurrentImageInfo();
+        mImageManager = ImageManager.getInstance();
+        mImageManager.setLoadingBitmap(null);
 
-        DisplayMetrics matric = getActivity().getResources().getDisplayMetrics();
-        int width = matric.widthPixels;
-        int height = matric.heightPixels;
-        ImageManager.getInstance().loadBitmap(imageInfo, imageView, width, height);
+        final View v = inflater.inflate(R.layout.image_detail_fragment, container, false);
+        mImageView = (ImageView) v.findViewById(R.id.imageView);
 
-
-        return rootView;
+        return v;
     }
 
-    public class ImageGridAdapter extends BaseAdapter {
-        static final String CLASS = "ImageAdapter";
-        static final String TAG = GalleryConfig.TAG + "_" + CLASS;
-        static final boolean DEBUG = GalleryConfig.DEBUG;
+    @Override
+    public void onResume() {
+        if (DEBUG) {
+            Log.d(TAG, "onResume()");
+        }
+        super.onResume();
+    }
 
-        private final LayoutInflater mInflater;
-        private final ImageManager mImageManager;
-        private final BucketInfo mBucketInfo;
-        private int mNumOfImages = 0;
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
 
-        public ImageGridAdapter(Context context) {
-            mInflater = LayoutInflater.from(context);
-
+        // Use the parent activity to load the image asynchronously into the ImageView (so a single
+        // cache can be used over all pages in the ViewPager
+        if (ImageViewActivity.class.isInstance(getActivity())) {
             mImageManager = ImageManager.getInstance();
-
-            mBucketInfo = GalleryContext.getInstance().getCurrentBucketInfo();
-            mNumOfImages = mBucketInfo.getNumOfImageInfos();
+            mImageManager.loadBitmap(mImageInfo, mImageView, mWidth, mHeight);
         }
 
-        public int getCount() {
-            return mNumOfImages;
+        // Pass clicks on the ImageView to the parent activity to handle
+        if (View.OnClickListener.class.isInstance(getActivity()) &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            mImageView.setOnClickListener((View.OnClickListener) getActivity());
         }
+    }
 
-        public Object getItem(int position) {
-            return null;
-        }
-
-        public long getItemId(int position) {
-            return position;
-        }
-
-        // create a new ImageView for each item referenced by the Adapter
-        public View getView(int position, View convertView, ViewGroup parent) {
-            FrameLayout layout;
-
-            if (convertView == null) {
-                layout = (FrameLayout) mInflater.inflate(
-                        R.layout.grid_item_image,
-                        parent, false);
-            } else {
-                layout = (FrameLayout) convertView;
-
-            }
-            ImageView imageView = (RecyclingImageView) layout
-                    .findViewById(R.id.image);
-            ImageInfo imageInfo = mBucketInfo.get(position);
-            mImageManager.loadThumbnail(imageInfo, imageView);
-
-            return layout;
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mImageView != null) {
+            ImageManager.cancelWork(mImageView);
+            mImageView.setImageDrawable(null);
         }
     }
 }

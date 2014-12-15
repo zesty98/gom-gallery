@@ -4,9 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -14,8 +12,6 @@ import android.os.AsyncTask;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.ImageView;
-
-import com.gomdev.gles.GLESUtils;
 
 import java.io.FileDescriptor;
 import java.lang.ref.WeakReference;
@@ -31,12 +27,12 @@ public class ImageManager {
     private static final String DISK_CACHE_SUBDIR = "thumbnails";
 
     private static ImageManager sImageManager = null;
-    private static Bitmap sPlaceHolderThumbnail = null;
     private final Context mContext;
     private ImageCache mImageCache = null;
     private int mNumOfImages = 0;
     private int mNumOfBuckets = 0;
     private ArrayList<BucketInfo> mBuckets = new ArrayList<>();
+    private Bitmap mLoadingBitmap = null;
 
     private ImageManager(Context context) {
         mContext = context;
@@ -71,12 +67,6 @@ public class ImageManager {
 
     public static ImageManager getInstance() {
         return sImageManager;
-    }
-
-    static {
-        sPlaceHolderThumbnail = GLESUtils.makeBitmap(512, 384,
-                Config.ARGB_8888,
-                Color.BLACK);
     }
 
     private static Bitmap rotate(Bitmap b, int degrees) {
@@ -116,6 +106,17 @@ public class ImageManager {
         // No task associated with the ImageView, or an existing task was
         // cancelled
         return true;
+    }
+
+    public static void cancelWork(ImageView imageView) {
+        final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
+        if (bitmapWorkerTask != null) {
+            bitmapWorkerTask.cancel(true);
+            if (DEBUG) {
+                final Object bitmapData = bitmapWorkerTask.getData();
+                Log.d(TAG, "cancelWork - cancelled work for " + bitmapData);
+            }
+        }
     }
 
     private static BitmapWorkerTask getBitmapWorkerTask(ImageView imageView) {
@@ -165,14 +166,6 @@ public class ImageManager {
                 // If a suitable bitmap has been found, set it as the value of
                 // inBitmap.
                 options.inBitmap = inBitmap;
-
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "addInBitmapOptions() inBitmap is found");
-                }
-            } else {
-                if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "addInBitmapOptions() inBitmap is not found");
-                }
             }
         }
     }
@@ -282,13 +275,15 @@ public class ImageManager {
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, null,
                 null, null);
 
-        if (BuildConfig.DEBUG) {
+        if (DEBUG) {
             Log.d(TAG, "loadFolderInfo() duration=" + (System.nanoTime() - tick));
         }
 
         mNumOfImages = cursor.getCount();
 
         Set<Integer> buckets = new HashSet<>();
+
+        int index = 0;
 
         if (cursor.moveToFirst() == true) {
             do {
@@ -301,11 +296,11 @@ public class ImageManager {
                 String bucketName = cursor.getString(columnIndex);
 
                 if (buckets.add(bucketID) == true) {
-                    BucketInfo bucketInfo = new BucketInfo(bucketID);
+                    BucketInfo bucketInfo = new BucketInfo(index, bucketID);
                     bucketInfo.setName(bucketName);
                     mBuckets.add(bucketInfo);
+                    index++;
                 }
-
             } while (cursor.moveToNext());
 
             mNumOfBuckets = mBuckets.size();
@@ -345,9 +340,8 @@ public class ImageManager {
                         .getColumnIndexOrThrow(MediaStore.Images.Media.ORIENTATION);
                 int orientation = cursor.getInt(columnIndex);
 
-                ImageInfo imageInfo = new ImageInfo(index, orientation);
+                ImageInfo imageInfo = new ImageInfo(index, imageID, orientation);
                 imageInfo.setImagePath(imagePath);
-                imageInfo.setImageID(imageID);
                 bucketInfo.add(imageInfo);
 
                 if (DEBUG) {
@@ -360,6 +354,10 @@ public class ImageManager {
         }
 
         cursor.close();
+    }
+
+    public void setLoadingBitmap(Bitmap bitmap) {
+        mLoadingBitmap = bitmap;
     }
 
     public int getNumOfImages() {
@@ -380,7 +378,7 @@ public class ImageManager {
 
         if (value != null) {
             imageView.setImageDrawable(value);
-            if (BuildConfig.DEBUG) {
+            if (DEBUG) {
                 Log.d(TAG, "Memory cache hit " + imageInfo.getImagePath());
             }
         } else {
@@ -389,7 +387,7 @@ public class ImageManager {
                 final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
                 final AsyncDrawable asyncDrawable =
                         new AsyncDrawable(mContext.getResources(),
-                                sPlaceHolderThumbnail, task);
+                                mLoadingBitmap, task);
                 imageView.setImageDrawable(asyncDrawable);
                 task.execute(imageInfo);
             }
@@ -404,7 +402,7 @@ public class ImageManager {
 
             final AsyncDrawable asyncDrawable =
                     new AsyncDrawable(mContext.getResources(),
-                            sPlaceHolderThumbnail, task);
+                            mLoadingBitmap, task);
             imageView.setImageDrawable(asyncDrawable);
             task.execute(imageInfo);
         }
@@ -486,7 +484,7 @@ public class ImageManager {
                 if (bitmap == null) {
                     bitmap = mImageManager.getThumbnail(mImageInfo, true);
                 } else {
-                    if (BuildConfig.DEBUG) {
+                    if (DEBUG) {
                         Log.d(TAG,
                                 "Disk cache hit " + mImageInfo.getImagePath());
                     }

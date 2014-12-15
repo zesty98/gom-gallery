@@ -7,13 +7,19 @@ public class BucketInfo {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
+    private final int mPosition;
     private final int mID;
     private String mName;
     private ArrayList<ImageInfo> mImageInfos = new ArrayList<>();
 
-    public BucketInfo(int id) {
+    public BucketInfo(int position, int id) {
+        mPosition = position;
         mID = id;
         mImageInfos.clear();
+    }
+
+    public int getPosition() {
+        return mPosition;
     }
 
     public int getID() {
