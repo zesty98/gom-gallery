@@ -37,6 +37,7 @@ public class ImageListFragment extends Fragment {
 
     private ImageManager mImageManager;
     private BucketInfo mBucketInfo;
+    private int mNumOfColumns = 0;
 
     public ImageListFragment() {
     }
@@ -68,6 +69,7 @@ public class ImageListFragment extends Fragment {
 
         GalleryContext context = GalleryContext.getInstance();
         int columnWidth = context.getGridColumnWidth();
+        mNumOfColumns = context.getNumOfColumns();
 
         gridview.setColumnWidth(columnWidth);
         adapter.setItemHeight(columnWidth);
@@ -77,9 +79,9 @@ public class ImageListFragment extends Fragment {
                                     int position, long id) {
                 Intent intent = new Intent(getActivity(), com.gomdev.gallery.ImageViewActivity.class);
 
-                Log.d(TAG, "onItemClick() bucket position=" + mBucketInfo.getPosition() + " image position=" + (position - GalleryConfig.NUM_OF_COLUMNS));
+                Log.d(TAG, "onItemClick() bucket position=" + mBucketInfo.getPosition() + " image position=" + (position - mNumOfColumns));
                 intent.putExtra(GalleryConfig.BUCKET_POSITION, mBucketInfo.getPosition());
-                intent.putExtra(GalleryConfig.IMAGE_POSITION, position - GalleryConfig.NUM_OF_COLUMNS);
+                intent.putExtra(GalleryConfig.IMAGE_POSITION, position - mNumOfColumns);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                     // makeThumbnailScaleUpAnimation() looks kind of ugly here as the loading spinner may
@@ -141,18 +143,18 @@ public class ImageListFragment extends Fragment {
 
         @Override
         public int getCount() {
-            return mNumOfImages + GalleryConfig.NUM_OF_COLUMNS;
+            return mNumOfImages + mNumOfColumns;
         }
 
         @Override
         public Object getItem(int position) {
-            return position < GalleryConfig.NUM_OF_COLUMNS ?
-                    null : mBucketInfo.get(position - GalleryConfig.NUM_OF_COLUMNS);
+            return position < mNumOfColumns ?
+                    null : mBucketInfo.get(position - mNumOfColumns);
         }
 
         @Override
         public long getItemId(int position) {
-            return position < GalleryConfig.NUM_OF_COLUMNS ? 0 : position - GalleryConfig.NUM_OF_COLUMNS;
+            return position < mNumOfColumns ? 0 : position - mNumOfColumns;
         }
 
 
@@ -164,7 +166,7 @@ public class ImageListFragment extends Fragment {
 
         @Override
         public int getItemViewType(int position) {
-            return (position < GalleryConfig.NUM_OF_COLUMNS) ? 1 : 0;
+            return (position < mNumOfColumns) ? 1 : 0;
         }
 
         @Override
@@ -176,7 +178,7 @@ public class ImageListFragment extends Fragment {
         public View getView(int position, View convertView, ViewGroup parent) {
             FrameLayout layout;
 
-            if (position < GalleryConfig.NUM_OF_COLUMNS) {
+            if (position < mNumOfColumns) {
                 if (convertView == null) {
                     convertView = new ImageView(getActivity());
                 }
@@ -203,7 +205,7 @@ public class ImageListFragment extends Fragment {
             RecyclingImageView imageView = (RecyclingImageView) layout
                     .findViewById(R.id.image);
             imageView.setLayoutParams(mImageViewLayoutParams);
-            ImageInfo imageInfo = mBucketInfo.get(position - GalleryConfig.NUM_OF_COLUMNS);
+            ImageInfo imageInfo = mBucketInfo.get(position - mNumOfColumns);
             mImageManager.loadThumbnail(imageInfo, imageView);
 
             return layout;

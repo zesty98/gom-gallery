@@ -30,8 +30,6 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
 
         final DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        final int height = displayMetrics.heightPixels;
-        final int width = displayMetrics.widthPixels;
 
         int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_POSITION, 0);
         mBucketInfo = ImageManager.getInstance().getBucketInfo(bucketPosition);

@@ -28,13 +28,22 @@ import com.gomdev.gles.GLESUtils;
 public class BucketListFragment extends Fragment {
     static final String CLASS = "BucketListFragment";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
+    static final boolean DEBUG = GalleryConfig.DEBUG;
+
+    private static Bitmap sLoadingBitmap = null;
+
+    static {
+        sLoadingBitmap = GLESUtils.makeBitmap(512, 512, Bitmap.Config.ARGB_8888, Color.BLACK);
+    }
+
+    private ImageManager mImageManager;
+    private int mNumOfColumns = 0;
     private OnItemClickListener mOnItemClickListener = new OnItemClickListener() {
         public void onItemClick(AdapterView<?> parent, View v,
                                 int position, long id) {
             Intent intent = new Intent(getActivity(),
                     com.gomdev.gallery.ImageListActivity.class);
-            Log.d(TAG, "onItemClick() bucket position=" + (position - GalleryConfig.NUM_OF_COLUMNS));
-            intent.putExtra(GalleryConfig.BUCKET_POSITION, position - GalleryConfig.NUM_OF_COLUMNS);
+            intent.putExtra(GalleryConfig.BUCKET_POSITION, position - mNumOfColumns);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 // makeThumbnailScaleUpAnimation() looks kind of ugly here as the loading spinner may
                 // show plus the thumbnail image in GridView is cropped. so using
@@ -47,14 +56,6 @@ public class BucketListFragment extends Fragment {
             }
         }
     };
-    static final boolean DEBUG = GalleryConfig.DEBUG;
-    private static Bitmap sLoadingBitmap = null;
-
-    static {
-        sLoadingBitmap = GLESUtils.makeBitmap(512, 512, Bitmap.Config.ARGB_8888, Color.BLACK);
-    }
-
-    private ImageManager mImageManager;
 
     public BucketListFragment() {
 
@@ -81,6 +82,7 @@ public class BucketListFragment extends Fragment {
 
         GalleryContext context = GalleryContext.getInstance();
         int columnWidth = context.getGridColumnWidth();
+        mNumOfColumns = context.getNumOfColumns();
 
         gridview.setColumnWidth(columnWidth);
         adapter.setItemHeight(columnWidth);
@@ -132,17 +134,17 @@ public class BucketListFragment extends Fragment {
 
         @Override
         public int getCount() {
-            return mNumOfBuckets + GalleryConfig.NUM_OF_COLUMNS;
+            return mNumOfBuckets + mNumOfColumns;
         }
 
         @Override
         public Object getItem(int position) {
-            return (position < GalleryConfig.NUM_OF_COLUMNS) ? null : mImageManager.getBucketInfo(position - GalleryConfig.NUM_OF_COLUMNS);
+            return (position < mNumOfColumns) ? null : mImageManager.getBucketInfo(position - mNumOfColumns);
         }
 
         @Override
         public long getItemId(int position) {
-            return (position < GalleryConfig.NUM_OF_COLUMNS) ? 0 : (position - GalleryConfig.NUM_OF_COLUMNS);
+            return (position < mNumOfColumns) ? 0 : (position - mNumOfColumns);
         }
 
         @Override
@@ -152,7 +154,7 @@ public class BucketListFragment extends Fragment {
 
         @Override
         public int getItemViewType(int position) {
-            return (position < GalleryConfig.NUM_OF_COLUMNS) ? 1 : 0;
+            return (position < mNumOfColumns) ? 1 : 0;
         }
 
         @Override
@@ -164,7 +166,7 @@ public class BucketListFragment extends Fragment {
         public View getView(int position, View convertView, ViewGroup parent) {
             FrameLayout layout;
 
-            if (position < GalleryConfig.NUM_OF_COLUMNS) {
+            if (position < mNumOfColumns) {
                 if (convertView == null) {
                     convertView = new ImageView(getActivity());
                 }
@@ -186,7 +188,7 @@ public class BucketListFragment extends Fragment {
 
             ImageView imageView = (RecyclingImageView) layout
                     .findViewById(R.id.image);
-            BucketInfo bucketInfo = mImageManager.getBucketInfo(position - GalleryConfig.NUM_OF_COLUMNS);
+            BucketInfo bucketInfo = mImageManager.getBucketInfo(position - mNumOfColumns);
             ImageInfo imageInfo = bucketInfo.get(0);
 
             imageView.setLayoutParams(mImageViewLayoutParams);

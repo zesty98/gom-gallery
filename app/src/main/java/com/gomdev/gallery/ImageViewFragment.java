@@ -42,8 +42,6 @@ public class ImageViewFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mImageInfo = (ImageInfo) getArguments().getSerializable(GalleryConfig.IMAGE_VIEW_DATA);
-
-            Log.d(TAG, "onCreate() image position=" + mImageInfo.getPosition());
         }
 
         DisplayMetrics matric = getActivity().getResources().getDisplayMetrics();

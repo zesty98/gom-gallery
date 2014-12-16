@@ -6,10 +6,8 @@ public class GalleryContext {
     private int mWidth;
     private int mHeight;
 
+    private int mNumOfColumns = GalleryConfig.NUM_OF_COLUMNS;
     private int mGridColumnWidth;
-
-    private BucketInfo mCurrentBucketInfo = null;
-    private ImageInfo mCurrentImageInfo = null;
 
     private int mVersionCode = 100;
 
@@ -38,25 +36,17 @@ public class GalleryContext {
         return mGridColumnWidth;
     }
 
-    public void setGridColumnWidth(int columnWidth) {
+    public void setColumnWidth(int columnWidth) {
         mGridColumnWidth = columnWidth;
     }
 
-//    public void setCurrrentBucketInfo(BucketInfo bucketInfo) {
-//        mCurrentBucketInfo = bucketInfo;
-//    }
+    public int getNumOfColumns() {
+        return mNumOfColumns;
+    }
 
-//    public BucketInfo getCurrentBucketInfo() {
-//        return mCurrentBucketInfo;
-//    }
-//
-//    public ImageInfo getCurrentImageInfo() {
-//        return mCurrentImageInfo;
-//    }
-//
-//    public void setCurrentImageInfo(ImageInfo imageInfo) {
-//        mCurrentImageInfo = imageInfo;
-//    }
+    public void setNumOfColumns(int numOfColumns) {
+        mNumOfColumns = numOfColumns;
+    }
 
     public int getVersionCode() {
         return mVersionCode;
