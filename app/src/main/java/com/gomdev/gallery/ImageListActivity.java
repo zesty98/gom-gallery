@@ -5,7 +5,7 @@ import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 
 public class ImageListActivity extends Activity {
-    private GLSurfaceView mSurfaceView = null;
+    private GallerySurfaceView mSurfaceView = null;
     private ImageListRenderer mRenderer = null;
 
     @Override
@@ -14,6 +14,7 @@ public class ImageListActivity extends Activity {
 
         if (GalleryConfig.sUseGLES == true) {
             setContentView(R.layout.activity_gles_main);
+
             mSurfaceView = (GallerySurfaceView) findViewById(R.id.surfaceview);
             mRenderer = new ImageListRenderer(this);
             mRenderer.setSurfaceView(mSurfaceView);
@@ -27,6 +28,17 @@ public class ImageListActivity extends Activity {
             int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_POSITION, 0);
             BucketInfo bucketInfo = ImageManager.getInstance().getBucketInfo(bucketPosition);
             mRenderer.setBucketInfo(bucketInfo);
+
+            GalleryContext galleryContext = GalleryContext.getInstance();
+            int actionBarHeight = galleryContext.getActionBarHeight();
+            int numOfColumns = galleryContext.getNumOfColumns();
+            int columnWidth = galleryContext.getColumnWidth();
+            int spacing = this.getResources().getDimensionPixelSize(R.dimen.gridview_spacing);
+
+            int totalNumOfRows = (int) Math.ceil((double) bucketInfo.getNumOfImageInfos() / numOfColumns);
+            int scrollableHeight = actionBarHeight + (columnWidth + spacing) * totalNumOfRows;
+            mSurfaceView.setScrollableHeight(scrollableHeight);
+
         } else {
             setContentView(R.layout.activity_main);
             if (savedInstanceState == null) {

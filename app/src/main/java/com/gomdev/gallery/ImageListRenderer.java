@@ -7,13 +7,13 @@ import android.graphics.Color;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
-import android.util.DisplayMetrics;
 import android.util.Log;
 
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESContext;
 import com.gomdev.gles.GLESGLState;
 import com.gomdev.gles.GLESNode;
+import com.gomdev.gles.GLESNodeListener;
 import com.gomdev.gles.GLESRect;
 import com.gomdev.gles.GLESRenderer;
 import com.gomdev.gles.GLESSceneManager;
@@ -48,13 +48,14 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     private GLESGLState mGLState;
     private GalleryObject[] mObjects;
     private GLESShader mShader;
-    private GLSurfaceView mSurfaceView = null;
+    private GallerySurfaceView mSurfaceView = null;
+
+    private RendererListener mListener = null;
 
     private float mScreenRatio = 1f;
     private int mColumnWidth = 0;
     private int mNumOfColumns = 3;
-    private int mNumOfRows = 0;
-    private int mNumOfObjects = 0;
+    private int mNumOfObjectsInScreen = 0;
     private int mActionBarHeight = 0;
     private int mSpace = 0;
     private int mWidth = 0;
@@ -75,18 +76,9 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
         mSpace = context.getResources().getDimensionPixelSize(R.dimen.gridview_spacing);
 
-        mNumOfRows = calcNumOfRows(context);
-        mNumOfObjects = mNumOfColumns * mNumOfRows;
-
         mImageManager = ImageManager.getInstance();
 
         setupSceneComponent();
-    }
-
-    private int calcNumOfRows(Context context) {
-        DisplayMetrics matrics = context.getResources().getDisplayMetrics();
-        int height = matrics.heightPixels;
-        return (height / (mColumnWidth + mSpace)) + 1;
     }
 
     private void setupSceneComponent() {
@@ -94,6 +86,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
         mSM = GLESSceneManager.createSceneManager();
         mRoot = mSM.createRootNode("root");
+        mRoot.setListener(mNodeListener);
 
         mGLState = new GLESGLState();
         mGLState.setCullFaceState(true);
@@ -116,7 +109,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     private void update() {
         float xOffset = -(mWidth * 0.5f) + mColumnWidth * 0.5f + mSpace;
         float yOffset = (mHeight * 0.5f) - mColumnWidth * 0.5f - mSpace - mActionBarHeight;
-        for (int i = 0; i < mNumOfObjects; i++) {
+        for (int i = 0; i < mNumOfObjectsInScreen; i++) {
             GLESTransform transform = mObjects[i].getTransform();
             transform.setIdentity();
 
@@ -132,22 +125,38 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     @Override
     @TargetApi(Build.VERSION_CODES.KITKAT)
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+        if (DEBUG) {
+            Log.d(TAG, "onSurfaceChanged()");
+        }
+
         mRenderer.reset();
 
         mWidth = width;
         mHeight = height;
 
+        int numOfRowsInScreen = (int) Math.ceil((double) height / (mColumnWidth + mSpace));
+        mNumOfObjectsInScreen = mNumOfColumns * numOfRowsInScreen;
+
+        if (mNumOfImages < mNumOfObjectsInScreen) {
+            mNumOfObjectsInScreen = mNumOfImages;
+        }
+
+        // FIX
+        mNumOfObjectsInScreen = mNumOfImages;
+
+        createObjects();
+
         mScreenRatio = (float) width / height;
 
         GLESCamera camera = setupCamera(width, height);
 
-        for (int i = 0; i < mNumOfObjects; i++) {
+        for (int i = 0; i < mNumOfObjectsInScreen; i++) {
             mObjects[i].setCamera(camera);
         }
 
         ImageInfo imageInfo = mBucketInfo.get(0);
 
-        for (int i = 0; i < mNumOfObjects; i++) {
+        for (int i = 0; i < mNumOfObjectsInScreen; i++) {
             GLESVertexInfo vertexInfo = createPlaneVertexInfo(mColumnWidth, mColumnWidth, imageInfo);
             mObjects[i].setVertexInfo(vertexInfo, false, false);
 
@@ -210,7 +219,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         return camera;
     }
 
-
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         GLES20.glClearColor(1f, 1f, 1f, 1f);
@@ -245,9 +253,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         attribName = GLESShaderConstant.ATTRIB_TEXCOORD;
         mShader.setTexCoordAttribIndex(attribName);
 
-        for (int i = 0; i < mNumOfObjects; i++) {
-            mObjects[i].setShader(mShader);
-        }
 
         return true;
     }
@@ -255,24 +260,33 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     public void setBucketInfo(BucketInfo bucketInfo) {
         mBucketInfo = bucketInfo;
         mNumOfImages = mBucketInfo.getNumOfImageInfos();
-
-        if (mNumOfImages < mNumOfObjects) {
-            mNumOfObjects = mNumOfImages;
-        }
-
-        createObjects();
     }
 
     private void createObjects() {
-        mObjects = new GalleryObject[mNumOfObjects];
-        for (int i = 0; i < mNumOfObjects; i++) {
+        mObjects = new GalleryObject[mNumOfObjectsInScreen];
+
+        for (int i = 0; i < mNumOfObjectsInScreen; i++) {
             mObjects[i] = new GalleryObject("image" + i);
             mRoot.addChild(mObjects[i]);
             mObjects[i].setGLState(mGLState);
+            mObjects[i].setShader(mShader);
         }
     }
 
-    public void setSurfaceView(GLSurfaceView surfaceView) {
+    public void setSurfaceView(GallerySurfaceView surfaceView) {
         mSurfaceView = surfaceView;
     }
+
+    public void setRendererListener(RendererListener listener) {
+        mListener = listener;
+    }
+
+    private GLESNodeListener mNodeListener = new GLESNodeListener() {
+        @Override
+        public void update(GLESNode node) {
+            if (mListener != null) {
+                mListener.update(node);
+            }
+        }
+    };
 }
