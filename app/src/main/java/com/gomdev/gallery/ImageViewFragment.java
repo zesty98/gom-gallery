@@ -9,14 +9,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 
 public class ImageViewFragment extends Fragment {
     static final String CLASS = "ImageViewFragment";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private ImageView mImageView = null;
+    private RecyclingImageView mImageView = null;
 
     private ImageManager mImageManager = null;
     private ImageInfo mImageInfo = null;
@@ -60,7 +59,7 @@ public class ImageViewFragment extends Fragment {
         mImageManager.setLoadingBitmap(null);
 
         final View v = inflater.inflate(R.layout.image_detail_fragment, container, false);
-        mImageView = (ImageView) v.findViewById(R.id.imageView);
+        mImageView = (RecyclingImageView) v.findViewById(R.id.imageView);
 
         return v;
     }

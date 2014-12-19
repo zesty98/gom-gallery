@@ -1,17 +1,39 @@
 package com.gomdev.gallery;
 
 import android.app.Activity;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 
 public class ImageListActivity extends Activity {
+    private GLSurfaceView mSurfaceView = null;
+    private ImageListRenderer mRenderer = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        if (savedInstanceState == null) {
-            getFragmentManager().beginTransaction()
-                    .add(R.id.container, new ImageListFragment())
-                    .commit();
+
+        if (GalleryConfig.sUseGLES == true) {
+            setContentView(R.layout.activity_gles_main);
+            mSurfaceView = (GallerySurfaceView) findViewById(R.id.surfaceview);
+            mRenderer = new ImageListRenderer(this);
+            mRenderer.setSurfaceView(mSurfaceView);
+
+            mSurfaceView.setEGLContextClientVersion(2);
+            mSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
+            mSurfaceView.setRenderer(mRenderer);
+            mSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+//            mSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+
+            int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_POSITION, 0);
+            BucketInfo bucketInfo = ImageManager.getInstance().getBucketInfo(bucketPosition);
+            mRenderer.setBucketInfo(bucketInfo);
+        } else {
+            setContentView(R.layout.activity_main);
+            if (savedInstanceState == null) {
+                getFragmentManager().beginTransaction()
+                        .add(R.id.container, new ImageListFragment())
+                        .commit();
+            }
         }
 
         init();
@@ -44,5 +66,23 @@ public class ImageListActivity extends Activity {
         GalleryContext context = GalleryContext.getInstance();
         context.setScreenSize(width, height);
         context.setColumnWidth(columnWidth);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (GalleryConfig.sUseGLES == true && mSurfaceView != null) {
+            mSurfaceView.onResume();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (GalleryConfig.sUseGLES == true && mSurfaceView != null) {
+            mSurfaceView.onPause();
+        }
+
+        super.onPause();
     }
 }

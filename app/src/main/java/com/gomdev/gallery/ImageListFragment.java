@@ -68,7 +68,7 @@ public class ImageListFragment extends Fragment {
         gridview.setAdapter(adapter);
 
         GalleryContext context = GalleryContext.getInstance();
-        int columnWidth = context.getGridColumnWidth();
+        int columnWidth = context.getColumnWidth();
         mNumOfColumns = context.getNumOfColumns();
 
         gridview.setColumnWidth(columnWidth);

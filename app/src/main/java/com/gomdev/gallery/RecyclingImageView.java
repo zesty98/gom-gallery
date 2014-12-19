@@ -1,12 +1,13 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 
-public class RecyclingImageView extends ImageView {
+public class RecyclingImageView extends ImageView implements CacheContainer {
     static final String CLASS = "RecyclingBitmapDrawable";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -69,5 +70,15 @@ public class RecyclingImageView extends ImageView {
 
         // Notify old Drawable so it is no longer being displayed
         notifyDrawable(previousDrawable, false);
+    }
+
+    @Override
+    public void setBitmapDrawable(BitmapDrawable drawable) {
+        this.setImageDrawable(drawable);
+    }
+
+    @Override
+    public BitmapDrawable getBitmapDrawable() {
+        return (BitmapDrawable) this.getDrawable();
     }
 }

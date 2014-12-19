@@ -11,6 +11,12 @@ public class ImageInfo implements Serializable {
     private final int mOrientation;
     private final long mImageID;
     private String mImagePath = null;
+    private int mWidth;
+    private int mHeight;
+    private int mThumbnailWidth;
+    private int mThumbnailHeight;
+
+    private float[] mTexCoord = null;
 
     public ImageInfo(int position, long id, int orientation) {
         mPosition = position;
@@ -36,6 +42,46 @@ public class ImageInfo implements Serializable {
 
     public void setImagePath(String path) {
         mImagePath = path;
+    }
+
+    public int getWidth() {
+        return mWidth;
+    }
+
+    public void setWidth(int width) {
+        mWidth = width;
+    }
+
+    public int getHeight() {
+        return mHeight;
+    }
+
+    public void setHeight(int height) {
+        mHeight = height;
+    }
+
+    public int getThumbnailWidth() {
+        return mThumbnailWidth;
+    }
+
+    public void setThumbnailWidth(int width) {
+        mThumbnailWidth = width;
+    }
+
+    public int getThumbnailHeight() {
+        return mThumbnailHeight;
+    }
+
+    public void setThumbnailHeight(int height) {
+        mThumbnailHeight = height;
+    }
+
+    public void setTexCoord(float[] texCoord) {
+        mTexCoord = texCoord;
+    }
+
+    public float[] getTexCoord() {
+        return mTexCoord;
     }
 
     @Override

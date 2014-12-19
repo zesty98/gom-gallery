@@ -81,7 +81,7 @@ public class BucketListFragment extends Fragment {
         gridview.setAdapter(adapter);
 
         GalleryContext context = GalleryContext.getInstance();
-        int columnWidth = context.getGridColumnWidth();
+        int columnWidth = context.getColumnWidth();
         mNumOfColumns = context.getNumOfColumns();
 
         gridview.setColumnWidth(columnWidth);
@@ -129,6 +129,7 @@ public class BucketListFragment extends Fragment {
                     android.R.attr.actionBarSize, tv, true)) {
                 mActionBarHeight = TypedValue.complexToDimensionPixelSize(
                         tv.data, context.getResources().getDisplayMetrics());
+                GalleryContext.getInstance().setActionbarHeight(mActionBarHeight);
             }
         }
 
@@ -186,7 +187,7 @@ public class BucketListFragment extends Fragment {
 
             }
 
-            ImageView imageView = (RecyclingImageView) layout
+            RecyclingImageView imageView = (RecyclingImageView) layout
                     .findViewById(R.id.image);
             BucketInfo bucketInfo = mImageManager.getBucketInfo(position - mNumOfColumns);
             ImageInfo imageInfo = bucketInfo.get(0);

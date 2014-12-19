@@ -9,6 +9,8 @@ public class GalleryContext {
     private int mNumOfColumns = GalleryConfig.NUM_OF_COLUMNS;
     private int mGridColumnWidth;
 
+    private int mActionBarHeight = 0;
+
     private int mVersionCode = 100;
 
     private GalleryContext() {
@@ -32,7 +34,7 @@ public class GalleryContext {
         return mHeight;
     }
 
-    public int getGridColumnWidth() {
+    public int getColumnWidth() {
         return mGridColumnWidth;
     }
 
@@ -46,6 +48,14 @@ public class GalleryContext {
 
     public void setNumOfColumns(int numOfColumns) {
         mNumOfColumns = numOfColumns;
+    }
+
+    public int getActionBarHeight() {
+        return mActionBarHeight;
+    }
+
+    public void setActionbarHeight(int height) {
+        mActionBarHeight = height;
     }
 
     public int getVersionCode() {
