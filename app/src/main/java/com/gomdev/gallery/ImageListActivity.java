@@ -8,6 +8,8 @@ public class ImageListActivity extends Activity {
     private GallerySurfaceView mSurfaceView = null;
     private ImageListRenderer mRenderer = null;
 
+    private GridInfo mGridInfo = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,17 +29,13 @@ public class ImageListActivity extends Activity {
 
             int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_POSITION, 0);
             BucketInfo bucketInfo = ImageManager.getInstance().getBucketInfo(bucketPosition);
-            mRenderer.setBucketInfo(bucketInfo);
 
-            GalleryContext galleryContext = GalleryContext.getInstance();
-            int actionBarHeight = galleryContext.getActionBarHeight();
-            int numOfColumns = galleryContext.getNumOfColumns();
-            int columnWidth = galleryContext.getColumnWidth();
-            int spacing = this.getResources().getDimensionPixelSize(R.dimen.gridview_spacing);
+            mGridInfo = new GridInfo(this, bucketInfo);
 
-            int totalNumOfRows = (int) Math.ceil((double) bucketInfo.getNumOfImageInfos() / numOfColumns);
-            int scrollableHeight = actionBarHeight + (columnWidth + spacing) * totalNumOfRows;
-            mSurfaceView.setScrollableHeight(scrollableHeight);
+            mRenderer.setGridInfo(mGridInfo);
+            mSurfaceView.setGridInfo(mGridInfo);
+
+
 
         } else {
             setContentView(R.layout.activity_main);

@@ -34,7 +34,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     private RectF mScrollerStartViewport = new RectF(); // Used only for zooms and flings.
     private Rect mContentRect = new Rect(); // screen coordinate
     private Point mSurfaceSizeBuffer = new Point();
-    private int mScrollableHeight = 0;
 
     // Edge effect / overscroll tracking objects.
     private EdgeEffectCompat mEdgeEffectTop;
@@ -47,6 +46,8 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     private float mSurfaceBufferBottom = 0f;
     private float mSurfaceBufferLeft = 0f;
     private float mSurfaceBufferRight = 0f;
+
+    private GridInfo mGridInfo = null;
 
     private float mTranslateY = 0f;
 
@@ -87,26 +88,27 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         }
 
         super.surfaceChanged(holder, format, w, h);
+        mGridInfo.setScreenSize(w, h);
 
         mContentRect.set(0, 0, w, h);
+
+        mSurfaceSizeBuffer.x = w;
+        mSurfaceSizeBuffer.y = mGridInfo.getScrollableHeight();
+
+        mSurfaceBufferRight = w * 0.5f;
+        mSurfaceBufferLeft = -mSurfaceBufferRight;
+        mSurfaceBufferTop = mGridInfo.getScrollableHeight() * 0.5f;
+        mSurfaceBufferBottom = -mSurfaceBufferTop;
 
         if (mCurrentViewport == null) {
             float right = w * 0.5f;
             float left = -right;
-            float top = h * 0.5f;
-            float bottom = -top;
+            float top = mSurfaceBufferTop;
+            float bottom = mSurfaceBufferTop - h;
 
             // OpenGL ES coordiante.
             mCurrentViewport = new RectF(left, bottom, right, top);
         }
-
-        mSurfaceSizeBuffer.x = w;
-        mSurfaceSizeBuffer.y = mScrollableHeight;
-
-        mSurfaceBufferRight = w * 0.5f;
-        mSurfaceBufferLeft = -mSurfaceBufferRight;
-        mSurfaceBufferTop = mScrollableHeight * 0.5f;
-        mSurfaceBufferBottom = -mSurfaceBufferTop;
     }
 
     @Override
@@ -263,10 +265,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         computeScroll();
     }
 
-    public void setScrollableHeight(int scrollableHeight) {
-        mScrollableHeight = scrollableHeight;
-    }
-
     @Override
     public void update(final GLESNode node) {
         if (mScroller.getCurrVelocity() > 0) {
@@ -276,10 +274,15 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         queueEvent(new Runnable() {
             @Override
             public void run() {
+//                float translateY = mTranslateY % (mColumnWidth + mSpacing);
                 GLESTransform transform = node.getTransform();
                 transform.setIdentity();
                 transform.setTranslate(0f, mTranslateY, 0);
             }
         });
+    }
+
+    public void setGridInfo(GridInfo gridInfo) {
+        mGridInfo = gridInfo;
     }
 }

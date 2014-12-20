@@ -41,7 +41,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     private final Context mContext;
     private final ImageManager mImageManager;
 
-
     private GLESRenderer mRenderer;
     private GLESSceneManager mSM;
     private GLESNode mRoot;
@@ -52,29 +51,15 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
     private RendererListener mListener = null;
 
+    private GridInfo mGridInfo = null;
+
     private float mScreenRatio = 1f;
-    private int mColumnWidth = 0;
-    private int mNumOfColumns = 3;
-    private int mNumOfObjectsInScreen = 0;
-    private int mActionBarHeight = 0;
-    private int mSpace = 0;
     private int mWidth = 0;
     private int mHeight = 0;
-
-    private int mNumOfImages = 0;
-
-    private BucketInfo mBucketInfo;
 
     public ImageListRenderer(Context context) {
         mContext = context;
         GLESContext.getInstance().setContext(context);
-
-        GalleryContext galleryContext = GalleryContext.getInstance();
-        mColumnWidth = galleryContext.getColumnWidth();
-        mNumOfColumns = galleryContext.getNumOfColumns();
-        mActionBarHeight = galleryContext.getActionBarHeight();
-
-        mSpace = context.getResources().getDimensionPixelSize(R.dimen.gridview_spacing);
 
         mImageManager = ImageManager.getInstance();
 
@@ -107,16 +92,16 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     }
 
     private void update() {
-        float xOffset = -(mWidth * 0.5f) + mColumnWidth * 0.5f + mSpace;
-        float yOffset = (mHeight * 0.5f) - mColumnWidth * 0.5f - mSpace - mActionBarHeight;
-        for (int i = 0; i < mNumOfObjectsInScreen; i++) {
+        float xOffset = -(mWidth * 0.5f) + mGridInfo.getColumnWidth() * 0.5f + mGridInfo.getSpacing();
+        float yOffset = (mHeight * 0.5f) - mGridInfo.getColumnWidth() * 0.5f - mGridInfo.getSpacing() - mGridInfo.getActionBarHeight();
+        for (int i = 0; i < mGridInfo.getNumOfImagesInScreen(); i++) {
             GLESTransform transform = mObjects[i].getTransform();
             transform.setIdentity();
 
-            int rowIndex = i / mNumOfColumns;
-            int columnIndex = i % mNumOfColumns;
-            float x = xOffset + (mColumnWidth + mSpace) * columnIndex;
-            float y = yOffset - (mColumnWidth + mSpace) * rowIndex;
+            int rowIndex = i / mGridInfo.getNumOfColumns();
+            int columnIndex = i % mGridInfo.getNumOfColumns();
+            float x = xOffset + (mGridInfo.getColumnWidth() + mGridInfo.getSpacing()) * columnIndex;
+            float y = yOffset - (mGridInfo.getColumnWidth() + mGridInfo.getSpacing()) * rowIndex;
 
             transform.translate(x, y, 0f);
         }
@@ -134,15 +119,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         mWidth = width;
         mHeight = height;
 
-        int numOfRowsInScreen = (int) Math.ceil((double) height / (mColumnWidth + mSpace));
-        mNumOfObjectsInScreen = mNumOfColumns * numOfRowsInScreen;
-
-        if (mNumOfImages < mNumOfObjectsInScreen) {
-            mNumOfObjectsInScreen = mNumOfImages;
-        }
-
-        // FIX
-        mNumOfObjectsInScreen = mNumOfImages;
+        mGridInfo.setScreenSize(width, height);
 
         createObjects();
 
@@ -150,20 +127,20 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
         GLESCamera camera = setupCamera(width, height);
 
-        for (int i = 0; i < mNumOfObjectsInScreen; i++) {
+        for (int i = 0; i < mGridInfo.getNumOfImagesInScreen(); i++) {
             mObjects[i].setCamera(camera);
         }
 
-        ImageInfo imageInfo = mBucketInfo.get(0);
+        ImageInfo imageInfo = mGridInfo.getBucketInfo().get(0);
 
-        for (int i = 0; i < mNumOfObjectsInScreen; i++) {
-            GLESVertexInfo vertexInfo = createPlaneVertexInfo(mColumnWidth, mColumnWidth, imageInfo);
+        for (int i = 0; i < mGridInfo.getNumOfImagesInScreen(); i++) {
+            GLESVertexInfo vertexInfo = createPlaneVertexInfo(mGridInfo.getColumnWidth(), mGridInfo.getColumnWidth(), imageInfo);
             mObjects[i].setVertexInfo(vertexInfo, false, false);
 
             GalleryTexture texture = new GalleryTexture(imageInfo.getWidth(), imageInfo.getHeight());
             texture.setObject(mObjects[i]);
             texture.setSurfaceView(mSurfaceView);
-            texture.setBucketInfo(mBucketInfo);
+            texture.setBucketInfo(mGridInfo.getBucketInfo());
             texture.setPosition(i);
             mObjects[i].setTextureReference(texture);
 
@@ -257,15 +234,10 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         return true;
     }
 
-    public void setBucketInfo(BucketInfo bucketInfo) {
-        mBucketInfo = bucketInfo;
-        mNumOfImages = mBucketInfo.getNumOfImageInfos();
-    }
-
     private void createObjects() {
-        mObjects = new GalleryObject[mNumOfObjectsInScreen];
+        mObjects = new GalleryObject[mGridInfo.getNumOfImagesInScreen()];
 
-        for (int i = 0; i < mNumOfObjectsInScreen; i++) {
+        for (int i = 0; i < mGridInfo.getNumOfImagesInScreen(); i++) {
             mObjects[i] = new GalleryObject("image" + i);
             mRoot.addChild(mObjects[i]);
             mObjects[i].setGLState(mGLState);
@@ -289,4 +261,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
             }
         }
     };
+
+    public void setGridInfo(GridInfo gridInfo) {
+        mGridInfo = gridInfo;
+    }
 }
