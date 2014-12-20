@@ -92,12 +92,14 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
         mContentRect.set(0, 0, w, h);
 
+        int scrollableHeight = mGridInfo.getScrollableHeight();
+
         mSurfaceSizeBuffer.x = w;
-        mSurfaceSizeBuffer.y = mGridInfo.getScrollableHeight();
+        mSurfaceSizeBuffer.y = scrollableHeight;
 
         mSurfaceBufferRight = w * 0.5f;
         mSurfaceBufferLeft = -mSurfaceBufferRight;
-        mSurfaceBufferTop = mGridInfo.getScrollableHeight() * 0.5f;
+        mSurfaceBufferTop = scrollableHeight * 0.5f;
         mSurfaceBufferBottom = -mSurfaceBufferTop;
 
         if (mCurrentViewport == null) {
