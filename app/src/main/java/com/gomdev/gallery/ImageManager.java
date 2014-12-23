@@ -32,6 +32,7 @@ public class ImageManager {
     private int mNumOfBuckets = 0;
     private ArrayList<BucketInfo> mBuckets = new ArrayList<>();
     private Bitmap mLoadingBitmap = null;
+    private final String mOrderClause;
 
     private ImageManager(Context context) {
         mContext = context;
@@ -43,6 +44,9 @@ public class ImageManager {
         params.mDiskCacheEnabled = true;
         params.mMemoryCacheEnabled = true;
         mImageCache = ImageCache.getInstance(((Activity) context).getFragmentManager(), params);
+
+        mOrderClause = MediaStore.Images.ImageColumns.DATE_TAKEN + " DESC, "
+                + MediaStore.Images.ImageColumns._ID + " DESC";
 
         loadFolderInfo();
 
@@ -126,7 +130,8 @@ public class ImageManager {
                 MediaStore.Images.Media.DATA,
                 MediaStore.Images.Media.ORIENTATION,
                 MediaStore.Images.Media.WIDTH,
-                MediaStore.Images.Media.HEIGHT
+                MediaStore.Images.Media.HEIGHT,
+                MediaStore.Images.Media.DATE_TAKEN
         };
 
         Cursor cursor = mContext.getContentResolver().query(
@@ -135,7 +140,7 @@ public class ImageManager {
                 MediaStore.Images.Media.BUCKET_ID + " = ? ",
                 new String[]{String.valueOf(bucketID)
                 },
-                null);
+                mOrderClause);
 
         int index = 0;
         if (cursor.moveToFirst() == true) {
