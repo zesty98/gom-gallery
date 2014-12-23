@@ -32,7 +32,6 @@ public class GalleryTexture extends GLESTexture2D implements CacheContainer {
             return;
         }
 
-        Log.d(TAG, "setBitmapDrawable() position=" + mPosition);
         mImageLoadingListener.onImageLoaded(mPosition, this);
         mIsTextureLoaded = true;
     }

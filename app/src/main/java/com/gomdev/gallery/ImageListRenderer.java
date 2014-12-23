@@ -45,7 +45,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     private GLESSceneManager mSM;
     private GLESNode mRoot;
     private GLESGLState mGLState;
-    private GalleryObject[] mObjects;
+    private GalleryObject[]  mObjects;
     private GLESShader mShader;
     private GallerySurfaceView mSurfaceView = null;
     private GLESTexture mDummyTexture = null;
@@ -210,7 +210,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             mObjects[i].setTexture(mDummyTexture);
 
             TextureMappingInfo textureMappingInfo = new TextureMappingInfo(mObjects[i], imageInfo);
-//            textureMappingInfo.setReferenceQueue(mReferenceQueue);
             mTextureMappingInfos.add(textureMappingInfo);
         }
     }
@@ -346,9 +345,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     }
 
     @Override
-    public void onImageLoaded(int position, final GalleryTexture texture) {
-        Log.d(TAG, "onImageLoaded() position=" + position + " texture=" + texture.hashCode());
-
+    public void onImageLoaded(final int position, final GalleryTexture texture) {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
         final GalleryObject object = textureMappingInfo.getObject();
         final ImageInfo imageInfo = textureMappingInfo.getImageInfo();
