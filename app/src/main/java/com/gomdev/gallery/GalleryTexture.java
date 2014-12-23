@@ -1,14 +1,9 @@
 package com.gomdev.gallery;
 
-import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.opengl.GLSurfaceView;
 import android.util.Log;
 
-import com.gomdev.gles.GLESObject;
-import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESTexture2D;
-import com.gomdev.gles.GLESVertexInfo;
 
 /**
  * Created by gomdev on 14. 12. 17..

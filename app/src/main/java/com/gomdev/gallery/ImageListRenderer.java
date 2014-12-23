@@ -25,8 +25,6 @@ import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -68,8 +66,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     private int mNumOfRowsInScreen;
     private BucketInfo mBucketInfo;
     private int mActionBarHeight;
-
-//    private Map<GalleryTexture, GalleryObject> mTextureObjectMaps = new HashMap<>();
 
     private ArrayList<TextureMappingInfo> mTextureMappingInfos = new ArrayList<>();
 
@@ -126,31 +122,25 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         }
     }
 
-//    private ReferenceQueue<GalleryTexture> mReferenceQueue = new ReferenceQueue<>();
-
     private void checkVisibility() {
         GLESTransform transform = mRoot.getWorldTransform();
 
         float[] matrix = transform.getMatrix();
-        float x = matrix[12];
         float y = matrix[13];
-        float z = matrix[14];
-
-        float screenTop = y;
-        float screenBottom = y + mWidth;
 
         int visibleFirstRow = (int) Math.floor((double) (y - mActionBarHeight) / mColumnWidth);
         if (visibleFirstRow < 0) {
             visibleFirstRow = 0;
         }
-        int visibleLastRow = visibleFirstRow + mNumOfRowsInScreen;
-        int visibleFirstPosition = visibleFirstRow * 3;
-        int visibleLastPosition = visibleLastRow * 3 + (mNumOfColumns - 1);
-        int lastIndex = mBucketInfo.getNumOfImageInfos() - 1;
 
+        int visibleLastRow = visibleFirstRow + mNumOfRowsInScreen;
         if (visibleLastRow > mNumOfRows) {
             visibleLastRow = mNumOfRows;
         }
+
+        int visibleFirstPosition = visibleFirstRow * 3;
+        int visibleLastPosition = visibleLastRow * 3 + (mNumOfColumns - 1);
+        int lastIndex = mBucketInfo.getNumOfImageInfos() - 1;
 
         if (visibleLastPosition > lastIndex) {
             visibleLastPosition = lastIndex;
@@ -181,12 +171,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
                 textureMappingInfo.set(null);
             }
         }
-
-//        WeakReference<GalleryTexture> reference = (WeakReference<GalleryTexture>) mReferenceQueue.poll();
-//        while (reference != null) {
-//            Log.d(TAG, "\t =============" + reference.get());
-//            reference = (WeakReference<GalleryTexture>) mReferenceQueue.poll();
-//        }
     }
 
 

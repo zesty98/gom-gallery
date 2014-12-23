@@ -1,7 +1,6 @@
 package com.gomdev.gallery;
 
 import com.gomdev.gles.GLESObject;
-import com.gomdev.gles.GLESTexture;
 
 /**
  * Created by gomdev on 14. 12. 18..

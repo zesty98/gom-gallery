@@ -36,7 +36,6 @@ public class ImageListActivity extends Activity {
             mSurfaceView.setGridInfo(mGridInfo);
 
 
-
         } else {
             setContentView(R.layout.activity_main);
             if (savedInstanceState == null) {
