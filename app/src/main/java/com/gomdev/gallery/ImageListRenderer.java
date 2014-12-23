@@ -25,18 +25,20 @@ import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 /**
  * Created by gomdev on 14. 12. 16..
  */
-public class ImageListRenderer implements GLSurfaceView.Renderer {
+public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingListener {
     static final String CLASS = "ImageListRenderer";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
-
-    private static GLESTexture sDummyTexture = null;
 
     private final Context mContext;
     private final ImageManager mImageManager;
@@ -48,9 +50,9 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     private GalleryObject[] mObjects;
     private GLESShader mShader;
     private GallerySurfaceView mSurfaceView = null;
+    private GLESTexture mDummyTexture = null;
 
     private RendererListener mListener = null;
-
 
     private float mScreenRatio = 1f;
     private int mWidth = 0;
@@ -62,8 +64,14 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     private int mNumOfColumns;
     private int mNumOfImagesInScreen;
     private int mColumnWidth;
+    private int mNumOfRows;
+    private int mNumOfRowsInScreen;
     private BucketInfo mBucketInfo;
     private int mActionBarHeight;
+
+//    private Map<GalleryTexture, GalleryObject> mTextureObjectMaps = new HashMap<>();
+
+    private ArrayList<TextureMappingInfo> mTextureMappingInfos = new ArrayList<>();
 
     public ImageListRenderer(Context context) {
         mContext = context;
@@ -96,6 +104,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         update();
 
         mRenderer.updateScene(mSM);
+        checkVisibility();
+
         mRenderer.drawScene(mSM);
     }
 
@@ -116,6 +126,69 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         }
     }
 
+//    private ReferenceQueue<GalleryTexture> mReferenceQueue = new ReferenceQueue<>();
+
+    private void checkVisibility() {
+        GLESTransform transform = mRoot.getWorldTransform();
+
+        float[] matrix = transform.getMatrix();
+        float x = matrix[12];
+        float y = matrix[13];
+        float z = matrix[14];
+
+        float screenTop = y;
+        float screenBottom = y + mWidth;
+
+        int visibleFirstRow = (int) Math.floor((double) (y - mActionBarHeight) / mColumnWidth);
+        if (visibleFirstRow < 0) {
+            visibleFirstRow = 0;
+        }
+        int visibleLastRow = visibleFirstRow + mNumOfRowsInScreen;
+        int visibleFirstPosition = visibleFirstRow * 3;
+        int visibleLastPosition = visibleLastRow * 3 + (mNumOfColumns - 1);
+        int lastIndex = mBucketInfo.getNumOfImageInfos() - 1;
+
+        if (visibleLastRow > mNumOfRows) {
+            visibleLastRow = mNumOfRows;
+        }
+
+        if (visibleLastPosition > lastIndex) {
+            visibleLastPosition = lastIndex;
+        }
+
+        for (int i = 0; i <= lastIndex; i++) {
+            GalleryObject object = mObjects[i];
+            TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(i);
+
+            if (i >= visibleFirstPosition && i <= visibleLastPosition) {
+                object.show();
+                ImageInfo imageInfo = textureMappingInfo.getImageInfo();
+                GalleryTexture texture = textureMappingInfo.getTexture();
+                if (texture == null) {
+                    texture = new GalleryTexture(imageInfo.getWidth(), imageInfo.getHeight());
+                    texture.setPosition(i);
+                    texture.setImageLoadingListener(this);
+                }
+
+                if ((texture != null && texture.isTextureLoaded() == false)) {
+                    mImageManager.loadThumbnail(imageInfo, texture);
+                    textureMappingInfo.set(texture);
+                    mSurfaceView.requestRender();
+                }
+            } else {
+                object.hide();
+                object.setTexture(mDummyTexture);
+                textureMappingInfo.set(null);
+            }
+        }
+
+//        WeakReference<GalleryTexture> reference = (WeakReference<GalleryTexture>) mReferenceQueue.poll();
+//        while (reference != null) {
+//            Log.d(TAG, "\t =============" + reference.get());
+//            reference = (WeakReference<GalleryTexture>) mReferenceQueue.poll();
+//        }
+    }
+
 
     @Override
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -125,35 +198,45 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         }
 
         mRenderer.reset();
+        mTextureMappingInfos.clear();
 
         mWidth = width;
         mHeight = height;
 
         mGridInfo.setScreenSize(width, height);
         mNumOfImagesInScreen = mGridInfo.getNumOfImagesInScreen();
+        mNumOfRowsInScreen = mGridInfo.getNumOfRowsInScreen();
+
+        mDummyTexture = createDummyTexture();
 
         createObjects();
 
         mScreenRatio = (float) width / height;
 
         GLESCamera camera = setupCamera(width, height);
-        ImageInfo imageInfo = mBucketInfo.get(0);
 
         for (int i = 0; i < mNumOfImagesInScreen; i++) {
+            ImageInfo imageInfo = mBucketInfo.get(i);
+
             mObjects[i].setCamera(camera);
 
             GLESVertexInfo vertexInfo = createPlaneVertexInfo(mColumnWidth, mColumnWidth);
             mObjects[i].setVertexInfo(vertexInfo, false, false);
 
-            GalleryTexture texture = new GalleryTexture(imageInfo.getWidth(), imageInfo.getHeight());
-            texture.setObject(mObjects[i]);
-            texture.setSurfaceView(mSurfaceView);
-            texture.setBucketInfo(mBucketInfo);
-            texture.setPosition(i);
-            mObjects[i].setTextureReference(texture);
+            mObjects[i].setTexture(mDummyTexture);
 
-            mObjects[i].setTexture(sDummyTexture);
+            TextureMappingInfo textureMappingInfo = new TextureMappingInfo(mObjects[i], imageInfo);
+//            textureMappingInfo.setReferenceQueue(mReferenceQueue);
+            mTextureMappingInfos.add(textureMappingInfo);
         }
+    }
+
+    private GLESTexture createDummyTexture() {
+        Bitmap bitmap = GLESUtils.makeBitmap(512, 512, Bitmap.Config.ARGB_8888, Color.BLACK);
+        GLESTexture dummyTexture = new GLESTexture2D(512, 512, bitmap);
+        dummyTexture.load();
+
+        return dummyTexture;
     }
 
     private GLESVertexInfo createPlaneVertexInfo(float width, float height) {
@@ -206,15 +289,13 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        if (DEBUG) {
+            Log.d(TAG, "onSurfaceCreated()");
+        }
+
         GLES20.glClearColor(1f, 1f, 1f, 1f);
 
         createShader();
-
-        if (null == sDummyTexture) {
-            Bitmap bitmap = GLESUtils.makeBitmap(512, 512, Bitmap.Config.ARGB_8888, Color.BLACK);
-            sDummyTexture = new GLESTexture2D(512, 512, bitmap);
-            sDummyTexture.load();
-        }
     }
 
     private boolean createShader() {
@@ -237,7 +318,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
         attribName = GLESShaderConstant.ATTRIB_TEXCOORD;
         mShader.setTexCoordAttribIndex(attribName);
-
 
         return true;
     }
@@ -270,14 +350,73 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         }
     };
 
-
     public void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
 
         mSpacing = gridInfo.getSpacing();
         mNumOfColumns = gridInfo.getNumOfColumns();
+        mNumOfRows = gridInfo.getNumOfRows();
         mColumnWidth = gridInfo.getColumnWidth();
         mActionBarHeight = gridInfo.getActionBarHeight();
         mBucketInfo = gridInfo.getBucketInfo();
+    }
+
+    @Override
+    public void onImageLoaded(int position, final GalleryTexture texture) {
+        Log.d(TAG, "onImageLoaded() position=" + position + " texture=" + texture.hashCode());
+
+        TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
+        final GalleryObject object = textureMappingInfo.getObject();
+        final ImageInfo imageInfo = textureMappingInfo.getImageInfo();
+
+        final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
+        imageInfo.setThumbnailWidth(bitmap.getWidth());
+        imageInfo.setThumbnailHeight(bitmap.getHeight());
+
+        calcTexCoord(imageInfo);
+
+        GLESVertexInfo vertexInfo = object.getVertexInfo();
+        GLESShader shader = object.getShader();
+        vertexInfo.setBuffer(shader.getTexCoordAttribIndex(), imageInfo.getTexCoord(), 2);
+
+        mSurfaceView.queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                texture.load(bitmap);
+                object.setTexture(texture);
+            }
+        });
+        mSurfaceView.requestRender();
+    }
+
+    private void calcTexCoord(ImageInfo imageInfo) {
+        int width = imageInfo.getThumbnailWidth();
+        int height = imageInfo.getThumbnailHeight();
+
+        float minS = 0f;
+        float minT = 0f;
+        float maxS = 0f;
+        float maxT = 0f;
+        if (width > height) {
+            minS = (float) ((width - height) / 2f) / width;
+            maxS = 1f - minS;
+
+            minT = 0f;
+            maxT = 1f;
+        } else {
+            minT = (float) ((height - width) / 2f) / height;
+            maxT = 1f - minT;
+
+            minS = 0f;
+            maxS = 1f;
+        }
+
+        float[] texCoord = new float[]{
+                minS, maxT,
+                maxS, maxT,
+                minS, minT,
+                maxS, minT
+        };
+        imageInfo.setTexCoord(texCoord);
     }
 }

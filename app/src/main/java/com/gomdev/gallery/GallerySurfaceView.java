@@ -1,6 +1,7 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -15,7 +16,9 @@ import android.view.SurfaceHolder;
 import android.widget.OverScroller;
 
 import com.gomdev.gles.GLESNode;
+import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESTransform;
+import com.gomdev.gles.GLESVertexInfo;
 
 /**
  * Created by gomdev on 14. 12. 18..
@@ -276,7 +279,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         queueEvent(new Runnable() {
             @Override
             public void run() {
-//                float translateY = mTranslateY % (mColumnWidth + mSpacing);
                 GLESTransform transform = node.getTransform();
                 transform.setIdentity();
                 transform.setTranslate(0f, mTranslateY, 0);
@@ -287,4 +289,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     public void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
     }
+
+
 }

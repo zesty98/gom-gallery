@@ -11,9 +11,6 @@ public class GalleryObject extends GLESObject {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private ImageManager mImageManager = null;
-    private GalleryTexture mTextureReference = null;
-
     private int mPosition = -1;
 
     public GalleryObject() {
@@ -27,12 +24,6 @@ public class GalleryObject extends GLESObject {
     }
 
     private void init() {
-        mImageManager = ImageManager.getInstance();
-    }
-
-    @Override
-    public void setTexture(GLESTexture texture) {
-        super.setTexture(texture);
     }
 
     public void setPosition(int position) {
@@ -41,9 +32,5 @@ public class GalleryObject extends GLESObject {
 
     public int getPosition() {
         return mPosition;
-    }
-
-    public void setTextureReference(GalleryTexture reference) {
-        mTextureReference = reference;
     }
 }
