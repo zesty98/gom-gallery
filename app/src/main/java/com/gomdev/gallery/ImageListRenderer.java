@@ -128,7 +128,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         float[] matrix = transform.getMatrix();
         float y = matrix[13];
 
-        int visibleFirstRow = (int) Math.floor((double) (y - mActionBarHeight) / mColumnWidth);
+        int visibleFirstRow = (int) Math.floor((double) (y - mActionBarHeight) / (mColumnWidth + mSpacing));
         if (visibleFirstRow < 0) {
             visibleFirstRow = 0;
         }
