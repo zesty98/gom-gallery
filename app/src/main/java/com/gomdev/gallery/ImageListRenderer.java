@@ -45,7 +45,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     private GLESSceneManager mSM;
     private GLESNode mRoot;
     private GLESGLState mGLState;
-    private GalleryObject[]  mObjects;
+    private GalleryObject[] mObjects;
     private GLESShader mShader;
     private GallerySurfaceView mSurfaceView = null;
     private GLESTexture mDummyTexture = null;
@@ -152,24 +152,44 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
 
             if (i >= visibleFirstPosition && i <= visibleLastPosition) {
                 object.show();
-                ImageInfo imageInfo = textureMappingInfo.getImageInfo();
-                GalleryTexture texture = textureMappingInfo.getTexture();
-                if (texture == null) {
-                    texture = new GalleryTexture(imageInfo.getWidth(), imageInfo.getHeight());
-                    texture.setPosition(i);
-                    texture.setImageLoadingListener(this);
-                }
-
-                if ((texture != null && texture.isTextureLoaded() == false)) {
-                    mImageManager.loadThumbnail(imageInfo, texture);
-                    textureMappingInfo.set(texture);
-                    mSurfaceView.requestRender();
-                }
+                mapTexture(i);
             } else {
                 object.hide();
-                object.setTexture(mDummyTexture);
-                textureMappingInfo.set(null);
+                unmapTexture(i, object);
             }
+        }
+    }
+
+    private void unmapTexture(int position, GalleryObject object) {
+        if (mIsOnFling == true) {
+            return;
+        }
+
+        TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
+
+        object.setTexture(mDummyTexture);
+        textureMappingInfo.set(null);
+    }
+
+    private void mapTexture(int position) {
+        if (mIsOnFling == true) {
+            return;
+        }
+
+        TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
+
+        ImageInfo imageInfo = textureMappingInfo.getImageInfo();
+        GalleryTexture texture = textureMappingInfo.getTexture();
+        if (texture == null) {
+            texture = new GalleryTexture(imageInfo.getWidth(), imageInfo.getHeight());
+            texture.setPosition(position);
+            texture.setImageLoadingListener(this);
+        }
+
+        if ((texture != null && texture.isTextureLoadingNeeded() == true)) {
+            mImageManager.loadThumbnail(imageInfo, texture);
+            textureMappingInfo.set(texture);
+            mSurfaceView.requestRender();
         }
     }
 
@@ -399,5 +419,15 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
                 maxS, minT
         };
         imageInfo.setTexCoord(texCoord);
+    }
+
+    private boolean mIsOnFling = false;
+
+    public void onFlingStarted() {
+        mIsOnFling = true;
+    }
+
+    public void onFlingFinished() {
+        mIsOnFling = false;
     }
 }

@@ -198,6 +198,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
                 0, mSurfaceSizeBuffer.y - mContentRect.height(),
                 0,
                 0);
+        mRenderer.onFlingStarted();
         invalidateViewport();
     }
 
@@ -234,6 +235,8 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
             float currYRange = (mSurfaceBufferTop) - currY;
             setViewportBottomLeft(mSurfaceBufferLeft, currYRange);
+        } else {
+            mRenderer.onFlingFinished();
         }
 
         if (needsInvalidate) {

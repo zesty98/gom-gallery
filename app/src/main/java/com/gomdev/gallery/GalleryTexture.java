@@ -1,7 +1,6 @@
 package com.gomdev.gallery;
 
 import android.graphics.drawable.BitmapDrawable;
-import android.util.Log;
 
 import com.gomdev.gles.GLESTexture2D;
 
@@ -17,7 +16,8 @@ public class GalleryTexture extends GLESTexture2D implements CacheContainer {
 
     private ImageLoadingListener mImageLoadingListener;
 
-    boolean mIsTextureLoaded = false;
+    boolean mIsTextureLoadingFinished = false;
+    boolean mIsTextureLoadingStarted = false;
     private int mPosition = 0;
 
     public GalleryTexture(int width, int height) {
@@ -29,11 +29,14 @@ public class GalleryTexture extends GLESTexture2D implements CacheContainer {
         mDrawable = drawable;
 
         if (drawable instanceof AsyncDrawable) {
+            mIsTextureLoadingStarted = true;
             return;
         }
 
-        mImageLoadingListener.onImageLoaded(mPosition, this);
-        mIsTextureLoaded = true;
+        if (mIsTextureLoadingFinished == false) {
+            mImageLoadingListener.onImageLoaded(mPosition, this);
+        }
+        mIsTextureLoadingFinished = true;
     }
 
     @Override
@@ -45,11 +48,16 @@ public class GalleryTexture extends GLESTexture2D implements CacheContainer {
         mPosition = position;
     }
 
+    public int getPosition() {
+        return mPosition;
+    }
+
     public void setImageLoadingListener(ImageLoadingListener listener) {
         mImageLoadingListener = listener;
     }
 
-    public boolean isTextureLoaded() {
-        return mIsTextureLoaded;
+    public boolean isTextureLoadingNeeded() {
+        return (mIsTextureLoadingFinished == false) && (mIsTextureLoadingStarted == false);
     }
+
 }
