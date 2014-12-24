@@ -1,5 +1,6 @@
 package com.gomdev.gallery;
 
+import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 
 import com.gomdev.gles.GLESTexture2D;
@@ -33,6 +34,10 @@ public class GalleryTexture extends GLESTexture2D implements CacheContainer {
             return;
         }
 
+        if (mDrawable instanceof RecyclingBitmapDrawable) {
+            ((RecyclingBitmapDrawable) mDrawable).setIsDisplayed(true);
+        }
+
         if (mIsTextureLoadingFinished == false) {
             mImageLoadingListener.onImageLoaded(mPosition, this);
         }
@@ -42,6 +47,15 @@ public class GalleryTexture extends GLESTexture2D implements CacheContainer {
     @Override
     public BitmapDrawable getBitmapDrawable() {
         return mDrawable;
+    }
+
+    @Override
+    public void load(Bitmap bitmap) {
+        super.load(bitmap);
+
+        if (mDrawable instanceof RecyclingBitmapDrawable) {
+            ((RecyclingBitmapDrawable) mDrawable).setIsDisplayed(false);
+        }
     }
 
     public void setPosition(int position) {

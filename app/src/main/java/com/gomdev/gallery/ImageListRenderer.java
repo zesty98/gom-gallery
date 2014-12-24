@@ -360,7 +360,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
 
     @Override
     public void onImageLoaded(final int position, final GalleryTexture texture) {
-        Log.d(TAG, "onImageLoaded() image=" + position);
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
         final GalleryObject object = textureMappingInfo.getObject();
         final ImageInfo imageInfo = textureMappingInfo.getImageInfo();
