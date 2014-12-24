@@ -10,11 +10,13 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
+import android.text.format.DateUtils;
 import android.util.Log;
 
 import java.io.FileDescriptor;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -87,7 +89,7 @@ public class ImageManager {
 
         Cursor cursor = mContext.getContentResolver().query(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, null,
-                null, null);
+                null, mOrderClause);
 
         if (DEBUG) {
             Log.d(TAG, "loadFolderInfo() duration=" + (System.nanoTime() - tick));
@@ -164,6 +166,11 @@ public class ImageManager {
                 columnIndex = cursor
                         .getColumnIndexOrThrow(MediaStore.Images.Media.HEIGHT);
                 int height = cursor.getInt(columnIndex);
+
+                columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
+                long dateTakenInMs = cursor.getLong(columnIndex);
+                int flags = DateUtils.FORMAT_SHOW_YEAR;
+                String date = DateUtils.formatDateTime(mContext, dateTakenInMs, flags);
 
                 ImageInfo imageInfo = new ImageInfo(index, imageID, orientation);
                 imageInfo.setImagePath(imagePath);
@@ -513,7 +520,6 @@ public class ImageManager {
 
                 value = new BitmapDrawable(mContext.getResources(), bitmap);
             }
-
 
             return value;
         }
