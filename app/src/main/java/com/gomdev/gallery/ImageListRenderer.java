@@ -159,13 +159,10 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     }
 
     private void unmapTexture(int position, GalleryObject object) {
-        if (mIsOnFling == true) {
-            return;
-        }
-
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
 
         object.setTexture(mDummyTexture);
+        mImageManager.cancelWork(textureMappingInfo.getTexture());
         textureMappingInfo.set(null);
     }
 
@@ -181,21 +178,13 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         }
 
         if ((texture != null && texture.isTextureLoadingNeeded() == true)) {
-            if (mIsOnFling == true) {
-                boolean success = mImageManager.loadThumbnailFromMemCache(imageInfo, texture);
-                if (success == true) {
-                    textureMappingInfo.set(texture);
-                    mSurfaceView.requestRender();
-                }
-            } else {
-                mImageManager.loadThumbnail(imageInfo, texture);
-                textureMappingInfo.set(texture);
-                mSurfaceView.requestRender();
-            }
+            mImageManager.loadThumbnail(imageInfo, texture);
+            textureMappingInfo.set(texture);
+            mSurfaceView.requestRender();
+//            }
 
         }
     }
-
 
     @Override
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -339,6 +328,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         }
     }
 
+
+
     public void setSurfaceView(GallerySurfaceView surfaceView) {
         mSurfaceView = surfaceView;
     }
@@ -369,6 +360,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
 
     @Override
     public void onImageLoaded(final int position, final GalleryTexture texture) {
+        Log.d(TAG, "onImageLoaded() image=" + position);
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
         final GalleryObject object = textureMappingInfo.getObject();
         final ImageInfo imageInfo = textureMappingInfo.getImageInfo();
@@ -422,15 +414,5 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
                 maxS, minT
         };
         imageInfo.setTexCoord(texCoord);
-    }
-
-    private boolean mIsOnFling = false;
-
-    public void onFlingStarted() {
-        mIsOnFling = true;
-    }
-
-    public void onFlingFinished() {
-        mIsOnFling = false;
     }
 }

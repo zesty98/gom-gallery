@@ -16,7 +16,6 @@ import android.util.Log;
 import java.io.FileDescriptor;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -218,7 +217,7 @@ public class ImageManager {
                 Log.d(TAG, "Memory cache hit " + imageInfo.getImagePath());
             }
         } else {
-            if (cancelPotentialWork(imageInfo, container)) {
+            if (cancelPotentialWork(imageInfo, container) && container != null) {
                 final BitmapWorkerTask<T> task = new BitmapWorkerTask<>(container);
                 final AsyncDrawable asyncDrawable =
                         new AsyncDrawable(mContext.getResources(),
@@ -353,6 +352,7 @@ public class ImageManager {
                 return asyncDrawable.getBitmapWorkerTask();
             }
         }
+
         return null;
     }
 
