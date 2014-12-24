@@ -171,6 +171,7 @@ public class ImageManager {
                 long dateTakenInMs = cursor.getLong(columnIndex);
                 int flags = DateUtils.FORMAT_SHOW_YEAR;
                 String date = DateUtils.formatDateTime(mContext, dateTakenInMs, flags);
+                Log.d(TAG, "date=" + date);
 
                 ImageInfo imageInfo = new ImageInfo(index, imageID, orientation);
                 imageInfo.setImagePath(imagePath);
@@ -217,7 +218,6 @@ public class ImageManager {
                 Log.d(TAG, "Memory cache hit " + imageInfo.getImagePath());
             }
         } else {
-
             if (cancelPotentialWork(imageInfo, container)) {
                 final BitmapWorkerTask<T> task = new BitmapWorkerTask<>(container);
                 final AsyncDrawable asyncDrawable =
@@ -227,6 +227,18 @@ public class ImageManager {
                 task.execute(imageInfo);
             }
         }
+    }
+
+    public <T extends CacheContainer> boolean loadThumbnailFromMemCache(ImageInfo imageInfo, T container) {
+        final String imageKey = String.valueOf(imageInfo.getImageID());
+        final BitmapDrawable value = mImageCache.getBitmapFromMemCache(imageKey);
+
+        if (value != null) {
+            container.setBitmapDrawable(value);
+            return true;
+        }
+
+        return false;
     }
 
     public void loadBitmap(ImageInfo imageInfo, RecyclingImageView imageView,

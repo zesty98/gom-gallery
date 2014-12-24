@@ -148,8 +148,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
 
         for (int i = 0; i <= lastIndex; i++) {
             GalleryObject object = mObjects[i];
-            TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(i);
-
             if (i >= visibleFirstPosition && i <= visibleLastPosition) {
                 object.show();
                 mapTexture(i);
@@ -172,10 +170,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     }
 
     private void mapTexture(int position) {
-        if (mIsOnFling == true) {
-            return;
-        }
-
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
 
         ImageInfo imageInfo = textureMappingInfo.getImageInfo();
@@ -187,9 +181,18 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         }
 
         if ((texture != null && texture.isTextureLoadingNeeded() == true)) {
-            mImageManager.loadThumbnail(imageInfo, texture);
-            textureMappingInfo.set(texture);
-            mSurfaceView.requestRender();
+            if (mIsOnFling == true) {
+                boolean success = mImageManager.loadThumbnailFromMemCache(imageInfo, texture);
+                if (success == true) {
+                    textureMappingInfo.set(texture);
+                    mSurfaceView.requestRender();
+                }
+            } else {
+                mImageManager.loadThumbnail(imageInfo, texture);
+                textureMappingInfo.set(texture);
+                mSurfaceView.requestRender();
+            }
+
         }
     }
 
