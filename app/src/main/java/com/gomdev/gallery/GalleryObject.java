@@ -1,6 +1,7 @@
 package com.gomdev.gallery;
 
 import com.gomdev.gles.GLESObject;
+import com.gomdev.gles.GLESTexture;
 
 /**
  * Created by gomdev on 14. 12. 18..
@@ -23,6 +24,18 @@ public class GalleryObject extends GLESObject {
     }
 
     private void init() {
+    }
+
+    @Override
+    public void setTexture(GLESTexture texture) {
+        GLESTexture prevTexture = getTexture();
+
+        if (prevTexture instanceof GalleryTexture) {
+            prevTexture.destroy();
+            prevTexture = null;
+        }
+
+        super.setTexture(texture);
     }
 
     public void setPosition(int position) {
