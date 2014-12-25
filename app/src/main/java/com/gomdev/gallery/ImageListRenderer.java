@@ -25,6 +25,7 @@ import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -60,7 +61,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
 
     private int mSpacing;
     private int mNumOfColumns;
-    private int mNumOfImagesInScreen;
+    private int mNumOfImages;
     private int mColumnWidth;
     private int mNumOfRows;
     private int mNumOfRowsInScreen;
@@ -94,7 +95,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
 
 
     @Override
-    public void onDrawFrame(GL10 gl) {
+    public synchronized void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         update();
@@ -105,11 +106,10 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         mRenderer.drawScene(mSM);
     }
 
-
     private void update() {
         float xOffset = -(mWidth * 0.5f) + mColumnWidth * 0.5f + mSpacing;
         float yOffset = (mHeight * 0.5f) - mColumnWidth * 0.5f - mSpacing - mActionBarHeight;
-        for (int i = 0; i < mNumOfImagesInScreen; i++) {
+        for (int i = 0; i < mNumOfImages; i++) {
             GLESTransform transform = mObjects[i].getTransform();
             transform.setIdentity();
 
@@ -138,9 +138,9 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             visibleLastRow = mNumOfRows;
         }
 
-        int visibleFirstPosition = visibleFirstRow * 3;
-        int visibleLastPosition = visibleLastRow * 3 + (mNumOfColumns - 1);
-        int lastIndex = mBucketInfo.getNumOfImageInfos() - 1;
+        int visibleFirstPosition = visibleFirstRow * mNumOfColumns;
+        int visibleLastPosition = visibleLastRow * mNumOfColumns + (mNumOfColumns - 1);
+        int lastIndex = mNumOfImages - 1;
 
         if (visibleLastPosition > lastIndex) {
             visibleLastPosition = lastIndex;
@@ -181,8 +181,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             mImageManager.loadThumbnail(imageInfo, texture);
             textureMappingInfo.set(texture);
             mSurfaceView.requestRender();
-//            }
-
         }
     }
 
@@ -200,8 +198,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         mHeight = height;
 
         mGridInfo.setScreenSize(width, height);
-        mNumOfImagesInScreen = mGridInfo.getNumOfImagesInScreen();
         mNumOfRowsInScreen = mGridInfo.getNumOfRowsInScreen();
+        mNumOfImages = mGridInfo.getNumOfImages();
 
         mDummyTexture = createDummyTexture();
 
@@ -211,7 +209,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
 
         GLESCamera camera = setupCamera(width, height);
 
-        for (int i = 0; i < mNumOfImagesInScreen; i++) {
+        for (int i = 0; i < mNumOfImages; i++) {
             ImageInfo imageInfo = mBucketInfo.get(i);
 
             mObjects[i].setCamera(camera);
@@ -318,16 +316,15 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     }
 
     private void createObjects() {
-        mObjects = new GalleryObject[mNumOfImagesInScreen];
+        mObjects = new GalleryObject[mNumOfImages];
 
-        for (int i = 0; i < mNumOfImagesInScreen; i++) {
+        for (int i = 0; i < mNumOfImages; i++) {
             mObjects[i] = new GalleryObject("image" + i);
             mRoot.addChild(mObjects[i]);
             mObjects[i].setGLState(mGLState);
             mObjects[i].setShader(mShader);
         }
     }
-
 
 
     public void setSurfaceView(GallerySurfaceView surfaceView) {
@@ -413,5 +410,39 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
                 maxS, minT
         };
         imageInfo.setTexCoord(texCoord);
+    }
+
+    public synchronized void resize() {
+        int columnWidth = mGridInfo.getColumnWidth();
+        if (mColumnWidth == columnWidth) {
+            return;
+        }
+
+        mColumnWidth = columnWidth;
+        mNumOfColumns = mGridInfo.getNumOfColumns();
+        mNumOfRows = mGridInfo.getNumOfRows();
+        mNumOfRowsInScreen = mGridInfo.getNumOfRowsInScreen();
+
+        float halfScaledWidth = mColumnWidth * 0.5f;
+        for (int i = 0; i < mNumOfImages; i++) {
+            GLESVertexInfo vertexInfo = mObjects[i].getVertexInfo();
+            FloatBuffer buffer = (FloatBuffer) vertexInfo.getBuffer(mShader.getPositionAttribIndex());
+
+            buffer.put(0, -halfScaledWidth);
+            buffer.put(1, -halfScaledWidth);
+            buffer.put(2, 0f);
+
+            buffer.put(3, halfScaledWidth);
+            buffer.put(4, -halfScaledWidth);
+            buffer.put(5, 0f);
+
+            buffer.put(6, -halfScaledWidth);
+            buffer.put(7, halfScaledWidth);
+            buffer.put(8, 0f);
+
+            buffer.put(9, halfScaledWidth);
+            buffer.put(10, halfScaledWidth);
+            buffer.put(11, 0f);
+        }
     }
 }

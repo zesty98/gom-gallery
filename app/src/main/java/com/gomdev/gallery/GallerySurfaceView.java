@@ -11,11 +11,13 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.SurfaceHolder;
 import android.widget.OverScroller;
 
 import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESTransform;
+import com.gomdev.gles.GLESUtils;
 
 /**
  * Created by gomdev on 14. 12. 18..
@@ -25,11 +27,15 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
+    private final int DRAG_DISTANCE_DPI = 50;   // dpi
+
+    private Context mContext = null;
     private ImageListRenderer mRenderer = null;
 
     private RectF mCurrentViewport = null;   // OpenGL ES coordinate
 
     private GestureDetectorCompat mGestureDetector;
+    private ScaleGestureDetector mScaleGestureDetector;
     private OverScroller mScroller;
     private RectF mScrollerStartViewport = new RectF(); // Used only for zooms and flings.
     private Rect mContentRect = new Rect(); // screen coordinate
@@ -45,9 +51,9 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     private float mSurfaceBufferTop = 0f;
     private float mSurfaceBufferBottom = 0f;
     private float mSurfaceBufferLeft = 0f;
-    private float mSurfaceBufferRight = 0f;
 
     private GridInfo mGridInfo = null;
+    private int mScrollableHeight = 0;
 
     private float mTranslateY = 0f;
 
@@ -64,7 +70,9 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     }
 
     private void init(Context context) {
+        mContext = context;
         mGestureDetector = new GestureDetectorCompat(context, mGestureListener);
+        mScaleGestureDetector = new ScaleGestureDetector(context, mScaleGestureListener);
 
         mScroller = new OverScroller(context);
 
@@ -92,14 +100,14 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
         mContentRect.set(0, 0, w, h);
 
-        int scrollableHeight = mGridInfo.getScrollableHeight();
+        mScrollableHeight = mGridInfo.getScrollableHeight();
 
         mSurfaceSizeBuffer.x = w;
-        mSurfaceSizeBuffer.y = scrollableHeight;
+        mSurfaceSizeBuffer.y = mScrollableHeight;
 
-        mSurfaceBufferRight = w * 0.5f;
-        mSurfaceBufferLeft = -mSurfaceBufferRight;
-        mSurfaceBufferTop = scrollableHeight * 0.5f;
+        float surfaceBufferRight = w * 0.5f;
+        mSurfaceBufferLeft = -surfaceBufferRight;
+        mSurfaceBufferTop = mScrollableHeight * 0.5f;
         mSurfaceBufferBottom = -mSurfaceBufferTop;
 
         if (mCurrentViewport == null) {
@@ -115,8 +123,10 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        boolean retVal = mGestureDetector.onTouchEvent(event);
+        boolean retVal = mScaleGestureDetector.onTouchEvent(event);
+        retVal = mGestureDetector.onTouchEvent(event) || retVal;
         return retVal || super.onTouchEvent(event);
+
     }
 
     /**
@@ -125,6 +135,9 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
      */
     private final GestureDetector.SimpleOnGestureListener mGestureListener
             = new GestureDetector.SimpleOnGestureListener() {
+        private float lastSpanX;
+        private float lastSpanY;
+
         @Override
         public boolean onDown(MotionEvent e) {
             releaseEdgeEffects();
@@ -173,6 +186,59 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
             return true;
         }
     };
+
+
+    private final ScaleGestureDetector.OnScaleGestureListener mScaleGestureListener
+            = new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+        private float mLastSpan;
+        private int mDragDistance = 0;
+
+        @Override
+        public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
+            mLastSpan = scaleGestureDetector.getCurrentSpan();
+            mDragDistance = GLESUtils.getPixelFromDpi(mContext, DRAG_DISTANCE_DPI);
+            return true;
+        }
+
+        @Override
+        public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
+            float span = scaleGestureDetector.getCurrentSpan();
+
+            float dragDistance = span - mLastSpan;
+            float absDragDistance = Math.abs(dragDistance);
+            if (absDragDistance > mDragDistance) {
+                mLastSpan = span;
+
+                int numOfColumns = mGridInfo.getNumOfColumns();
+                if (dragDistance > 0) {
+                    numOfColumns--;
+                } else {
+                    numOfColumns++;
+                }
+
+                mGridInfo.resize(numOfColumns);
+                GallerySurfaceView.this.resize();
+                mRenderer.resize();
+            }
+
+            return true;
+        }
+
+        @Override
+        public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
+        }
+    };
+
+    private void resize() {
+        int scrollableHeight = mGridInfo.getScrollableHeight();
+        if (mScrollableHeight == scrollableHeight) {
+            return;
+        }
+
+        mScrollableHeight = scrollableHeight;
+        mSurfaceBufferTop = mScrollableHeight * 0.5f;
+        mSurfaceBufferBottom = -mSurfaceBufferTop;
+    }
 
     private void releaseEdgeEffects() {
         mEdgeEffectTopActive
@@ -286,6 +352,4 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     public void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
     }
-
-
 }
