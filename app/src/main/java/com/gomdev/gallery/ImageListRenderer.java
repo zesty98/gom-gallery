@@ -450,13 +450,5 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         }
     }
 
-    public synchronized void selectImage(float x, float y) {
-        int columnWidth = mGridInfo.getColumnWidth();
-        int spacing = mGridInfo.getSpacing();
-        int row = (int) (((mTranslateY + y) - mActionBarHeight) / (columnWidth + spacing));
-        int column = (int) (x / (columnWidth + spacing));
 
-        int numOfColumns = mGridInfo.getNumOfColumns();
-        int imageIndex = numOfColumns * row + column;
-    }
 }

@@ -54,6 +54,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
     private GridInfo mGridInfo = null;
     private int mScrollableHeight = 0;
+    private int mActionBarHeight = 0;
 
     private float mTranslateY = 0f;
 
@@ -79,6 +80,8 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         // Sets up edge effects
         mEdgeEffectTop = new EdgeEffectCompat(context);
         mEdgeEffectBottom = new EdgeEffectCompat(context);
+
+
     }
 
     @Override
@@ -101,6 +104,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         mContentRect.set(0, 0, w, h);
 
         mScrollableHeight = mGridInfo.getScrollableHeight();
+
 
         mSurfaceSizeBuffer.x = w;
         mSurfaceSizeBuffer.y = mScrollableHeight;
@@ -146,7 +150,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
             float x = e.getX();
             float y = e.getY();
 
-            mRenderer.selectImage(x, y);
+            int imageIndex = getImageIndex(x, y);
             return true;
         }
 
@@ -212,8 +216,9 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
                     numOfColumns++;
                 }
 
+                int imageIndex = getImageIndex(focusX, focusY);
                 mGridInfo.resize(numOfColumns);
-                GallerySurfaceView.this.resize(focusX, focusY);
+                GallerySurfaceView.this.resize(imageIndex);
                 mRenderer.resize();
             }
 
@@ -225,7 +230,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         }
     };
 
-    private void resize(float focusX, float focusY) {
+    private void resize(int imageIndex) {
         int scrollableHeight = mGridInfo.getScrollableHeight();
         if (mScrollableHeight == scrollableHeight) {
             return;
@@ -234,6 +239,44 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         mScrollableHeight = scrollableHeight;
         mSurfaceBufferTop = mScrollableHeight * 0.5f;
         mSurfaceBufferBottom = -mSurfaceBufferTop;
+
+        int row = (int) (imageIndex / mGridInfo.getNumOfColumns());
+        float y = row * (mGridInfo.getColumnWidth() + mGridInfo.getSpacing()) + mActionBarHeight;
+        float left = mSurfaceBufferLeft;
+        float top = mSurfaceBufferTop - y;
+
+        top = Math.min(top, mSurfaceBufferTop);
+        top = Math.max(top, mSurfaceBufferBottom + mCurrentViewport.height());
+
+        setViewportBottomLeft(left, top);
+    }
+
+    public int getImageIndex(float x, float y) {
+        int columnWidth = mGridInfo.getColumnWidth();
+        int spacing = mGridInfo.getSpacing();
+        int row = (int) (((mTranslateY + y) - mActionBarHeight) / (columnWidth + spacing));
+        int column = (int) (x / (columnWidth + spacing));
+
+        int numOfColumns = mGridInfo.getNumOfColumns();
+        int imageIndex = numOfColumns * row + column;
+
+        return imageIndex;
+    }
+
+    public int getImageColumn(float x) {
+        int columnWidth = mGridInfo.getColumnWidth();
+        int spacing = mGridInfo.getSpacing();
+        int column = (int) (x / (columnWidth + spacing));
+
+        return column;
+    }
+
+    public int getImageRow(float y) {
+        int columnWidth = mGridInfo.getColumnWidth();
+        int spacing = mGridInfo.getSpacing();
+        int row = (int) (((mTranslateY + y) - mActionBarHeight) / (columnWidth + spacing));
+
+        return row;
     }
 
     private void releaseEdgeEffects() {
@@ -338,5 +381,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
     public void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
+
+        mActionBarHeight = mGridInfo.getActionBarHeight();
     }
 }
