@@ -122,6 +122,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         }
     }
 
+    private float mTranslateY = 0f;
+
     private void checkVisibility() {
         GLESTransform transform = mRoot.getWorldTransform();
 
@@ -156,6 +158,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
                 unmapTexture(i, object);
             }
         }
+
+        mTranslateY = y;
     }
 
     private void unmapTexture(int position, GalleryObject object) {
@@ -444,5 +448,15 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             buffer.put(10, halfScaledWidth);
             buffer.put(11, 0f);
         }
+    }
+
+    public synchronized void selectImage(float x, float y) {
+        int columnWidth = mGridInfo.getColumnWidth();
+        int spacing = mGridInfo.getSpacing();
+        int row = (int) (((mTranslateY + y) - mActionBarHeight) / (columnWidth + spacing));
+        int column = (int) (x / (columnWidth + spacing));
+
+        int numOfColumns = mGridInfo.getNumOfColumns();
+        int imageIndex = numOfColumns * row + column;
     }
 }

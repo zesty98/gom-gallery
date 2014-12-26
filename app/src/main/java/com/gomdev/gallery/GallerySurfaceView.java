@@ -129,14 +129,8 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
     }
 
-    /**
-     * The gesture listener, used for handling simple gestures such as double touches, scrolls,
-     * and flings.
-     */
     private final GestureDetector.SimpleOnGestureListener mGestureListener
             = new GestureDetector.SimpleOnGestureListener() {
-        private float lastSpanX;
-        private float lastSpanY;
 
         @Override
         public boolean onDown(MotionEvent e) {
@@ -148,16 +142,16 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         }
 
         @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            // Scrolling uses math based on the viewport (as opposed to math using pixels).
-            /**
-             * Pixel offset is the offset in screen pixels, while viewport offset is the
-             * offset within the current viewport. For additional information on surface sizes
-             * and pixel offsets, see the docs for {@link computeScrollSurfaceSize()}. For
-             * additional information about the viewport, see the comments for
-             * {@link mCurrentViewport}.
-             */
+        public boolean onSingleTapUp(MotionEvent e) {
+            float x = e.getX();
+            float y = e.getY();
 
+            mRenderer.selectImage(x, y);
+            return true;
+        }
+
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             float viewportOffsetY = -distanceY;
 
             int scrolledY = (int) (mSurfaceBufferTop - mCurrentViewport.bottom - viewportOffsetY);
@@ -187,7 +181,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         }
     };
 
-
     private final ScaleGestureDetector.OnScaleGestureListener mScaleGestureListener
             = new ScaleGestureDetector.SimpleOnScaleGestureListener() {
         private float mLastSpan;
@@ -204,6 +197,9 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
             float span = scaleGestureDetector.getCurrentSpan();
 
+            float focusX = scaleGestureDetector.getFocusX();
+            float focusY = scaleGestureDetector.getFocusY();
+
             float dragDistance = span - mLastSpan;
             float absDragDistance = Math.abs(dragDistance);
             if (absDragDistance > mDragDistance) {
@@ -217,7 +213,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
                 }
 
                 mGridInfo.resize(numOfColumns);
-                GallerySurfaceView.this.resize();
+                GallerySurfaceView.this.resize(focusX, focusY);
                 mRenderer.resize();
             }
 
@@ -229,7 +225,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         }
     };
 
-    private void resize() {
+    private void resize(float focusX, float focusY) {
         int scrollableHeight = mGridInfo.getScrollableHeight();
         if (mScrollableHeight == scrollableHeight) {
             return;
@@ -274,9 +270,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         boolean needsInvalidate = false;
 
         if (mScroller.computeScrollOffset()) {
-            // The scroller isn't finished, meaning a fling or programmatic pan operation is
-            // currently active.
-
             int currY = mScroller.getCurrY();
 
             boolean canScrollY = (mCurrentViewport.top > mSurfaceBufferBottom
@@ -307,12 +300,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         }
     }
 
-    /**
-     * Sets the current viewport (defined by {@link #mCurrentViewport}) to the given
-     * X and Y positions. Note that the Y value represents the topmost pixel position, and thus
-     * the bottom of the {@link #mCurrentViewport} rectangle. For more details on why top and
-     * bottom are flipped, see {@link #mCurrentViewport}.
-     */
     private void setViewportBottomLeft(float leftX, float topY) {
         float curWidth = mCurrentViewport.width();
         float curHeight = mCurrentViewport.height();
