@@ -1,10 +1,13 @@
 package com.gomdev.gallery;
 
+import android.app.ActivityOptions;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.opengl.GLSurfaceView;
+import android.os.Build;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.widget.EdgeEffectCompat;
 import android.util.AttributeSet;
@@ -151,6 +154,14 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
             float y = e.getY();
 
             int imageIndex = getImageIndex(x, y);
+
+            Intent intent = new Intent(mContext, com.gomdev.gallery.ImageViewActivity.class);
+
+            intent.putExtra(GalleryConfig.BUCKET_POSITION, mGridInfo.getBucketInfo().getPosition());
+            intent.putExtra(GalleryConfig.IMAGE_POSITION, imageIndex);
+
+            mContext.startActivity(intent);
+
             return true;
         }
 
