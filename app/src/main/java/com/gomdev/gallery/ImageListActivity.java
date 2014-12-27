@@ -1,12 +1,15 @@
 package com.gomdev.gallery;
 
 import android.app.Activity;
-import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 
 import com.gomdev.gles.GLESUtils;
 
 public class ImageListActivity extends Activity {
+    static final String CLASS = "ImageListActivity";
+    static final String TAG = GalleryConfig.TAG + "_" + CLASS;
+    static final boolean DEBUG = GalleryConfig.DEBUG;
+
     private GallerySurfaceView mSurfaceView = null;
     private ImageListRenderer mRenderer = null;
 
@@ -21,21 +24,12 @@ public class ImageListActivity extends Activity {
         if (GalleryConfig.sUseGLES == true) {
             setContentView(R.layout.activity_gles_main);
 
-            mSurfaceView = (GallerySurfaceView) findViewById(R.id.surfaceview);
-            mRenderer = new ImageListRenderer(this);
-            mRenderer.setSurfaceView(mSurfaceView);
-
-            mSurfaceView.setEGLContextClientVersion(2);
-            mSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
-            mSurfaceView.setRenderer(mRenderer);
-            mSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-
             int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_POSITION, 0);
             BucketInfo bucketInfo = ImageManager.getInstance().getBucketInfo(bucketPosition);
 
             mGridInfo = new GridInfo(this, bucketInfo);
 
-            mRenderer.setGridInfo(mGridInfo);
+            mSurfaceView = (GallerySurfaceView) findViewById(R.id.surfaceview);
             mSurfaceView.setGridInfo(mGridInfo);
 
 

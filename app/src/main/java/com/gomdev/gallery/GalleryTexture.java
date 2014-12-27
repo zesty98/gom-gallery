@@ -9,7 +9,7 @@ import com.gomdev.gles.GLESTexture2D;
  * Created by gomdev on 14. 12. 17..
  */
 public class GalleryTexture extends GLESTexture2D implements CacheContainer {
-    static final String CLASS = "GalleryTexture";
+    public static final String CLASS = "GalleryTexture";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 

@@ -27,6 +27,8 @@ import com.gomdev.gles.GLESVertexInfo;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -69,6 +71,9 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     private int mActionBarHeight;
 
     private ArrayList<TextureMappingInfo> mTextureMappingInfos = new ArrayList<>();
+    private Queue<GalleryTexture> mWaitingTextures = new LinkedList<>();
+
+    private boolean mIsSurfaceChanged = false;
 
     public ImageListRenderer(Context context) {
         mContext = context;
@@ -96,13 +101,18 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
 
     @Override
     public synchronized void onDrawFrame(GL10 gl) {
+        if (mIsSurfaceChanged == false) {
+            Log.d(TAG, "onDrawFrame() frame is skipped");
+            return;
+        }
+
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         update();
 
         mRenderer.updateScene(mSM);
+        updateTexture();
         checkVisibility();
-
         mRenderer.drawScene(mSM);
     }
 
@@ -122,7 +132,18 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         }
     }
 
-    private float mTranslateY = 0f;
+    private void updateTexture() {
+        GalleryTexture texture = mWaitingTextures.poll();
+        if (texture != null) {
+            TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(texture.getPosition());
+            final GalleryObject object = textureMappingInfo.getObject();
+
+            final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
+            texture.load(bitmap);
+            object.setTexture(texture);
+            mSurfaceView.requestRender();
+        }
+    }
 
     private void checkVisibility() {
         GLESTransform transform = mRoot.getWorldTransform();
@@ -158,8 +179,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
                 unmapTexture(i, object);
             }
         }
-
-        mTranslateY = y;
     }
 
     private void unmapTexture(int position, GalleryObject object) {
@@ -195,7 +214,11 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             Log.d(TAG, "onSurfaceChanged()");
         }
 
+        mIsSurfaceChanged = false;
+
         mRenderer.reset();
+        cancelLoading();
+        mWaitingTextures.clear();
         mTextureMappingInfos.clear();
 
         mWidth = width;
@@ -226,6 +249,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             TextureMappingInfo textureMappingInfo = new TextureMappingInfo(mObjects[i], imageInfo);
             mTextureMappingInfos.add(textureMappingInfo);
         }
+        mIsSurfaceChanged = true;
     }
 
     private GLESTexture createDummyTexture() {
@@ -359,6 +383,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         mBucketInfo = gridInfo.getBucketInfo();
     }
 
+
     @Override
     public void onImageLoaded(final int position, final GalleryTexture texture) {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
@@ -375,13 +400,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         GLESShader shader = object.getShader();
         vertexInfo.setBuffer(shader.getTexCoordAttribIndex(), imageInfo.getTexCoord(), 2);
 
-        mSurfaceView.queueEvent(new Runnable() {
-            @Override
-            public void run() {
-                texture.load(bitmap);
-                object.setTexture(texture);
-            }
-        });
+        mWaitingTextures.add(texture);
         mSurfaceView.requestRender();
     }
 
@@ -448,7 +467,23 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             buffer.put(10, halfScaledWidth);
             buffer.put(11, 0f);
         }
+
+        mSurfaceView.requestRender();
     }
 
 
+    public void onSurfaceDestroyed() {
+        cancelLoading();
+    }
+
+    private void cancelLoading() {
+        int size = mTextureMappingInfos.size();
+
+        for (int i = 0; i < size; i++) {
+            GalleryTexture texture = mTextureMappingInfos.get(i).getTexture();
+            if (texture != null) {
+                mImageManager.cancelWork(mTextureMappingInfos.get(i).getTexture());
+            }
+        }
+    }
 }

@@ -1,13 +1,11 @@
 package com.gomdev.gallery;
 
-import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.opengl.GLSurfaceView;
-import android.os.Build;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.widget.EdgeEffectCompat;
 import android.util.AttributeSet;
@@ -75,6 +73,15 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
     private void init(Context context) {
         mContext = context;
+
+        mRenderer = new ImageListRenderer(context);
+        mRenderer.setSurfaceView(this);
+
+        setEGLContextClientVersion(2);
+        setEGLConfigChooser(8, 8, 8, 8, 16, 0);
+        setRenderer(mRenderer);
+        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+
         mGestureDetector = new GestureDetectorCompat(context, mGestureListener);
         mScaleGestureDetector = new ScaleGestureDetector(context, mScaleGestureListener);
 
@@ -126,6 +133,22 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
             // OpenGL ES coordiante.
             mCurrentViewport = new RectF(left, bottom, right, top);
         }
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        mRenderer.onSurfaceDestroyed();
+        super.surfaceDestroyed(holder);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
     }
 
     @Override
@@ -394,5 +417,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         mGridInfo = gridInfo;
 
         mActionBarHeight = mGridInfo.getActionBarHeight();
+
+        mRenderer.setGridInfo(mGridInfo);
     }
 }

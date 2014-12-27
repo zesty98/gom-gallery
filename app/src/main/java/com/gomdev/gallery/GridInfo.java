@@ -1,7 +1,6 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
-import android.util.Log;
 
 /**
  * Created by gomdev on 14. 12. 20..
@@ -40,7 +39,7 @@ public class GridInfo {
         mColumnWidth = galleryContext.getColumnWidth();
         mNumOfColumns = galleryContext.getNumOfColumns();
         mMinNumOfColumns = mNumOfColumns;
-        mMaxNumOfColumns = 2 * mNumOfColumns;
+        mMaxNumOfColumns = 3 * mNumOfColumns;
         mActionBarHeight = galleryContext.getActionBarHeight();
 
         mSpacing = context.getResources().getDimensionPixelSize(R.dimen.gridview_spacing);
@@ -62,8 +61,6 @@ public class GridInfo {
     }
 
     public void resize(int numOfColumns) {
-        Log.d(TAG, "resize() mNumOfColumns=" + mNumOfColumns + " numOfColumns=" + numOfColumns);
-
         numOfColumns = Math.max(numOfColumns, mMinNumOfColumns);
         numOfColumns = Math.min(numOfColumns, mMaxNumOfColumns);
 
