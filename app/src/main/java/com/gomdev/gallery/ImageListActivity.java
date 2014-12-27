@@ -48,6 +48,8 @@ public class ImageListActivity extends Activity {
         int height = getResources().getDisplayMetrics().heightPixels;
 
 
+
+
 //        int widthInDP = width * 160 / getResources().getDisplayMetrics().densityDpi;
 //
 //        int numOfColumns = 3;
@@ -64,6 +66,9 @@ public class ImageListActivity extends Activity {
 //        GalleryContext.getInstance().setNumOfColumns(numOfColumns);
 
         GalleryContext galleryContext = GalleryContext.getInstance();
+
+        int actionBarHeight = GalleryUtils.getActionBarHeight(this);
+        galleryContext.setActionbarHeight(actionBarHeight);
 
         int spacing = getResources().getDimensionPixelSize(
                 R.dimen.gridview_spacing);

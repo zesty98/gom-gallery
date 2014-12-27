@@ -38,24 +38,7 @@ public class BucketListFragment extends Fragment {
 
     private ImageManager mImageManager;
     private int mNumOfColumns = 0;
-    private OnItemClickListener mOnItemClickListener = new OnItemClickListener() {
-        public void onItemClick(AdapterView<?> parent, View v,
-                                int position, long id) {
-            Intent intent = new Intent(getActivity(),
-                    com.gomdev.gallery.ImageListActivity.class);
-            intent.putExtra(GalleryConfig.BUCKET_POSITION, position - mNumOfColumns);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                // makeThumbnailScaleUpAnimation() looks kind of ugly here as the loading spinner may
-                // show plus the thumbnail image in GridView is cropped. so using
-                // makeScaleUpAnimation() instead.
-                ActivityOptions options =
-                        ActivityOptions.makeScaleUpAnimation(v, 0, 0, v.getWidth(), v.getHeight());
-                getActivity().startActivity(intent, options.toBundle());
-            } else {
-                startActivity(intent);
-            }
-        }
-    };
+    private int mActionBarHeight = 0;
 
     public BucketListFragment() {
 
@@ -74,6 +57,12 @@ public class BucketListFragment extends Fragment {
         mImageManager = ImageManager.getInstance();
 
         Activity activity = getActivity();
+
+        // Calculate ActionBar height
+        mActionBarHeight = GalleryUtils.getActionBarHeight(activity);
+        if (mActionBarHeight != 0) {
+            GalleryContext.getInstance().setActionbarHeight(mActionBarHeight);
+        }
 
         BucketGridAdapter adapter = new BucketGridAdapter(activity);
 
@@ -113,7 +102,7 @@ public class BucketListFragment extends Fragment {
         private final int mNumOfBuckets;
         private int mItemHeight = 0;
         private FrameLayout.LayoutParams mImageViewLayoutParams;
-        private int mActionBarHeight = 0;
+
 
         public BucketGridAdapter(Context context) {
             mInflater = LayoutInflater.from(context);
@@ -122,16 +111,9 @@ public class BucketListFragment extends Fragment {
 
             mImageViewLayoutParams = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-
-            // Calculate ActionBar height
-            TypedValue tv = new TypedValue();
-            if (context.getTheme().resolveAttribute(
-                    android.R.attr.actionBarSize, tv, true)) {
-                mActionBarHeight = TypedValue.complexToDimensionPixelSize(
-                        tv.data, context.getResources().getDisplayMetrics());
-                GalleryContext.getInstance().setActionbarHeight(mActionBarHeight);
-            }
         }
+
+
 
         @Override
         public int getCount() {
@@ -216,4 +198,23 @@ public class BucketListFragment extends Fragment {
             notifyDataSetChanged();
         }
     }
+
+    private OnItemClickListener mOnItemClickListener = new OnItemClickListener() {
+        public void onItemClick(AdapterView<?> parent, View v,
+                                int position, long id) {
+            Intent intent = new Intent(getActivity(),
+                    com.gomdev.gallery.ImageListActivity.class);
+            intent.putExtra(GalleryConfig.BUCKET_POSITION, position - mNumOfColumns);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                // makeThumbnailScaleUpAnimation() looks kind of ugly here as the loading spinner may
+                // show plus the thumbnail image in GridView is cropped. so using
+                // makeScaleUpAnimation() instead.
+                ActivityOptions options =
+                        ActivityOptions.makeScaleUpAnimation(v, 0, 0, v.getWidth(), v.getHeight());
+                getActivity().startActivity(intent, options.toBundle());
+            } else {
+                startActivity(intent);
+            }
+        }
+    };
 }
