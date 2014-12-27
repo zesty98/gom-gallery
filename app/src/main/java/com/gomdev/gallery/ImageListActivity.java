@@ -47,24 +47,6 @@ public class ImageListActivity extends Activity {
         int width = getResources().getDisplayMetrics().widthPixels;
         int height = getResources().getDisplayMetrics().heightPixels;
 
-
-
-
-//        int widthInDP = width * 160 / getResources().getDisplayMetrics().densityDpi;
-//
-//        int numOfColumns = 3;
-//
-//        if (widthInDP < 500f) {
-//            numOfColumns = 3;
-//        } else if (widthInDP < 600f) {
-//            numOfColumns = 4;
-//        } else if (widthInDP < 820f) {
-//            numOfColumns = 5;
-//        } else {
-//            numOfColumns = 6;
-//        }
-//        GalleryContext.getInstance().setNumOfColumns(numOfColumns);
-
         GalleryContext galleryContext = GalleryContext.getInstance();
 
         int actionBarHeight = GalleryUtils.getActionBarHeight(this);
@@ -72,7 +54,7 @@ public class ImageListActivity extends Activity {
 
         int spacing = getResources().getDimensionPixelSize(
                 R.dimen.gridview_spacing);
-        int columnWidth = GLESUtils.getPixelFromDpi(this, 100);
+        int columnWidth = getResources().getDimensionPixelSize(R.dimen.gridview_column_width);
         int numOfColumns = width / (columnWidth + spacing);
         galleryContext.setNumOfColumns(numOfColumns);
 

@@ -38,7 +38,7 @@ public class BucketListFragment extends Fragment {
 
     private ImageManager mImageManager;
     private int mNumOfColumns = 0;
-    private int mActionBarHeight = 0;
+
 
     public BucketListFragment() {
 
@@ -57,12 +57,6 @@ public class BucketListFragment extends Fragment {
         mImageManager = ImageManager.getInstance();
 
         Activity activity = getActivity();
-
-        // Calculate ActionBar height
-        mActionBarHeight = GalleryUtils.getActionBarHeight(activity);
-        if (mActionBarHeight != 0) {
-            GalleryContext.getInstance().setActionbarHeight(mActionBarHeight);
-        }
 
         BucketGridAdapter adapter = new BucketGridAdapter(activity);
 
@@ -100,6 +94,7 @@ public class BucketListFragment extends Fragment {
         private final LayoutInflater mInflater;
 
         private final int mNumOfBuckets;
+        private final int mActionBarHeight;
         private int mItemHeight = 0;
         private FrameLayout.LayoutParams mImageViewLayoutParams;
 
@@ -108,12 +103,11 @@ public class BucketListFragment extends Fragment {
             mInflater = LayoutInflater.from(context);
 
             mNumOfBuckets = mImageManager.getNumOfBuckets();
+            mActionBarHeight = GalleryContext.getInstance().getActionBarHeight();
 
             mImageViewLayoutParams = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         }
-
-
 
         @Override
         public int getCount() {

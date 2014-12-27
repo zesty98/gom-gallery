@@ -115,7 +115,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
         mScrollableHeight = mGridInfo.getScrollableHeight();
 
-
         mSurfaceSizeBuffer.x = w;
         mSurfaceSizeBuffer.y = mScrollableHeight;
 

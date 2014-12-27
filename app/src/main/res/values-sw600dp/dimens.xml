@@ -1,0 +1,4 @@
+<resources>
+
+    <dimen name="gridview_column_width">130dp</dimen>
+</resources>
