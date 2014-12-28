@@ -25,10 +25,12 @@ import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
+import java.lang.ref.WeakReference;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -71,7 +73,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     private int mActionBarHeight;
 
     private ArrayList<TextureMappingInfo> mTextureMappingInfos = new ArrayList<>();
-    private Queue<GalleryTexture> mWaitingTextures = new LinkedList<>();
+    private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
 
     private boolean mIsSurfaceChanged = false;
 
@@ -94,8 +96,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         mGLState = new GLESGLState();
         mGLState.setCullFaceState(true);
         mGLState.setCullFace(GLES20.GL_BACK);
-        mGLState.setDepthState(true);
-        mGLState.setDepthFunc(GLES20.GL_LEQUAL);
+        mGLState.setDepthState(false);
     }
 
 
@@ -106,7 +107,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             return;
         }
 
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         update();
 
@@ -134,6 +135,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
 
     private void updateTexture() {
         GalleryTexture texture = mWaitingTextures.poll();
+
         if (texture != null) {
             TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(texture.getPosition());
             final GalleryObject object = textureMappingInfo.getObject();
@@ -141,6 +143,9 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
             texture.load(bitmap);
             object.setTexture(texture);
+        }
+
+        if (mWaitingTextures.size() > 0) {
             mSurfaceView.requestRender();
         }
     }
@@ -181,14 +186,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         }
     }
 
-    private void unmapTexture(int position, GalleryObject object) {
-        TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
-
-        object.setTexture(mDummyTexture);
-        mImageManager.cancelWork(textureMappingInfo.getTexture());
-        textureMappingInfo.set(null);
-    }
-
     private void mapTexture(int position) {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
 
@@ -205,6 +202,17 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             textureMappingInfo.set(texture);
             mSurfaceView.requestRender();
         }
+    }
+
+    private void unmapTexture(int position, GalleryObject object) {
+        object.setTexture(mDummyTexture);
+
+        TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
+        GalleryTexture texture = textureMappingInfo.getTexture();
+        mImageManager.cancelWork(texture);
+        mWaitingTextures.remove(texture);
+
+        textureMappingInfo.set(null);
     }
 
     @Override
@@ -253,7 +261,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     }
 
     private GLESTexture createDummyTexture() {
-        Bitmap bitmap = GLESUtils.makeBitmap(512, 512, Bitmap.Config.ARGB_8888, Color.BLACK);
+        Bitmap bitmap = GLESUtils.makeBitmap(512, 512, Bitmap.Config.ARGB_8888, Color.LTGRAY);
         GLESTexture dummyTexture = new GLESTexture2D(512, 512, bitmap);
         dummyTexture.load();
 

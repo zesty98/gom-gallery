@@ -279,14 +279,8 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         float left = mSurfaceBufferLeft;
         float top = mSurfaceBufferTop - y;
 
-        Log.d(TAG, "\nresize() mSurfaceBufferTop=" + mSurfaceBufferTop + " top=" + top);
         top = Math.min(top, mSurfaceBufferTop);
-
-        Log.d(TAG, "resize() top=" + top);
-        Log.d(TAG, "resize() mSurfaceBufferBottom=" + mSurfaceBufferBottom + " mCurrentViewport.height()=" + mCurrentViewport.height());
         top = Math.max(top, mSurfaceBufferBottom + mCurrentViewport.height());
-
-        Log.d(TAG, "resize() top=" + top);
 
         setViewportBottomLeft(left, top);
     }
@@ -387,16 +381,11 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         float curWidth = mCurrentViewport.width();
         float curHeight = mCurrentViewport.height();
 
-        Log.d(TAG, "setViewportBottomLeft() topY=" + topY);
-        Log.d(TAG, "setViewportBottomLeft() mSurfaceSizeBuffer.y=" + mSurfaceSizeBuffer.y + " curHeight=" + curHeight);
-
         if (mSurfaceSizeBuffer.y < curHeight) {
             topY = mSurfaceBufferTop;
         } else {
             topY = Math.max(mSurfaceBufferBottom + curHeight, Math.min(topY, mSurfaceBufferTop));
         }
-
-        Log.d(TAG, "setViewportBottomLeft() topY=" + topY);
 
         mCurrentViewport.set(leftX, topY - curHeight, leftX + curWidth, topY);
 
@@ -414,14 +403,9 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
             computeScroll();
         }
 
-        queueEvent(new Runnable() {
-            @Override
-            public void run() {
-                GLESTransform transform = node.getTransform();
-                transform.setIdentity();
-                transform.setTranslate(0f, mTranslateY, 0);
-            }
-        });
+        GLESTransform transform = node.getTransform();
+        transform.setIdentity();
+        transform.setTranslate(0f, mTranslateY, 0);
     }
 
     public void setGridInfo(GridInfo gridInfo) {

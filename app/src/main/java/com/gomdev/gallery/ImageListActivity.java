@@ -3,15 +3,12 @@ package com.gomdev.gallery;
 import android.app.Activity;
 import android.os.Bundle;
 
-import com.gomdev.gles.GLESUtils;
-
 public class ImageListActivity extends Activity {
     static final String CLASS = "ImageListActivity";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private GallerySurfaceView mSurfaceView = null;
-    private ImageListRenderer mRenderer = null;
 
     private GridInfo mGridInfo = null;
 
@@ -68,14 +65,14 @@ public class ImageListActivity extends Activity {
     protected void onResume() {
         super.onResume();
 
-        if (GalleryConfig.sUseGLES == true && mSurfaceView != null) {
+        if (mSurfaceView != null) {
             mSurfaceView.onResume();
         }
     }
 
     @Override
     protected void onPause() {
-        if (GalleryConfig.sUseGLES == true && mSurfaceView != null) {
+        if (mSurfaceView != null) {
             mSurfaceView.onPause();
         }
 
