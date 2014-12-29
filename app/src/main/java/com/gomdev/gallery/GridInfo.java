@@ -15,8 +15,6 @@ public class GridInfo {
     private final int mActionBarHeight;
     private final int mSpacing;
     private final int mNumOfImages;
-    private final int mMinNumOfColumns;
-    private final int mMaxNumOfColumns;
 
     private int mColumnWidth;
     private int mNumOfRows;
@@ -25,7 +23,6 @@ public class GridInfo {
     private int mNumOfColumns;
     private int mNumOfRowsInScreen;
     private int mNumOfImagesInScreen;
-
 
     private int mWidth = 0;
     private int mHeight = 0;
@@ -38,8 +35,6 @@ public class GridInfo {
         GalleryContext galleryContext = GalleryContext.getInstance();
         mColumnWidth = galleryContext.getColumnWidth();
         mNumOfColumns = galleryContext.getNumOfColumns();
-        mMinNumOfColumns = mNumOfColumns;
-        mMaxNumOfColumns = 3 * mNumOfColumns;
         mActionBarHeight = galleryContext.getActionBarHeight();
 
         mSpacing = context.getResources().getDimensionPixelSize(R.dimen.gridview_spacing);
@@ -61,19 +56,14 @@ public class GridInfo {
     }
 
     public void resize(int numOfColumns) {
-        numOfColumns = Math.max(numOfColumns, mMinNumOfColumns);
-        numOfColumns = Math.min(numOfColumns, mMaxNumOfColumns);
+        mNumOfColumns = numOfColumns;
+        mColumnWidth = (int) ((mWidth - mSpacing * (mNumOfColumns + 1)) / mNumOfColumns);
 
-        if (numOfColumns != mNumOfColumns) {
-            mNumOfColumns = numOfColumns;
-            mColumnWidth = (int) ((mWidth - mSpacing * (mNumOfColumns + 1)) / mNumOfColumns);
+        mNumOfRows = (int) Math.ceil((double) mNumOfImages / mNumOfColumns);
+        mScrollableHeight = mActionBarHeight + (mColumnWidth + mSpacing) * mNumOfRows;
 
-            mNumOfRows = (int) Math.ceil((double) mNumOfImages / mNumOfColumns);
-            mScrollableHeight = mActionBarHeight + (mColumnWidth + mSpacing) * mNumOfRows;
-
-            mNumOfRowsInScreen = (int) Math.ceil((double) mHeight / (mColumnWidth + mSpacing));
-            mNumOfImagesInScreen = mNumOfColumns * mNumOfRowsInScreen;
-        }
+        mNumOfRowsInScreen = (int) Math.ceil((double) mHeight / (mColumnWidth + mSpacing));
+        mNumOfImagesInScreen = mNumOfColumns * mNumOfRowsInScreen;
     }
 
     public BucketInfo getBucketInfo() {

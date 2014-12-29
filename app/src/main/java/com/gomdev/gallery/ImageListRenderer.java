@@ -241,7 +241,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
 
         GLESCamera camera = setupCamera(width, height);
 
-        createObjects(camera);
+        createScene(camera);
 
         mIsSurfaceChanged = true;
     }
@@ -312,7 +312,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         return true;
     }
 
-    private void createObjects(GLESCamera camera) {
+    private void createScene(GLESCamera camera) {
         mSM = GLESSceneManager.createSceneManager();
         mRoot = mSM.createRootNode("root");
 
@@ -430,42 +430,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     public void onGridInfoChanged() {
         mColumnWidth = mGridInfo.getColumnWidth();
         ;
-        mNumOfColumns = mGridInfo.getNumOfColumns();
-        mNumOfRows = mGridInfo.getNumOfRows();
-        mNumOfRowsInScreen = mGridInfo.getNumOfRowsInScreen();
-
-        float halfScaledWidth = mColumnWidth * 0.5f;
-        for (int i = 0; i < mNumOfImages; i++) {
-            GLESVertexInfo vertexInfo = mObjects[i].getVertexInfo();
-            FloatBuffer buffer = (FloatBuffer) vertexInfo.getBuffer(mTextureShader.getPositionAttribIndex());
-
-            buffer.put(0, -halfScaledWidth);
-            buffer.put(1, -halfScaledWidth);
-            buffer.put(2, 0f);
-
-            buffer.put(3, halfScaledWidth);
-            buffer.put(4, -halfScaledWidth);
-            buffer.put(5, 0f);
-
-            buffer.put(6, -halfScaledWidth);
-            buffer.put(7, halfScaledWidth);
-            buffer.put(8, 0f);
-
-            buffer.put(9, halfScaledWidth);
-            buffer.put(10, halfScaledWidth);
-            buffer.put(11, 0f);
-        }
-
-        mSurfaceView.requestRender();
-    }
-
-    public synchronized void resize() {
-        int columnWidth = mGridInfo.getColumnWidth();
-        if (mColumnWidth == columnWidth) {
-            return;
-        }
-
-        mColumnWidth = columnWidth;
         mNumOfColumns = mGridInfo.getNumOfColumns();
         mNumOfRows = mGridInfo.getNumOfRows();
         mNumOfRowsInScreen = mGridInfo.getNumOfRowsInScreen();

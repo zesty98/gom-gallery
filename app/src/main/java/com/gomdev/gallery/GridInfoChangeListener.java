@@ -5,5 +5,6 @@ package com.gomdev.gallery;
  */
 public interface GridInfoChangeListener {
     public void onSurfaceChanged(int width, int height);
+
     public void onGridInfoChanged();
 }
