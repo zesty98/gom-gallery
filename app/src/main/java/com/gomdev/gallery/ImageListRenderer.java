@@ -116,6 +116,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         updateTexture();
         checkVisibility();
         mRenderer.drawScene(mSM);
+
+        mScrollbar.hide();
     }
 
     private void update() {
@@ -512,8 +514,19 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     private GLESNodeListener mImageNodeListener = new GLESNodeListener() {
         @Override
         public void update(GLESNode node) {
+            GLESTransform transform = node.getTransform();
+            float[] matrix = transform.getMatrix();
+            float prevY = matrix[13];
             if (mListener != null) {
                 mListener.update(node);
+            }
+
+            transform = node.getTransform();
+            matrix = transform.getMatrix();
+            float currentY = matrix[13];
+
+            if (prevY != currentY) {
+                mScrollbar.show();
             }
         }
     };

@@ -95,8 +95,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         // Sets up edge effects
         mEdgeEffectTop = new EdgeEffectCompat(context);
         mEdgeEffectBottom = new EdgeEffectCompat(context);
-
-
     }
 
     @Override

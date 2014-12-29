@@ -53,6 +53,8 @@ public class Scrollbar implements GridInfoChangeListener {
     private int mScrollbarHeight = 0;
     private float mScrollableDistance = 0f;
 
+    private boolean mIsVisible = true;
+
     public Scrollbar(Context context) {
         mContext = context;
 
@@ -72,6 +74,13 @@ public class Scrollbar implements GridInfoChangeListener {
     public void onSurfaceChanged(int width, int height) {
         mWidth = width;
         mHeight = height;
+
+        int scrollableHeight = mGridInfo.getScrollableHeight();
+        if (scrollableHeight < height) {
+            mIsVisible = false;
+        } else {
+            mIsVisible = true;
+        }
 
         mScrollbarRegionWidth = mContext.getResources().getDimensionPixelSize(R.dimen.gridview_scrollbar_width);
         mScrollbarRegionHeight = height - mActionBarHeight - mSpacing * 2;
@@ -98,6 +107,13 @@ public class Scrollbar implements GridInfoChangeListener {
 
     @Override
     public void onGridInfoChanged() {
+        int scrollableHeight = mGridInfo.getScrollableHeight();
+        if (scrollableHeight < mHeight) {
+            mIsVisible = false;
+        } else {
+            mIsVisible = true;
+        }
+
         mColumnWidth = mGridInfo.getColumnWidth();
         mNumOfColumns = mGridInfo.getNumOfColumns();
 
@@ -107,7 +123,6 @@ public class Scrollbar implements GridInfoChangeListener {
         FloatBuffer position = (FloatBuffer) vertexInfo.getBuffer(mColorShader.getPositionAttribIndex());
 
         int scrollbarHeight = 0;
-        int scrollableHeight = mGridInfo.getScrollableHeight();
         if (scrollableHeight > mHeight) {
             scrollbarHeight = (int) (((float) mScrollbarRegionHeight / scrollableHeight) * mScrollbarRegionHeight);
         } else {
@@ -165,6 +180,8 @@ public class Scrollbar implements GridInfoChangeListener {
                 mRed, mGreen, mBlue, mAlpha);
         mScrollbarObject.setVertexInfo(vertexInfo, false, false);
 
+        mScrollbarObject.hide();
+
         return mScrollbarObject;
     }
 
@@ -192,10 +209,26 @@ public class Scrollbar implements GridInfoChangeListener {
         mScrollNode = node;
     }
 
+    public void show() {
+        if (mScrollbarObject != null && mIsVisible == true) {
+            mScrollbarObject.show();
+        }
+    }
+
+    public void hide() {
+        if (mScrollbarObject != null) {
+            mScrollbarObject.hide();
+        }
+    }
+
     private GLESObjectListener mScrollbarListener = new GLESObjectListener() {
 
         @Override
         public void update(GLESObject object) {
+            if (mIsVisible == false) {
+                return;
+            }
+
             GLESTransform transform = object.getTransform();
 
             transform.setIdentity();
