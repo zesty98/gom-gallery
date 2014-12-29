@@ -37,7 +37,7 @@ import javax.microedition.khronos.opengles.GL10;
 /**
  * Created by gomdev on 14. 12. 16..
  */
-public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingListener {
+public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingListener, GridInfoChangeListener {
     static final String CLASS = "ImageListRenderer";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -52,7 +52,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     private GLESGLState mImageGLState;
 
     private GalleryObject[] mObjects;
-    private GLESObject mScrollbarObject = null;
     private GLESShader mTextureShader;
     private GallerySurfaceView mSurfaceView = null;
     private GLESTexture mDummyTexture = null;
@@ -226,20 +225,13 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
 
         mIsSurfaceChanged = false;
 
+        mWidth = width;
+        mHeight = height;
+
         mRenderer.reset();
         cancelLoading();
         mWaitingTextures.clear();
         mTextureMappingInfos.clear();
-
-        mWidth = width;
-        mHeight = height;
-
-        mGridInfo.setScreenSize(width, height);
-
-        mScrollbar.onSurfaceChanged(width, height);
-
-        mNumOfRowsInScreen = mGridInfo.getNumOfRowsInScreen();
-        mNumOfImages = mGridInfo.getNumOfImages();
 
         mDummyTexture = createDummyTexture();
 
@@ -346,13 +338,16 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             mTextureMappingInfos.add(textureMappingInfo);
         }
 
-        mScrollbarObject = mScrollbar.createObject(mImageNode, camera);
-        mRoot.addChild(mScrollbarObject);
-
+        GLESObject scrollbarObject = mScrollbar.createObject(camera);
+        mRoot.addChild(scrollbarObject);
+        mScrollbar.setScrollNode(mImageNode);
     }
 
     public void setSurfaceView(GallerySurfaceView surfaceView) {
         mSurfaceView = surfaceView;
+
+        mSurfaceView.setGridInfoChangeListener(mScrollbar);
+        mSurfaceView.setGridInfoChangeListener(this);
     }
 
     public void setRendererListener(RendererListener listener) {
@@ -423,6 +418,45 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         imageInfo.setTexCoord(texCoord);
     }
 
+    @Override
+    public void onSurfaceChanged(int width, int height) {
+        mNumOfRowsInScreen = mGridInfo.getNumOfRowsInScreen();
+        mNumOfImages = mGridInfo.getNumOfImages();
+    }
+
+    @Override
+    public void onGridInfoChanged() {
+        mColumnWidth = mGridInfo.getColumnWidth();
+        ;
+        mNumOfColumns = mGridInfo.getNumOfColumns();
+        mNumOfRows = mGridInfo.getNumOfRows();
+        mNumOfRowsInScreen = mGridInfo.getNumOfRowsInScreen();
+
+        float halfScaledWidth = mColumnWidth * 0.5f;
+        for (int i = 0; i < mNumOfImages; i++) {
+            GLESVertexInfo vertexInfo = mObjects[i].getVertexInfo();
+            FloatBuffer buffer = (FloatBuffer) vertexInfo.getBuffer(mTextureShader.getPositionAttribIndex());
+
+            buffer.put(0, -halfScaledWidth);
+            buffer.put(1, -halfScaledWidth);
+            buffer.put(2, 0f);
+
+            buffer.put(3, halfScaledWidth);
+            buffer.put(4, -halfScaledWidth);
+            buffer.put(5, 0f);
+
+            buffer.put(6, -halfScaledWidth);
+            buffer.put(7, halfScaledWidth);
+            buffer.put(8, 0f);
+
+            buffer.put(9, halfScaledWidth);
+            buffer.put(10, halfScaledWidth);
+            buffer.put(11, 0f);
+        }
+
+        mSurfaceView.requestRender();
+    }
+
     public synchronized void resize() {
         int columnWidth = mGridInfo.getColumnWidth();
         if (mColumnWidth == columnWidth) {
@@ -456,8 +490,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             buffer.put(11, 0f);
         }
 
-        mScrollbar.resize();
-
         mSurfaceView.requestRender();
     }
 
@@ -485,4 +517,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             }
         }
     };
+
+
 }

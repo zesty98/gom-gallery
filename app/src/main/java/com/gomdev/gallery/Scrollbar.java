@@ -19,7 +19,7 @@ import java.nio.FloatBuffer;
 /**
  * Created by gomdev on 14. 12. 29..
  */
-public class Scrollbar {
+public class Scrollbar implements GridInfoChangeListener {
     static final String CLASS = "Scrollbar";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -27,7 +27,7 @@ public class Scrollbar {
     private final Context mContext;
 
     private GLESObject mScrollbarObject;
-    private GLESNode mParentNode;
+    private GLESNode mScrollNode;
     private GLESShader mColorShader;
     private GLESGLState mGLState;
 
@@ -68,22 +68,7 @@ public class Scrollbar {
         mGLState.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
-    public void setColor(float r, float g, float b, float a) {
-        mRed = r;
-        mGreen = g;
-        mBlue = b;
-        mAlpha = a;
-    }
-
-    public void setGridInfo(GridInfo gridInfo) {
-        mGridInfo = gridInfo;
-
-        mSpacing = gridInfo.getSpacing();
-        mNumOfColumns = gridInfo.getNumOfColumns();
-        mColumnWidth = gridInfo.getColumnWidth();
-        mActionBarHeight = gridInfo.getActionBarHeight();
-    }
-
+    @Override
     public void onSurfaceChanged(int width, int height) {
         mWidth = width;
         mHeight = height;
@@ -111,10 +96,61 @@ public class Scrollbar {
         mScrollableDistance = bottom + (mHeight * 0.5f - mSpacing);
     }
 
-    public GLESObject createObject(GLESNode parent, GLESCamera camera) {
-        mParentNode = parent;
+    @Override
+    public void onGridInfoChanged() {
+        mColumnWidth = mGridInfo.getColumnWidth();
+        mNumOfColumns = mGridInfo.getNumOfColumns();
 
+        mScrollbarRegionLeft = -mWidth * 0.5f + (mSpacing + mColumnWidth) * mNumOfColumns - mScrollbarRegionWidth;
+
+        GLESVertexInfo vertexInfo = mScrollbarObject.getVertexInfo();
+        FloatBuffer position = (FloatBuffer) vertexInfo.getBuffer(mColorShader.getPositionAttribIndex());
+
+        int scrollbarHeight = 0;
+        int scrollableHeight = mGridInfo.getScrollableHeight();
+        if (scrollableHeight > mHeight) {
+            scrollbarHeight = (int) (((float) mScrollbarRegionHeight / scrollableHeight) * mScrollbarRegionHeight);
+        } else {
+            scrollbarHeight = mScrollbarRegionHeight;
+        }
+
+        float top = position.get(7);
+        float bottom = top - scrollbarHeight;
+        float left = mScrollbarRegionLeft;
+        float right = mScrollbarRegionLeft + mScrollbarRegionWidth;
+
+        position.put(0, left);
+        position.put(1, bottom);
+
+        position.put(3, right);
+        position.put(4, bottom);
+
+        position.put(6, left);
+
+        position.put(9, right);
+
+        mScrollableDistance = bottom + (mHeight * 0.5f - mSpacing);
+    }
+
+    public void setColor(float r, float g, float b, float a) {
+        mRed = r;
+        mGreen = g;
+        mBlue = b;
+        mAlpha = a;
+    }
+
+    public void setGridInfo(GridInfo gridInfo) {
+        mGridInfo = gridInfo;
+
+        mSpacing = gridInfo.getSpacing();
+        mNumOfColumns = gridInfo.getNumOfColumns();
+        mColumnWidth = gridInfo.getColumnWidth();
+        mActionBarHeight = gridInfo.getActionBarHeight();
+    }
+
+    public GLESObject createObject(GLESCamera camera) {
         mScrollbarObject = new GLESObject("scrollbar");
+
         mScrollbarObject.setListener(mScrollbarListener);
         mScrollbarObject.setGLState(mGLState);
         mScrollbarObject.setShader(mColorShader);
@@ -152,39 +188,8 @@ public class Scrollbar {
         return true;
     }
 
-    public void resize() {
-        mColumnWidth = mGridInfo.getColumnWidth();
-        mNumOfColumns = mGridInfo.getNumOfColumns();
-
-        mScrollbarRegionLeft = -mWidth * 0.5f + (mSpacing + mColumnWidth) * mNumOfColumns - mScrollbarRegionWidth;
-
-        GLESVertexInfo vertexInfo = mScrollbarObject.getVertexInfo();
-        FloatBuffer position = (FloatBuffer) vertexInfo.getBuffer(mColorShader.getPositionAttribIndex());
-
-        int scrollbarHeight = 0;
-        int scrollableHeight = mGridInfo.getScrollableHeight();
-        if (scrollableHeight > mHeight) {
-            scrollbarHeight = (int) (((float) mScrollbarRegionHeight / scrollableHeight) * mScrollbarRegionHeight);
-        } else {
-            scrollbarHeight = mScrollbarRegionHeight;
-        }
-
-        float top = position.get(7);
-        float bottom = top - scrollbarHeight;
-        float left = mScrollbarRegionLeft;
-        float right = mScrollbarRegionLeft + mScrollbarRegionWidth;
-
-        position.put(0, left);
-        position.put(1, bottom);
-
-        position.put(3, right);
-        position.put(4, bottom);
-
-        position.put(6, left);
-
-        position.put(9, right);
-
-        mScrollableDistance = bottom + (mHeight * 0.5f - mSpacing);
+    public void setScrollNode(GLESNode node) {
+        mScrollNode = node;
     }
 
     private GLESObjectListener mScrollbarListener = new GLESObjectListener() {
@@ -199,7 +204,7 @@ public class Scrollbar {
 
             if (scrollableHeight > mHeight) {
 
-                float[] matrix = mParentNode.getWorldTransform().getMatrix();
+                float[] matrix = mScrollNode.getWorldTransform().getMatrix();
                 float imageScrollDistance = matrix[13];
 
                 float scrollDistance = (imageScrollDistance / (scrollableHeight - mHeight)) * mScrollableDistance;

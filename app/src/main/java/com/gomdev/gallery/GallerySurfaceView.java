@@ -20,6 +20,8 @@ import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 
+import java.util.ArrayList;
+
 /**
  * Created by gomdev on 14. 12. 18..
  */
@@ -42,7 +44,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     private Rect mContentRect = new Rect(); // screen coordinate
     private Point mSurfaceSizeBuffer = new Point();
 
-    // Edge effect / overscroll tracking objects.
     private EdgeEffectCompat mEdgeEffectTop;
     private EdgeEffectCompat mEdgeEffectBottom;
 
@@ -59,6 +60,8 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
     private float mTranslateY = 0f;
 
+    private ArrayList<GridInfoChangeListener> mListeners = new ArrayList<>();
+
     public GallerySurfaceView(Context context) {
         super(context);
 
@@ -73,6 +76,8 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
     private void init(Context context) {
         mContext = context;
+
+        mListeners.clear();
 
         mRenderer = new ImageListRenderer(context);
         mRenderer.setSurfaceView(this);
@@ -110,6 +115,13 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
         super.surfaceChanged(holder, format, w, h);
         mGridInfo.setScreenSize(w, h);
+
+        int size = mListeners.size();
+        if (size > 0) {
+            for (int i = 0; i < size; i++) {
+                mListeners.get(i).onSurfaceChanged(w, h);
+            }
+        }
 
         mContentRect.set(0, 0, w, h);
 
@@ -218,6 +230,10 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         }
     };
 
+    public void setGridInfoChangeListener(GridInfoChangeListener listener) {
+        mListeners.add(listener);
+    }
+
     private final ScaleGestureDetector.OnScaleGestureListener mScaleGestureListener
             = new ScaleGestureDetector.SimpleOnScaleGestureListener() {
         private float mLastSpan;
@@ -283,9 +299,16 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         top = Math.max(top, mSurfaceBufferBottom + mCurrentViewport.height());
 
         setViewportBottomLeft(left, top);
+
+        int size = mListeners.size();
+        if (size > 0) {
+            for (int i = 0; i < size; i++) {
+                mListeners.get(i).onGridInfoChanged();
+            }
+        }
     }
 
-    public int getImageIndex(float x, float y) {
+    private int getImageIndex(float x, float y) {
         int columnWidth = mGridInfo.getColumnWidth();
         int spacing = mGridInfo.getSpacing();
         int row = (int) (((mTranslateY + y) - mActionBarHeight) / (columnWidth + spacing));
@@ -297,7 +320,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         return imageIndex;
     }
 
-    public int getImageColumn(float x) {
+    private int getImageColumn(float x) {
         int columnWidth = mGridInfo.getColumnWidth();
         int spacing = mGridInfo.getSpacing();
         int column = (int) (x / (columnWidth + spacing));
@@ -305,7 +328,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         return column;
     }
 
-    public int getImageRow(float y) {
+    private int getImageRow(float y) {
         int columnWidth = mGridInfo.getColumnWidth();
         int spacing = mGridInfo.getSpacing();
         int row = (int) (((mTranslateY + y) - mActionBarHeight) / (columnWidth + spacing));
