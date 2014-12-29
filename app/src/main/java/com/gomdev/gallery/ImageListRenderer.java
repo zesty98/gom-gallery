@@ -14,6 +14,8 @@ import com.gomdev.gles.GLESContext;
 import com.gomdev.gles.GLESGLState;
 import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESNodeListener;
+import com.gomdev.gles.GLESObject;
+import com.gomdev.gles.GLESObjectListener;
 import com.gomdev.gles.GLESRect;
 import com.gomdev.gles.GLESRenderer;
 import com.gomdev.gles.GLESSceneManager;
@@ -25,10 +27,8 @@ import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
-import java.lang.ref.WeakReference;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -49,9 +49,13 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     private GLESRenderer mRenderer;
     private GLESSceneManager mSM;
     private GLESNode mRoot;
-    private GLESGLState mGLState;
+    private GLESNode mImageNode;
+    private GLESGLState mImageGLState;
+    private GLESGLState mScrollbarGLState;
     private GalleryObject[] mObjects;
-    private GLESShader mShader;
+    private GLESObject mScrollbar = null;
+    private GLESShader mTextureShader;
+    private GLESShader mColorShader;
     private GallerySurfaceView mSurfaceView = null;
     private GLESTexture mDummyTexture = null;
 
@@ -72,6 +76,13 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     private BucketInfo mBucketInfo;
     private int mActionBarHeight;
 
+    // scrollbar
+    private float mScrollbarRegionTop = 0f;
+    private float mScrollbarRegionLeft = 0f;
+    private int mScrollbarRegionWidth = 0;
+    private int mScrollbarRegionHeight = 0;
+    private float mScrollableDistance = 0f;
+
     private ArrayList<TextureMappingInfo> mTextureMappingInfos = new ArrayList<>();
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
 
@@ -89,14 +100,17 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     private void setupSceneComponent() {
         mRenderer = GLESRenderer.createRenderer();
 
-        mSM = GLESSceneManager.createSceneManager();
-        mRoot = mSM.createRootNode("root");
-        mRoot.setListener(mNodeListener);
+        mImageGLState = new GLESGLState();
+        mImageGLState.setCullFaceState(true);
+        mImageGLState.setCullFace(GLES20.GL_BACK);
+        mImageGLState.setDepthState(false);
 
-        mGLState = new GLESGLState();
-        mGLState.setCullFaceState(true);
-        mGLState.setCullFace(GLES20.GL_BACK);
-        mGLState.setDepthState(false);
+        mScrollbarGLState = new GLESGLState();
+        mScrollbarGLState.setCullFaceState(true);
+        mScrollbarGLState.setCullFace(GLES20.GL_BACK);
+        mScrollbarGLState.setDepthState(false);
+        mScrollbarGLState.setBlendState(true);
+        mScrollbarGLState.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
 
@@ -151,7 +165,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     }
 
     private void checkVisibility() {
-        GLESTransform transform = mRoot.getWorldTransform();
+        GLESTransform transform = mImageNode.getWorldTransform();
 
         float[] matrix = transform.getMatrix();
         float y = matrix[13];
@@ -238,25 +252,12 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
 
         mDummyTexture = createDummyTexture();
 
-        createObjects();
-
         mScreenRatio = (float) width / height;
 
         GLESCamera camera = setupCamera(width, height);
 
-        for (int i = 0; i < mNumOfImages; i++) {
-            ImageInfo imageInfo = mBucketInfo.get(i);
+        createObjects(camera);
 
-            mObjects[i].setCamera(camera);
-
-            GLESVertexInfo vertexInfo = createPlaneVertexInfo(mColumnWidth, mColumnWidth);
-            mObjects[i].setVertexInfo(vertexInfo, false, false);
-
-            mObjects[i].setTexture(mDummyTexture);
-
-            TextureMappingInfo textureMappingInfo = new TextureMappingInfo(mObjects[i], imageInfo);
-            mTextureMappingInfos.add(textureMappingInfo);
-        }
         mIsSurfaceChanged = true;
     }
 
@@ -268,38 +269,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         return dummyTexture;
     }
 
-    private GLESVertexInfo createPlaneVertexInfo(float width, float height) {
-        float right = width * 0.5f;
-        float left = -right;
-        float top = height * 0.5f;
-        float bottom = -top;
-        float z = 0.0f;
-
-        float[] vertex = {
-                left, bottom, z,
-                right, bottom, z,
-                left, top, z,
-                right, top, z
-        };
-
-        GLESVertexInfo vertexInfo = new GLESVertexInfo();
-
-        vertexInfo.setBuffer(mShader.getPositionAttribIndex(), vertex, 3);
-
-        float[] texCoord = {
-                0f, 1f,
-                1f, 1f,
-                0f, 0f,
-                1f, 0f
-        };
-
-        vertexInfo.setBuffer(mShader.getTexCoordAttribIndex(), texCoord, 2);
-
-        vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
-        vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
-
-        return vertexInfo;
-    }
 
     private GLESCamera setupCamera(int width, int height) {
         GLESCamera camera = new GLESCamera();
@@ -332,36 +301,105 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             Log.d(TAG, "createShader()");
         }
 
-        mShader = new GLESShader(mContext);
+        {
+            mTextureShader = new GLESShader(mContext);
 
-        String vsSource = GLESUtils.getStringFromReosurce(mContext, R.raw.texture_20_vs);
-        String fsSource = GLESUtils.getStringFromReosurce(mContext, R.raw.texture_20_fs);
+            String vsSource = GLESUtils.getStringFromReosurce(mContext, R.raw.texture_20_vs);
+            String fsSource = GLESUtils.getStringFromReosurce(mContext, R.raw.texture_20_fs);
 
-        mShader.setShaderSource(vsSource, fsSource);
-        if (mShader.load() == false) {
-            return false;
+            mTextureShader.setShaderSource(vsSource, fsSource);
+            if (mTextureShader.load() == false) {
+                return false;
+            }
+
+            String attribName = GLESShaderConstant.ATTRIB_POSITION;
+            mTextureShader.setPositionAttribIndex(attribName);
+
+            attribName = GLESShaderConstant.ATTRIB_TEXCOORD;
+            mTextureShader.setTexCoordAttribIndex(attribName);
         }
 
-        String attribName = GLESShaderConstant.ATTRIB_POSITION;
-        mShader.setPositionAttribIndex(attribName);
+        {
+            mColorShader = new GLESShader(mContext);
 
-        attribName = GLESShaderConstant.ATTRIB_TEXCOORD;
-        mShader.setTexCoordAttribIndex(attribName);
+            String vsSource = GLESUtils.getStringFromReosurce(mContext, R.raw.color_20_vs);
+            String fsSource = GLESUtils.getStringFromReosurce(mContext, R.raw.color_20_fs);
+
+            mColorShader.setShaderSource(vsSource, fsSource);
+            if (mColorShader.load() == false) {
+                return false;
+            }
+
+            String attribName = GLESShaderConstant.ATTRIB_POSITION;
+            mColorShader.setPositionAttribIndex(attribName);
+
+            attribName = GLESShaderConstant.ATTRIB_COLOR;
+            mColorShader.setColorAttribIndex(attribName);
+        }
 
         return true;
     }
 
-    private void createObjects() {
+    private void createObjects(GLESCamera camera) {
+        mSM = GLESSceneManager.createSceneManager();
+        mRoot = mSM.createRootNode("root");
+
+        mImageNode = mSM.createNode("imageNode");
+        mImageNode.setListener(mImageNodeListener);
+        mRoot.addChild(mImageNode);
+
         mObjects = new GalleryObject[mNumOfImages];
 
         for (int i = 0; i < mNumOfImages; i++) {
             mObjects[i] = new GalleryObject("image" + i);
-            mRoot.addChild(mObjects[i]);
-            mObjects[i].setGLState(mGLState);
-            mObjects[i].setShader(mShader);
-        }
-    }
+            mImageNode.addChild(mObjects[i]);
+            mObjects[i].setGLState(mImageGLState);
+            mObjects[i].setShader(mTextureShader);
 
+            mObjects[i].setCamera(camera);
+
+            GLESVertexInfo vertexInfo = GalleryUtils.createImageVertexInfo(mTextureShader, mColumnWidth, mColumnWidth);
+            mObjects[i].setVertexInfo(vertexInfo, false, false);
+
+            mObjects[i].setTexture(mDummyTexture);
+
+            ImageInfo imageInfo = mBucketInfo.get(i);
+            TextureMappingInfo textureMappingInfo = new TextureMappingInfo(mObjects[i], imageInfo);
+            mTextureMappingInfos.add(textureMappingInfo);
+        }
+
+        mScrollbar = new GLESObject("Scrollbar");
+        mRoot.addChild(mScrollbar);
+        mScrollbar.setGLState(mScrollbarGLState);
+        mScrollbar.setShader(mColorShader);
+        mScrollbar.setCamera(camera);
+        mScrollbar.setListener(mScrollbarListener);
+
+        mScrollbarRegionWidth = mContext.getResources().getDimensionPixelSize(R.dimen.gridview_scrollbar_width);
+        mScrollbarRegionHeight = mHeight - mActionBarHeight - mSpacing * 2;
+        mScrollbarRegionTop = mHeight * 0.5f - mActionBarHeight - mSpacing;
+        mScrollbarRegionLeft = -mWidth * 0.5f + (mSpacing + mColumnWidth) * mNumOfColumns - mScrollbarRegionWidth;
+
+        int scrollbarHeight = 0;
+        int scrollableHeight = mGridInfo.getScrollableHeight();
+        if (scrollableHeight > mHeight) {
+            scrollbarHeight = (int) (((float) mScrollbarRegionHeight / scrollableHeight) * mScrollbarRegionHeight);
+        } else {
+            scrollbarHeight = mScrollbarRegionHeight;
+        }
+
+
+        GLESVertexInfo vertexInfo = GalleryUtils.createColorVertexInfo(mColorShader,
+                mScrollbarRegionLeft, mScrollbarRegionTop,
+                mScrollbarRegionWidth, scrollbarHeight,
+                1f, 1f, 1f, 0.7f);
+        mScrollbar.setVertexInfo(vertexInfo, false, false);
+
+        float bottom = mScrollbarRegionTop - scrollbarHeight;
+        mScrollableDistance = bottom + (mHeight * 0.5f - mSpacing);
+
+        Log.d(TAG, "createObjects() scrollbarHeight=" + scrollbarHeight + " mScrollableDistance=" + mScrollableDistance);
+    }
 
     public void setSurfaceView(GallerySurfaceView surfaceView) {
         mSurfaceView = surfaceView;
@@ -370,15 +408,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     public void setRendererListener(RendererListener listener) {
         mListener = listener;
     }
-
-    private GLESNodeListener mNodeListener = new GLESNodeListener() {
-        @Override
-        public void update(GLESNode node) {
-            if (mListener != null) {
-                mListener.update(node);
-            }
-        }
-    };
 
     public void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
@@ -390,7 +419,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         mActionBarHeight = gridInfo.getActionBarHeight();
         mBucketInfo = gridInfo.getBucketInfo();
     }
-
 
     @Override
     public void onImageLoaded(final int position, final GalleryTexture texture) {
@@ -457,7 +485,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
         float halfScaledWidth = mColumnWidth * 0.5f;
         for (int i = 0; i < mNumOfImages; i++) {
             GLESVertexInfo vertexInfo = mObjects[i].getVertexInfo();
-            FloatBuffer buffer = (FloatBuffer) vertexInfo.getBuffer(mShader.getPositionAttribIndex());
+            FloatBuffer buffer = (FloatBuffer) vertexInfo.getBuffer(mTextureShader.getPositionAttribIndex());
 
             buffer.put(0, -halfScaledWidth);
             buffer.put(1, -halfScaledWidth);
@@ -474,6 +502,38 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             buffer.put(9, halfScaledWidth);
             buffer.put(10, halfScaledWidth);
             buffer.put(11, 0f);
+        }
+
+        {
+            mScrollbarRegionLeft = -mWidth * 0.5f + (mSpacing + mColumnWidth) * mNumOfColumns - mScrollbarRegionWidth;
+
+            GLESVertexInfo vertexInfo = mScrollbar.getVertexInfo();
+            FloatBuffer position = (FloatBuffer) vertexInfo.getBuffer(mColorShader.getPositionAttribIndex());
+
+            int scrollbarHeight = 0;
+            int scrollableHeight = mGridInfo.getScrollableHeight();
+            if (scrollableHeight > mHeight) {
+                scrollbarHeight = (int) (((float) mScrollbarRegionHeight / scrollableHeight) * mScrollbarRegionHeight);
+            } else {
+                scrollbarHeight = mScrollbarRegionHeight;
+            }
+
+            float top = position.get(7);
+            float bottom = top - scrollbarHeight;
+            float left = mScrollbarRegionLeft;
+            float right = mScrollbarRegionLeft + mScrollbarRegionWidth;
+
+            position.put(0, left);
+            position.put(1, bottom);
+
+            position.put(3, right);
+            position.put(4, bottom);
+
+            position.put(6, left);
+
+            position.put(9, right);
+
+            mScrollableDistance = bottom + (mHeight * 0.5f - mSpacing);
         }
 
         mSurfaceView.requestRender();
@@ -494,4 +554,39 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
             }
         }
     }
+
+    private GLESNodeListener mImageNodeListener = new GLESNodeListener() {
+        @Override
+        public void update(GLESNode node) {
+            if (mListener != null) {
+                mListener.update(node);
+            }
+        }
+    };
+
+    private GLESObjectListener mScrollbarListener = new GLESObjectListener() {
+
+        @Override
+        public void update(GLESObject object) {
+            GLESTransform transform = object.getTransform();
+
+            transform.setIdentity();
+
+            int scrollableHeight = mGridInfo.getScrollableHeight();
+
+            if (scrollableHeight > mHeight) {
+
+                float[] matrix = mImageNode.getWorldTransform().getMatrix();
+                float imageScrollDistance = matrix[13];
+
+                float scrollDistance = (imageScrollDistance / (scrollableHeight - mHeight)) * mScrollableDistance;
+                transform.setTranslate(0f, -scrollDistance, 0f);
+            }
+        }
+
+        @Override
+        public void apply(GLESObject object) {
+
+        }
+    };
 }
