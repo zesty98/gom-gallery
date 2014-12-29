@@ -7,5 +7,6 @@
     <dimen name="gridview_margin">1dp</dimen>
     <dimen name="gridview_column_width">100dp</dimen>
     <dimen name="gridview_scrollbar_width">3dp</dimen>
+    <dimen name="drag_distance">50dp</dimen>
 
 </resources>

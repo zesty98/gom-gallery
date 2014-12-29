@@ -5,12 +5,10 @@ import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
 import android.view.SurfaceHolder;
 
 import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESTransform;
-import com.gomdev.gles.GLESUtils;
 
 import java.util.ArrayList;
 
@@ -22,19 +20,14 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private final int DRAG_DISTANCE_DPI = 50;   // dpi
-
     private Context mContext = null;
     private ImageListRenderer mRenderer = null;
 
     private GalleryGestureDetector mGalleryGestureDetector = null;
-
-    private ScaleGestureDetector mScaleGestureDetector;
+    private GalleryScaleGestureDetector mGalleryScaleGestureDetector = null;
 
     private GridInfo mGridInfo = null;
-    private int mNumOfColumns;
-    private int mMinNumOfColumns;
-    private int mMaxNumOfColumns;
+    private int mActionBarHeight = 0;
 
     private ArrayList<GridInfoChangeListener> mListeners = new ArrayList<>();
 
@@ -51,8 +44,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     }
 
     private void init(Context context) {
-        mContext = context;
-
         mListeners.clear();
 
         mRenderer = new ImageListRenderer(context);
@@ -63,11 +54,8 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         setRenderer(mRenderer);
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 
-
-        mScaleGestureDetector = new ScaleGestureDetector(context, mScaleGestureListener);
-
         mGalleryGestureDetector = new GalleryGestureDetector(context, this);
-
+        mGalleryScaleGestureDetector = new GalleryScaleGestureDetector(context, this);
     }
 
     @Override
@@ -86,8 +74,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
         super.surfaceChanged(holder, format, w, h);
         mGridInfo.setScreenSize(w, h);
-
-        mGalleryGestureDetector.onSurfaceChanged(w, h);
 
         int size = mListeners.size();
         if (size > 0) {
@@ -115,7 +101,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        boolean retVal = mScaleGestureDetector.onTouchEvent(event);
+        boolean retVal = mGalleryScaleGestureDetector.onTouchEvent(event);
         retVal = mGalleryGestureDetector.onTouchEvent(event) || retVal;
         return retVal || super.onTouchEvent(event);
 
@@ -125,57 +111,8 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         mListeners.add(listener);
     }
 
-    private final ScaleGestureDetector.OnScaleGestureListener mScaleGestureListener
-            = new ScaleGestureDetector.SimpleOnScaleGestureListener() {
-        private float mLastSpan;
-        private int mDragDistance = 0;
-
-        @Override
-        public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
-            mLastSpan = scaleGestureDetector.getCurrentSpan();
-            mDragDistance = GLESUtils.getPixelFromDpi(mContext, DRAG_DISTANCE_DPI);
-            return true;
-        }
-
-        @Override
-        public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
-            float span = scaleGestureDetector.getCurrentSpan();
-
-            float focusX = scaleGestureDetector.getFocusX();
-            float focusY = scaleGestureDetector.getFocusY();
-
-            float dragDistance = span - mLastSpan;
-            float absDragDistance = Math.abs(dragDistance);
-            if (absDragDistance > mDragDistance) {
-                mLastSpan = span;
-
-                int numOfColumns = mGridInfo.getNumOfColumns();
-                if (dragDistance > 0) {
-                    numOfColumns--;
-                } else {
-                    numOfColumns++;
-                }
-
-                numOfColumns = Math.max(numOfColumns, mMinNumOfColumns);
-                numOfColumns = Math.min(numOfColumns, mMaxNumOfColumns);
-
-                if (numOfColumns != mNumOfColumns) {
-                    int imageIndex = mGalleryGestureDetector.getImageIndex(focusX, focusY);
-                    mGridInfo.resize(numOfColumns);
-                    mGalleryGestureDetector.resize(imageIndex);
-                    GallerySurfaceView.this.resize();
-                }
-            }
-
-            return true;
-        }
-
-        @Override
-        public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
-        }
-    };
-
-    private void resize() {
+    public void resize(int centerImageIndex) {
+        mGalleryGestureDetector.setCenterImageIndex(centerImageIndex);
         int size = mListeners.size();
         if (size > 0) {
             for (int i = 0; i < size; i++) {
@@ -198,11 +135,23 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     public void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
 
-        mNumOfColumns = GalleryContext.getInstance().getNumOfColumns();
-        mMinNumOfColumns = mNumOfColumns;
-        mMaxNumOfColumns = 3 * mNumOfColumns;
+        mActionBarHeight = mGridInfo.getActionBarHeight();
 
         mGalleryGestureDetector.setGridInfo(mGridInfo);
+        mGalleryScaleGestureDetector.setGridInfo(mGridInfo);
         mRenderer.setGridInfo(mGridInfo);
+    }
+
+    public int getImageIndex(float x, float y) {
+        float scrollDistance = mGalleryGestureDetector.getScrollDistance();
+        int columnWidth = mGridInfo.getColumnWidth();
+        int spacing = mGridInfo.getSpacing();
+        int row = (int) (((scrollDistance + y) - mActionBarHeight) / (columnWidth + spacing));
+        int column = (int) (x / (columnWidth + spacing));
+
+        int numOfColumns = mGridInfo.getNumOfColumns();
+        int imageIndex = numOfColumns * row + column;
+
+        return imageIndex;
     }
 }

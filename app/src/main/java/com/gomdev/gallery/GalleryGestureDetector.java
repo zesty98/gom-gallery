@@ -14,8 +14,8 @@ import android.widget.OverScroller;
 /**
  * Created by gomdev on 14. 12. 29..
  */
-public class GalleryGestureDetector {
-    static final String CLASS = "GalleryScroller";
+public class GalleryGestureDetector implements GridInfoChangeListener {
+    static final String CLASS = "GalleryGestureDetector";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
@@ -47,13 +47,14 @@ public class GalleryGestureDetector {
     private boolean mEdgeEffectBottomActive;
 
     private float mTranslateY = 0f;
-
+    private int mCenterImageIndex = 0;
 
     public GalleryGestureDetector(Context context, GallerySurfaceView surfaceView) {
         mContext = context;
         mSurfaceView = surfaceView;
 
         mGestureDetector = new GestureDetectorCompat(context, mGestureListener);
+        mSurfaceView.setGridInfoChangeListener(this);
 
         mScroller = new OverScroller(context);
 
@@ -67,6 +68,7 @@ public class GalleryGestureDetector {
         mActionBarHeight = gridInfo.getActionBarHeight();
     }
 
+    @Override
     public void onSurfaceChanged(int width, int height) {
         mContentRect.set(0, 0, width, height);
 
@@ -91,28 +93,14 @@ public class GalleryGestureDetector {
         }
     }
 
-    public boolean onTouchEvent(MotionEvent event) {
-        return mGestureDetector.onTouchEvent(event);
-    }
-
-    public void update() {
-        if (mScroller.getCurrVelocity() > 0) {
-            computeScroll();
-        }
-    }
-
-    public void resize(int imageIndex) {
-        int scrollableHeight = mGridInfo.getScrollableHeight();
-        if (mScrollableHeight == scrollableHeight) {
-            return;
-        }
-
-        mScrollableHeight = scrollableHeight;
-        mSurfaceSizeBuffer.y = scrollableHeight;
+    @Override
+    public void onGridInfoChanged() {
+        mScrollableHeight = mGridInfo.getScrollableHeight();;
+        mSurfaceSizeBuffer.y = mScrollableHeight;
         mSurfaceBufferTop = mScrollableHeight * 0.5f;
         mSurfaceBufferBottom = -mSurfaceBufferTop;
 
-        int row = (int) (imageIndex / mGridInfo.getNumOfColumns());
+        int row = (int) (mCenterImageIndex / mGridInfo.getNumOfColumns());
         float y = row * (mGridInfo.getColumnWidth() + mGridInfo.getSpacing()) + mActionBarHeight;
         float left = mSurfaceBufferLeft;
         float top = mSurfaceBufferTop - y;
@@ -123,8 +111,22 @@ public class GalleryGestureDetector {
         setViewportBottomLeft(left, top);
     }
 
+    public boolean onTouchEvent(MotionEvent event) {
+        return mGestureDetector.onTouchEvent(event);
+    }
+
+    public void update() {
+        if (mScroller.getCurrVelocity() > 0) {
+            computeScroll();
+        }
+    }
+
     public float getScrollDistance() {
         return mTranslateY;
+    }
+
+    public void setCenterImageIndex(int index) {
+        mCenterImageIndex = index;
     }
 
     private final GestureDetector.SimpleOnGestureListener mGestureListener
@@ -144,7 +146,7 @@ public class GalleryGestureDetector {
             float x = e.getX();
             float y = e.getY();
 
-            int imageIndex = getImageIndex(x, y);
+            int imageIndex = mSurfaceView.getImageIndex(x, y);
 
             Intent intent = new Intent(mContext, com.gomdev.gallery.ImageViewActivity.class);
 
@@ -188,18 +190,6 @@ public class GalleryGestureDetector {
             return true;
         }
     };
-
-    public int getImageIndex(float x, float y) {
-        int columnWidth = mGridInfo.getColumnWidth();
-        int spacing = mGridInfo.getSpacing();
-        int row = (int) (((mTranslateY + y) - mActionBarHeight) / (columnWidth + spacing));
-        int column = (int) (x / (columnWidth + spacing));
-
-        int numOfColumns = mGridInfo.getNumOfColumns();
-        int imageIndex = numOfColumns * row + column;
-
-        return imageIndex;
-    }
 
     private void releaseEdgeEffects() {
         mEdgeEffectTopActive
