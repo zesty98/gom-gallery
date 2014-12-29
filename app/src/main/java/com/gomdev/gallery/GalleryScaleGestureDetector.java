@@ -4,8 +4,6 @@ import android.content.Context;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 
-import com.gomdev.gles.GLESUtils;
-
 /**
  * Created by gomdev on 14. 12. 29..
  */

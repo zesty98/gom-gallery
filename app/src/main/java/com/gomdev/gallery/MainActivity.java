@@ -7,8 +7,6 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.gomdev.gles.GLESUtils;
-
 public class MainActivity extends Activity {
     static final String CLASS = "MainActivity";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
