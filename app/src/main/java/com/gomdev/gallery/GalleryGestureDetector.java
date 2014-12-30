@@ -19,6 +19,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
+    private final static float MAX_ROTATION_ANGLE = 15f;
+
     private final Context mContext;
 
     private GridInfo mGridInfo = null;
@@ -49,6 +51,9 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     private float mTranslateY = 0f;
     private int mCenterImageIndex = 0;
 
+    private float mMaxDistance = 0f;
+    private float mRotationAngle = 0f;
+
     public GalleryGestureDetector(Context context, GallerySurfaceView surfaceView) {
         mContext = context;
         mSurfaceView = surfaceView;
@@ -66,6 +71,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         mGridInfo = gridInfo;
 
         mActionBarHeight = gridInfo.getActionBarHeight();
+        int columnWidth = GalleryContext.getInstance().getColumnWidth();
+        mMaxDistance = (columnWidth + mGridInfo.getSpacing()) * 10f;
     }
 
     @Override
@@ -96,7 +103,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     @Override
     public void onGridInfoChanged() {
         mScrollableHeight = mGridInfo.getScrollableHeight();
-        ;
+
         mSurfaceSizeBuffer.y = mScrollableHeight;
         mSurfaceBufferTop = mScrollableHeight * 0.5f;
         mSurfaceBufferBottom = -mSurfaceBufferTop;
@@ -116,10 +123,53 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         return mGestureDetector.onTouchEvent(event);
     }
 
+
     public void update() {
-        if (mScroller.getCurrVelocity() > 0) {
+        float currVelocity = mScroller.getCurrVelocity();
+        if (currVelocity > 0f) {
             computeScroll();
         }
+
+        calcRotationAngle();
+    }
+
+
+    private void calcRotationAngle() {
+        if (mScroller.isFinished() == true) {
+            mRotationAngle = 0f;
+            return;
+        }
+
+        float startY = mScroller.getStartY();
+        float finalY = mScroller.getFinalY();
+
+        float scrollDistance = finalY - startY;
+        scrollDistance = Math.abs(scrollDistance);
+
+        if (scrollDistance < mMaxDistance) {
+            mRotationAngle = 0f;
+            return;
+        }
+
+        float distanceToFinalY = finalY - mTranslateY;
+        distanceToFinalY = Math.abs(distanceToFinalY);
+        if (distanceToFinalY < mMaxDistance) {
+            mRotationAngle = distanceToFinalY * MAX_ROTATION_ANGLE / mMaxDistance;
+        } else {
+            mRotationAngle = MAX_ROTATION_ANGLE;
+        }
+
+        if (startY > finalY) {
+            mRotationAngle = -mRotationAngle;
+        }
+
+        if (mTranslateY == finalY) {
+            mRotationAngle = 0f;
+        }
+    }
+
+    public float getAngle() {
+        return mRotationAngle;
     }
 
     public float getScrollDistance() {
@@ -220,8 +270,6 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     }
 
     public void computeScroll() {
-        boolean needsInvalidate = false;
-
         if (mScroller.computeScrollOffset()) {
             int currY = mScroller.getCurrY();
 
@@ -234,22 +282,16 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
                     && !mEdgeEffectTopActive) {
                 mEdgeEffectTop.onAbsorb((int) mScroller.getCurrVelocity());
                 mEdgeEffectTopActive = true;
-                needsInvalidate = true;
             } else if (canScrollY
                     && currY > (mSurfaceSizeBuffer.y - mContentRect.height())
                     && mEdgeEffectBottom.isFinished()
                     && !mEdgeEffectBottomActive) {
                 mEdgeEffectBottom.onAbsorb((int) mScroller.getCurrVelocity());
                 mEdgeEffectBottomActive = true;
-                needsInvalidate = true;
             }
 
             float currYRange = (mSurfaceBufferTop) - currY;
             setViewportBottomLeft(mSurfaceBufferLeft, currYRange);
-        }
-
-        if (needsInvalidate) {
-            invalidateViewport();
         }
     }
 

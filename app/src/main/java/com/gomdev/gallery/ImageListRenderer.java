@@ -154,12 +154,10 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     }
 
     private void checkVisibility() {
-        GLESTransform transform = mImageNode.getWorldTransform();
+        GLESTransform transform = mImageNode.getTransform();
+        float y = transform.getPreTranslate().mY;
 
-        float[] matrix = transform.getMatrix();
-        float y = matrix[13];
-
-        int visibleFirstRow = (int) Math.floor((double) (y - mActionBarHeight) / (mColumnWidth + mSpacing));
+        int visibleFirstRow = (int) Math.floor((double) (y - mActionBarHeight) / (mColumnWidth + mSpacing)) - 1;
         if (visibleFirstRow < 0) {
             visibleFirstRow = 0;
         }
@@ -263,7 +261,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
 
         camera.setLookAt(0f, 0f, eyeZ, 0f, 0f, 0f, 0f, 1f, 0f);
 
-        camera.setFrustum(fovy, mScreenRatio, eyeZ * 0.1f, eyeZ * 2f);
+        camera.setFrustum(fovy, mScreenRatio, eyeZ * 0.01f, eyeZ * 10f);
 
         camera.setViewport(new GLESRect(0, 0, width, height));
 
@@ -429,7 +427,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, ImageLoadingLi
     @Override
     public void onGridInfoChanged() {
         mColumnWidth = mGridInfo.getColumnWidth();
-        ;
         mNumOfColumns = mGridInfo.getNumOfColumns();
         mNumOfRows = mGridInfo.getNumOfRows();
         mNumOfRowsInScreen = mGridInfo.getNumOfRowsInScreen();

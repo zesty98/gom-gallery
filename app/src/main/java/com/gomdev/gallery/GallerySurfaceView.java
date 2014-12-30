@@ -125,11 +125,14 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     public void update(final GLESNode node) {
         mGalleryGestureDetector.update();
 
-        float scrollDistance = mGalleryGestureDetector.getScrollDistance();
-
         GLESTransform transform = node.getTransform();
         transform.setIdentity();
-        transform.setTranslate(0f, scrollDistance, 0);
+
+        float angle = mGalleryGestureDetector.getAngle();
+        transform.rotate(angle, 1f, 0f, 0f);
+
+        float scrollDistance = mGalleryGestureDetector.getScrollDistance();
+        transform.preTranslate(0f, scrollDistance, 0f);
     }
 
     public void setGridInfo(GridInfo gridInfo) {

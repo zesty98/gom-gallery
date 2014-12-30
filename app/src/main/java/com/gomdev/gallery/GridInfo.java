@@ -47,7 +47,7 @@ public class GridInfo {
         mWidth = width;
         mHeight = height;
 
-        mNumOfRowsInScreen = (int) Math.ceil((double) height / (mColumnWidth + mSpacing));
+        mNumOfRowsInScreen = (int) Math.ceil((double) height / (mColumnWidth + mSpacing)) + 1;
         mNumOfImagesInScreen = mNumOfColumns * mNumOfRowsInScreen;
 
         if (mNumOfImages < mNumOfImagesInScreen) {
