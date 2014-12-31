@@ -65,8 +65,9 @@ public class ImageManager {
         }
     }
 
-    public static void newInstance(Context context) {
+    public static ImageManager newInstance(Context context) {
         sImageManager = new ImageManager(context);
+        return sImageManager;
     }
 
     public static ImageManager getInstance() {

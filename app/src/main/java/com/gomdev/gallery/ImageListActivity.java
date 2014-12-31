@@ -22,7 +22,12 @@ public class ImageListActivity extends Activity {
             setContentView(R.layout.activity_gles_main);
 
             int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_POSITION, 0);
-            BucketInfo bucketInfo = ImageManager.getInstance().getBucketInfo(bucketPosition);
+
+            ImageManager imageManager = ImageManager.getInstance();
+            if (imageManager == null) {
+                imageManager = ImageManager.newInstance(this);
+            }
+            BucketInfo bucketInfo = imageManager.getBucketInfo(bucketPosition);
 
             mGridInfo = new GridInfo(this, bucketInfo);
 
