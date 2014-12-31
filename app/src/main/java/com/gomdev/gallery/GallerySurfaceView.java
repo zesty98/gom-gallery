@@ -28,6 +28,12 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
     private GridInfo mGridInfo = null;
     private int mActionBarHeight = 0;
+    private int mColumnWidth = 0;
+    private int mNumOfColumns = 0;
+    private int mSpacing = 0;
+
+
+    private Object mLockObject;
 
     private ArrayList<GridInfoChangeListener> mListeners = new ArrayList<>();
 
@@ -44,9 +50,11 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     }
 
     private void init(Context context) {
+        mLockObject = new Object();
+
         mListeners.clear();
 
-        mRenderer = new ImageListRenderer(context);
+        mRenderer = new ImageListRenderer(context, mLockObject);
         mRenderer.setSurfaceView(this);
 
         setEGLContextClientVersion(2);
@@ -74,11 +82,12 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
         super.surfaceChanged(holder, format, w, h);
         mGridInfo.setScreenSize(w, h);
+        mGalleryGestureDetector.surfaceChanged(w, h);
 
         int size = mListeners.size();
         if (size > 0) {
             for (int i = 0; i < size; i++) {
-                mListeners.get(i).onSurfaceSizeChanged(w, h);
+                mListeners.get(i).onGridInfoChanged();
             }
         }
     }
@@ -106,11 +115,17 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     }
 
     public void resize(int centerImageIndex) {
-        mGalleryGestureDetector.setCenterImageIndex(centerImageIndex);
-        int size = mListeners.size();
-        if (size > 0) {
-            for (int i = 0; i < size; i++) {
-                mListeners.get(i).onGridInfoChanged();
+        synchronized (mLockObject) {
+            mColumnWidth = mGridInfo.getColumnWidth();
+            mNumOfColumns = mGridInfo.getNumOfColumns();
+            mSpacing = mGridInfo.getSpacing();
+
+            mGalleryGestureDetector.setCenterImageIndex(centerImageIndex);
+            int size = mListeners.size();
+            if (size > 0) {
+                for (int i = 0; i < size; i++) {
+                    mListeners.get(i).onGridInfoChanged();
+                }
             }
         }
     }
@@ -132,7 +147,10 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     public void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
 
+        mColumnWidth = mGridInfo.getColumnWidth();
+        mNumOfColumns = mGridInfo.getNumOfColumns();
         mActionBarHeight = mGridInfo.getActionBarHeight();
+        mSpacing = mGridInfo.getSpacing();
 
         mGalleryGestureDetector.setGridInfo(mGridInfo);
         mGalleryScaleGestureDetector.setGridInfo(mGridInfo);
@@ -141,13 +159,10 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
     public int getImageIndex(float x, float y) {
         float scrollDistance = mGalleryGestureDetector.getScrollDistance();
-        int columnWidth = mGridInfo.getColumnWidth();
-        int spacing = mGridInfo.getSpacing();
-        int row = (int) (((scrollDistance + y) - mActionBarHeight) / (columnWidth + spacing));
-        int column = (int) (x / (columnWidth + spacing));
+        int row = (int) (((scrollDistance + y) - mActionBarHeight) / (mColumnWidth + mSpacing));
+        int column = (int) (x / (mColumnWidth + mSpacing));
 
-        int numOfColumns = mGridInfo.getNumOfColumns();
-        int imageIndex = numOfColumns * row + column;
+        int imageIndex = mNumOfColumns * row + column;
 
         return imageIndex;
     }

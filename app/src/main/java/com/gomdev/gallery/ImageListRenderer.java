@@ -35,6 +35,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
     private final Context mContext;
 
+    private final Object mLockObject;
+
     private GLESRenderer mRenderer;
     private GLESSceneManager mSM;
     private GLESNode mRoot;
@@ -52,8 +54,10 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
     private boolean mIsSurfaceChanged = false;
 
-    public ImageListRenderer(Context context) {
+    public ImageListRenderer(Context context, Object lockObject) {
         mContext = context;
+        mLockObject = lockObject;
+
         GLESContext.getInstance().setContext(context);
 
         mRenderer = GLESRenderer.createRenderer();
@@ -65,7 +69,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     }
 
     @Override
-    public synchronized void onDrawFrame(GL10 gl) {
+    public void onDrawFrame(GL10 gl) {
+
         if (mIsSurfaceChanged == false) {
             Log.d(TAG, "onDrawFrame() frame is skipped");
             return;
@@ -73,17 +78,19 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
-        mImageObjects.update();
+        synchronized (mLockObject) {
+            mImageObjects.update();
 
-        mRenderer.updateScene(mSM);
+            mRenderer.updateScene(mSM);
 
-        float translateY = getTranslateY();
-        mScrollbar.setTranslateY(translateY);
+            float translateY = getTranslateY();
+            mScrollbar.setTranslateY(translateY);
 
-        mImageObjects.updateTexture();
-        mImageObjects.checkVisibility(translateY);
+            mImageObjects.updateTexture();
+            mImageObjects.checkVisibility(translateY);
 
-        mRenderer.drawScene(mSM);
+            mRenderer.drawScene(mSM);
+        }
 
         mScrollbar.hide();
     }
@@ -93,7 +100,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         GLESVector3 translate = transform.getPreTranslate();
         return translate.mY;
     }
-
 
     @Override
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -105,6 +111,9 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         mIsSurfaceChanged = false;
 
         mRenderer.reset();
+
+        mImageObjects.onSurfaceChanged(width, height);
+        mScrollbar.onSurfaceChanged(width, height);
 
         mDummyTexture = createDummyTexture();
         mImageObjects.setDummyTexture(mDummyTexture);

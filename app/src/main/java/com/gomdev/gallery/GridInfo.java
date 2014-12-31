@@ -22,7 +22,6 @@ public class GridInfo {
 
     private int mNumOfColumns;
     private int mNumOfRowsInScreen;
-    private int mNumOfImagesInScreen;
 
     private int mWidth = 0;
     private int mHeight = 0;
@@ -39,31 +38,44 @@ public class GridInfo {
 
         mSpacing = context.getResources().getDimensionPixelSize(R.dimen.gridview_spacing);
 
-        mNumOfRows = (int) Math.ceil((double) mNumOfImages / mNumOfColumns);
-        mScrollableHeight = mActionBarHeight + (mColumnWidth + mSpacing) * mNumOfRows;
+        mNumOfRows = calcNumOfRows();
+        mScrollableHeight = calcScrollableHeight();
     }
 
     public void setScreenSize(int width, int height) {
         mWidth = width;
         mHeight = height;
 
-        mNumOfRowsInScreen = (int) Math.ceil((double) height / (mColumnWidth + mSpacing)) + 1;
-        mNumOfImagesInScreen = mNumOfColumns * mNumOfRowsInScreen;
-
-        if (mNumOfImages < mNumOfImagesInScreen) {
-            mNumOfImagesInScreen = mNumOfImages;
-        }
+        mNumOfRowsInScreen = calcNumOfRowsInScreen();
     }
 
     public void resize(int numOfColumns) {
         mNumOfColumns = numOfColumns;
-        mColumnWidth = (int) ((mWidth - mSpacing * (mNumOfColumns + 1)) / mNumOfColumns);
 
-        mNumOfRows = (int) Math.ceil((double) mNumOfImages / mNumOfColumns);
-        mScrollableHeight = mActionBarHeight + (mColumnWidth + mSpacing) * mNumOfRows;
+        mColumnWidth = calcColumnWidth();
+        mNumOfRows = calcNumOfRows();
+        mScrollableHeight = calcScrollableHeight();
+        mNumOfRowsInScreen = calcNumOfRowsInScreen();
+    }
 
-        mNumOfRowsInScreen = (int) Math.ceil((double) mHeight / (mColumnWidth + mSpacing));
-        mNumOfImagesInScreen = mNumOfColumns * mNumOfRowsInScreen;
+    private int calcColumnWidth() {
+        int columnWidth = (int) ((mWidth - mSpacing * (mNumOfColumns + 1)) / mNumOfColumns);
+        return columnWidth;
+    }
+
+    private int calcNumOfRowsInScreen() {
+        int numOfRowsInScreen = (int) Math.ceil((double) mHeight / (mColumnWidth + mSpacing)) + 2;
+        return numOfRowsInScreen;
+    }
+
+    private int calcScrollableHeight() {
+        int scrollableHeight = mActionBarHeight + (mColumnWidth + mSpacing) * mNumOfRows;
+        return scrollableHeight;
+    }
+
+    private int calcNumOfRows() {
+        int numOfRows = (int) Math.ceil((double) mNumOfImages / mNumOfColumns);
+        return numOfRows;
     }
 
     public BucketInfo getBucketInfo() {

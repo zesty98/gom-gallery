@@ -85,8 +85,7 @@ public class Scrollbar implements GridInfoChangeListener {
         mScrollableDistance = bottom + (mHeight * 0.5f - mSpacing);
     }
 
-    @Override
-    public void onSurfaceSizeChanged(int width, int height) {
+    public void onSurfaceChanged(int width, int height) {
         mWidth = width;
         mHeight = height;
 
@@ -117,6 +116,10 @@ public class Scrollbar implements GridInfoChangeListener {
 
         mColumnWidth = mGridInfo.getColumnWidth();
         mNumOfColumns = mGridInfo.getNumOfColumns();
+
+        if (mScrollbarObject == null) {
+            return;
+        }
 
         mScrollbarRegionLeft = -mWidth * 0.5f + (mSpacing + mColumnWidth) * mNumOfColumns - mScrollbarRegionWidth;
 

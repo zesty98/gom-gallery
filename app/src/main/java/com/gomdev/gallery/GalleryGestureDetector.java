@@ -75,8 +75,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         mMaxDistance = (columnWidth + mGridInfo.getSpacing()) * 10f;
     }
 
-    @Override
-    public void onSurfaceSizeChanged(int width, int height) {
+    public void surfaceChanged(int width, int height) {
         mContentRect.set(0, 0, width, height);
 
         mScrollableHeight = mGridInfo.getScrollableHeight();

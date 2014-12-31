@@ -3,7 +3,6 @@ package com.gomdev.gallery;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.opengl.GLES20;
-import android.util.Log;
 
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
@@ -63,6 +62,7 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
 
     private void init() {
         mImageManager = ImageManager.getInstance();
+
         mImageGLState = new GLESGLState();
         mImageGLState.setCullFaceState(true);
         mImageGLState.setCullFace(GLES20.GL_BACK);
@@ -136,8 +136,6 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
             visibleLastPosition = lastIndex;
         }
 
-        Log.d(TAG, "checkVisibility() y=" + translateY + " first=" + visibleFirstPosition + " last=" + visibleLastPosition);
-
         for (int i = 0; i <= lastIndex; i++) {
             GalleryObject object = mObjects[i];
             if (i >= visibleFirstPosition && i <= visibleLastPosition) {
@@ -162,7 +160,6 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
         }
 
         if ((texture != null && texture.isTextureLoadingNeeded() == true)) {
-            Log.d(TAG, "mapTexture() position=" + position + " >>> loadThumbnail()");
             mImageManager.loadThumbnail(imageInfo, texture);
             textureMappingInfo.set(texture);
             mSurfaceView.requestRender();
@@ -178,6 +175,18 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
         mWaitingTextures.remove(texture);
 
         textureMappingInfo.set(null);
+    }
+
+    public void onSurfaceChanged(int width, int height) {
+        mWidth = width;
+        mHeight = height;
+
+        cancelLoading();
+
+        mWaitingTextures.clear();
+        mTextureMappingInfos.clear();
+
+        mNumOfImages = mGridInfo.getNumOfImages();
     }
 
     public void createObjects(GLESCamera camera, GLESNode parentNode) {
@@ -226,24 +235,6 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
         return true;
     }
 
-    @Override
-    public void onSurfaceSizeChanged(int width, int height) {
-        Log.d(TAG, "onSurfaceSizeChanged()");
-
-        mWidth = width;
-        mHeight = height;
-
-        cancelLoading();
-
-        mWaitingTextures.clear();
-        mTextureMappingInfos.clear();
-
-        mNumOfRowsInScreen = mGridInfo.getNumOfRowsInScreen();
-        mNumOfImages = mGridInfo.getNumOfImages();
-
-        Log.d(TAG, "onSurfaceSizeChanged() mNumOfRowsInScreen=" + mNumOfRowsInScreen);
-    }
-
     private void cancelLoading() {
         int size = mTextureMappingInfos.size();
 
@@ -287,8 +278,6 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
 
     @Override
     public void onImageLoaded(int position, GalleryTexture texture) {
-        Log.d(TAG, "onImageLoaded() position=" + position);
-
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
         final GalleryObject object = textureMappingInfo.getObject();
         final ImageInfo imageInfo = textureMappingInfo.getImageInfo();

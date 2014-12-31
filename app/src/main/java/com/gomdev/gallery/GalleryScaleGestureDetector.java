@@ -77,8 +77,8 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
                 numOfColumns = Math.min(numOfColumns, mMaxNumOfColumns);
 
                 if (numOfColumns != mNumOfColumns) {
-                    int imageIndex = mSurfaceView.getImageIndex(focusX, focusY);
                     mGridInfo.resize(numOfColumns);
+                    int imageIndex = mSurfaceView.getImageIndex(focusX, focusY);
                     mSurfaceView.resize(imageIndex);
                 }
             }
@@ -92,12 +92,7 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
     };
 
     @Override
-    public void onSurfaceSizeChanged(int width, int height) {
-
-    }
-
-    @Override
     public void onGridInfoChanged() {
-        mNumOfColumns = GalleryContext.getInstance().getNumOfColumns();
+        mNumOfColumns = mGridInfo.getNumOfColumns();
     }
 }
