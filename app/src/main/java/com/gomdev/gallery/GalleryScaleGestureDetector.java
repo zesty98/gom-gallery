@@ -92,7 +92,7 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
     };
 
     @Override
-    public void onSurfaceChanged(int width, int height) {
+    public void onSurfaceSizeChanged(int width, int height) {
 
     }
 

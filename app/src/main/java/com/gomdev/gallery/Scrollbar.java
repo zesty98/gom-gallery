@@ -27,7 +27,6 @@ public class Scrollbar implements GridInfoChangeListener {
     private final Context mContext;
 
     private GLESObject mScrollbarObject;
-    private GLESNode mScrollNode;
     private GLESShader mColorShader;
     private GLESGLState mGLState;
 
@@ -55,6 +54,8 @@ public class Scrollbar implements GridInfoChangeListener {
 
     private boolean mIsVisible = true;
 
+    private float mTranslateY = 0f;
+
     public Scrollbar(Context context) {
         mContext = context;
 
@@ -70,8 +71,22 @@ public class Scrollbar implements GridInfoChangeListener {
         mGLState.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
+    private void calcScrollbarHeight() {
+        int scrollableHeight = mGridInfo.getScrollableHeight();
+        if (scrollableHeight > mHeight) {
+            mScrollbarHeight = (int) (((float) mScrollbarRegionHeight / scrollableHeight) * mScrollbarRegionHeight);
+        } else {
+            mScrollbarHeight = mScrollbarRegionHeight;
+        }
+    }
+
+    private void calcScrollableDistance() {
+        float bottom = mScrollbarRegionTop - mScrollbarHeight;
+        mScrollableDistance = bottom + (mHeight * 0.5f - mSpacing);
+    }
+
     @Override
-    public void onSurfaceChanged(int width, int height) {
+    public void onSurfaceSizeChanged(int width, int height) {
         mWidth = width;
         mHeight = height;
 
@@ -89,20 +104,6 @@ public class Scrollbar implements GridInfoChangeListener {
 
         calcScrollbarHeight();
         calcScrollableDistance();
-    }
-
-    private void calcScrollbarHeight() {
-        int scrollableHeight = mGridInfo.getScrollableHeight();
-        if (scrollableHeight > mHeight) {
-            mScrollbarHeight = (int) (((float) mScrollbarRegionHeight / scrollableHeight) * mScrollbarRegionHeight);
-        } else {
-            mScrollbarHeight = mScrollbarRegionHeight;
-        }
-    }
-
-    private void calcScrollableDistance() {
-        float bottom = mScrollbarRegionTop - mScrollbarHeight;
-        mScrollableDistance = bottom + (mHeight * 0.5f - mSpacing);
     }
 
     @Override
@@ -163,8 +164,9 @@ public class Scrollbar implements GridInfoChangeListener {
         mActionBarHeight = gridInfo.getActionBarHeight();
     }
 
-    public GLESObject createObject(GLESCamera camera) {
+    public GLESObject createObject(GLESCamera camera, GLESNode parent) {
         mScrollbarObject = new GLESObject("scrollbar");
+        parent.addChild(mScrollbarObject);
 
         mScrollbarObject.setListener(mScrollbarListener);
         mScrollbarObject.setGLState(mGLState);
@@ -205,10 +207,6 @@ public class Scrollbar implements GridInfoChangeListener {
         return true;
     }
 
-    public void setScrollNode(GLESNode node) {
-        mScrollNode = node;
-    }
-
     public void show() {
         if (mScrollbarObject != null && mIsVisible == true) {
             mScrollbarObject.show();
@@ -236,11 +234,7 @@ public class Scrollbar implements GridInfoChangeListener {
             int scrollableHeight = mGridInfo.getScrollableHeight();
 
             if (scrollableHeight > mHeight) {
-
-                float[] matrix = mScrollNode.getWorldTransform().getMatrix();
-                float imageScrollDistance = matrix[13];
-
-                float scrollDistance = (imageScrollDistance / (scrollableHeight - mHeight)) * mScrollableDistance;
+                float scrollDistance = (mTranslateY / (scrollableHeight - mHeight)) * mScrollableDistance;
                 transform.setTranslate(0f, -scrollDistance, 0f);
             }
         }
@@ -250,4 +244,8 @@ public class Scrollbar implements GridInfoChangeListener {
 
         }
     };
+
+    public void setTranslateY(float translateY) {
+        mTranslateY = translateY;
+    }
 }

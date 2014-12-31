@@ -78,15 +78,9 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         int size = mListeners.size();
         if (size > 0) {
             for (int i = 0; i < size; i++) {
-                mListeners.get(i).onSurfaceChanged(w, h);
+                mListeners.get(i).onSurfaceSizeChanged(w, h);
             }
         }
-    }
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        mRenderer.onSurfaceDestroyed();
-        super.surfaceDestroyed(holder);
     }
 
     @Override

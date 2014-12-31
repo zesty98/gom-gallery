@@ -76,7 +76,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     }
 
     @Override
-    public void onSurfaceChanged(int width, int height) {
+    public void onSurfaceSizeChanged(int width, int height) {
         mContentRect.set(0, 0, width, height);
 
         mScrollableHeight = mGridInfo.getScrollableHeight();
