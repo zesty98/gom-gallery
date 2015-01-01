@@ -129,8 +129,9 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
     private GLESTexture createDummyTexture() {
         Bitmap bitmap = GLESUtils.makeBitmap(512, 512, Bitmap.Config.ARGB_8888, Color.LTGRAY);
-        GLESTexture dummyTexture = new GLESTexture2D(512, 512, bitmap);
-        dummyTexture.load();
+
+        GLESTexture dummyTexture = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, 512, 512)
+                .load(bitmap);
 
         return dummyTexture;
     }

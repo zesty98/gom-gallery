@@ -2,17 +2,20 @@ package com.gomdev.gallery;
 
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.opengl.GLES20;
 
-import com.gomdev.gles.GLESTexture2D;
+import com.gomdev.gles.GLESTexture;
 
 /**
  * Created by gomdev on 14. 12. 17..
  */
-public class GalleryTexture extends GLESTexture2D implements CacheContainer {
+public class GalleryTexture implements CacheContainer {
     public static final String CLASS = "GalleryTexture";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
+    private GLESTexture mTexture = null;
+    private GLESTexture.Builder mBuilder = null;
     private BitmapDrawable mDrawable = null;
 
     private ImageLoadingListener mImageLoadingListener;
@@ -22,7 +25,11 @@ public class GalleryTexture extends GLESTexture2D implements CacheContainer {
     private int mPosition = 0;
 
     public GalleryTexture(int width, int height) {
-        super(width, height);
+        mBuilder = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, width, height);
+    }
+
+    public GLESTexture getTexture() {
+        return mTexture;
     }
 
     @Override
@@ -49,13 +56,8 @@ public class GalleryTexture extends GLESTexture2D implements CacheContainer {
         return mDrawable;
     }
 
-    @Override
     public void load(Bitmap bitmap) {
-        super.load(bitmap);
-
-        if (mDrawable instanceof RecyclingBitmapDrawable) {
-            ((RecyclingBitmapDrawable) mDrawable).setIsDisplayed(false);
-        }
+        mTexture = mBuilder.load(bitmap);
     }
 
     public void setPosition(int position) {
@@ -73,5 +75,6 @@ public class GalleryTexture extends GLESTexture2D implements CacheContainer {
     public boolean isTextureLoadingNeeded() {
         return (mIsTextureLoadingFinished == false) && (mIsTextureLoadingStarted == false);
     }
+
 
 }

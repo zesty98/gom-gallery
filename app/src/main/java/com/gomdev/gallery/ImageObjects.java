@@ -109,7 +109,7 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
 
             final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
             texture.load(bitmap);
-            object.setTexture(texture);
+            object.setTexture(texture.getTexture());
         }
 
         if (mWaitingTextures.size() > 0) {

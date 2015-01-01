@@ -26,16 +26,11 @@ public class GalleryObject extends GLESObject {
     private void init() {
     }
 
-    @Override
-    public void setTexture(GLESTexture texture) {
+    public void setTexture(GalleryTexture texture) {
         GLESTexture prevTexture = getTexture();
+        prevTexture.destroy();
 
-        if (prevTexture instanceof GalleryTexture) {
-            prevTexture.destroy();
-            prevTexture = null;
-        }
-
-        super.setTexture(texture);
+        this.setTexture(texture.getTexture());
     }
 
     public void setPosition(int position) {
