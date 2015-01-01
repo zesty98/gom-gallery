@@ -51,6 +51,8 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
     private int mWidth;
     private int mHeight;
 
+    private boolean mIsObjectCreated = false;
+
     private ArrayList<TextureMappingInfo> mTextureMappingInfos = new ArrayList<>();
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
 
@@ -209,6 +211,8 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
             TextureMappingInfo textureMappingInfo = new TextureMappingInfo(mObjects[i], imageInfo);
             mTextureMappingInfos.add(textureMappingInfo);
         }
+
+        mIsObjectCreated = true;
     }
 
     public void setDummyTexture(GLESTexture dummyTexture) {
@@ -252,6 +256,10 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
         mNumOfColumns = mGridInfo.getNumOfColumns();
         mNumOfRows = mGridInfo.getNumOfRows();
         mNumOfRowsInScreen = mGridInfo.getNumOfRowsInScreen();
+
+        if (mIsObjectCreated == false) {
+            return;
+        }
 
         float halfScaledWidth = mColumnWidth * 0.5f;
         for (int i = 0; i < mNumOfImages; i++) {
