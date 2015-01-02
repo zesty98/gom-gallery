@@ -75,6 +75,4 @@ public class GalleryTexture implements CacheContainer {
     public boolean isTextureLoadingNeeded() {
         return (mIsTextureLoadingFinished == false) && (mIsTextureLoadingStarted == false);
     }
-
-
 }

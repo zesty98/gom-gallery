@@ -108,7 +108,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         mSurfaceBufferBottom = -mSurfaceBufferTop;
 
         int row = (int) (mCenterImageIndex / mGridInfo.getNumOfColumns());
-        float y = row * (mGridInfo.getColumnWidth() + mGridInfo.getSpacing()) + mActionBarHeight;
+        float y = row * (mGridInfo.getColumnWidth() + mGridInfo.getSpacing());
         float left = mSurfaceBufferLeft;
         float top = mSurfaceBufferTop - y;
 

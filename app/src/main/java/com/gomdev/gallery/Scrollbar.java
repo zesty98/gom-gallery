@@ -167,7 +167,7 @@ public class Scrollbar implements GridInfoChangeListener {
         mActionBarHeight = gridInfo.getActionBarHeight();
     }
 
-    public GLESObject createObject(GLESCamera camera, GLESNode parent) {
+    public GLESObject createObject(GLESNode parent) {
         mScrollbarObject = new GLESObject("scrollbar");
         parent.addChild(mScrollbarObject);
 
@@ -175,9 +175,11 @@ public class Scrollbar implements GridInfoChangeListener {
         mScrollbarObject.setGLState(mGLState);
         mScrollbarObject.setShader(mColorShader);
 
-        if (camera != null) {
-            mScrollbarObject.setCamera(camera);
-        }
+        return mScrollbarObject;
+    }
+
+    public void setupObject(GLESCamera camera) {
+        mScrollbarObject.setCamera(camera);
 
         GLESVertexInfo vertexInfo = GalleryUtils.createColorVertexInfo(mColorShader,
                 mScrollbarRegionLeft, mScrollbarRegionTop,
@@ -186,8 +188,6 @@ public class Scrollbar implements GridInfoChangeListener {
         mScrollbarObject.setVertexInfo(vertexInfo, false, false);
 
         mScrollbarObject.hide();
-
-        return mScrollbarObject;
     }
 
     public boolean createShader(int vsResID, int fsResID) {

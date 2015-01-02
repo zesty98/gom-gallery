@@ -17,7 +17,6 @@ import com.gomdev.gles.GLESRect;
 import com.gomdev.gles.GLESRenderer;
 import com.gomdev.gles.GLESSceneManager;
 import com.gomdev.gles.GLESTexture;
-import com.gomdev.gles.GLESTexture2D;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVector3;
@@ -50,8 +49,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
     private RendererListener mListener = null;
 
-    private float mScreenRatio = 1f;
-
     private boolean mIsSurfaceChanged = false;
 
     public ImageListRenderer(Context context, Object lockObject) {
@@ -70,7 +67,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 gl) {
-
         if (mIsSurfaceChanged == false) {
             Log.d(TAG, "onDrawFrame() frame is skipped");
             return;
@@ -115,14 +111,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         mImageObjects.onSurfaceChanged(width, height);
         mScrollbar.onSurfaceChanged(width, height);
 
-        mDummyTexture = createDummyTexture();
-        mImageObjects.setDummyTexture(mDummyTexture);
-
-        mScreenRatio = (float) width / height;
-
         GLESCamera camera = setupCamera(width, height);
-
-        createScene(camera);
+        setupScene(camera);
 
         mIsSurfaceChanged = true;
     }
@@ -140,12 +130,14 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     private GLESCamera setupCamera(int width, int height) {
         GLESCamera camera = new GLESCamera();
 
+        float screenRatio = (float) width / height;
+
         float fovy = 30f;
         float eyeZ = (height / 2f) / (float) Math.tan(Math.toRadians(fovy * 0.5));
 
         camera.setLookAt(0f, 0f, eyeZ, 0f, 0f, 0f, 0f, 1f, 0f);
 
-        camera.setFrustum(fovy, mScreenRatio, eyeZ * 0.01f, eyeZ * 10f);
+        camera.setFrustum(fovy, screenRatio, eyeZ * 0.01f, eyeZ * 10f);
 
         camera.setViewport(new GLESRect(0, 0, width, height));
 
@@ -161,6 +153,13 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         GLES20.glClearColor(1f, 1f, 1f, 1f);
 
         createShader();
+
+        mImageObjects.onSurfaceCreated();
+
+        mDummyTexture = createDummyTexture();
+        mImageObjects.setDummyTexture(mDummyTexture);
+
+        createScene();
     }
 
     private boolean createShader() {
@@ -181,7 +180,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         return true;
     }
 
-    private void createScene(GLESCamera camera) {
+    private void createScene() {
         mSM = GLESSceneManager.createSceneManager();
         mRoot = mSM.createRootNode("root");
 
@@ -189,8 +188,13 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         mImageNode.setListener(mImageNodeListener);
         mRoot.addChild(mImageNode);
 
-        mImageObjects.createObjects(camera, mImageNode);
-        mScrollbar.createObject(camera, mRoot);
+        mImageObjects.createObjects(mImageNode);
+        mScrollbar.createObject(mRoot);
+    }
+
+    private void setupScene(GLESCamera camera) {
+        mImageObjects.setupObjects(camera);
+        mScrollbar.setupObject(camera);
     }
 
     public void setSurfaceView(GallerySurfaceView surfaceView) {

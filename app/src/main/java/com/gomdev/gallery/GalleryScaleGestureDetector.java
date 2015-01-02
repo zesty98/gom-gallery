@@ -42,6 +42,11 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
         return mScaleGestureDetector.onTouchEvent(event);
     }
 
+    @Override
+    public void onGridInfoChanged() {
+        mNumOfColumns = mGridInfo.getNumOfColumns();
+    }
+
     private final ScaleGestureDetector.OnScaleGestureListener mScaleGestureListener
             = new ScaleGestureDetector.SimpleOnScaleGestureListener() {
         private float mLastSpan;
@@ -90,9 +95,4 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
         public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
         }
     };
-
-    @Override
-    public void onGridInfoChanged() {
-        mNumOfColumns = mGridInfo.getNumOfColumns();
-    }
 }

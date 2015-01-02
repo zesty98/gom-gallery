@@ -51,7 +51,7 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
     private int mWidth;
     private int mHeight;
 
-    private boolean mIsObjectCreated = false;
+    private boolean mIsSurfaceChanged = false;
 
     private ArrayList<TextureMappingInfo> mTextureMappingInfos = new ArrayList<>();
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
@@ -69,6 +69,8 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
         mImageGLState.setCullFaceState(true);
         mImageGLState.setCullFace(GLES20.GL_BACK);
         mImageGLState.setDepthState(false);
+
+        mIsSurfaceChanged = false;
     }
 
     public void setSurfaceView(GallerySurfaceView surfaceView) {
@@ -84,6 +86,7 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
         mColumnWidth = gridInfo.getColumnWidth();
         mActionBarHeight = gridInfo.getActionBarHeight();
         mBucketInfo = gridInfo.getBucketInfo();
+        mNumOfImages = mGridInfo.getNumOfImages();
     }
 
     public void update() {
@@ -111,6 +114,10 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
 
             final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
             texture.load(bitmap);
+
+            GLESVertexInfo vertexInfo = object.getVertexInfo();
+            FloatBuffer floatBuffer = (FloatBuffer) vertexInfo.getBuffer(object.getShader().getTexCoordAttribIndex());
+
             object.setTexture(texture.getTexture());
         }
 
@@ -179,19 +186,23 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
         textureMappingInfo.set(null);
     }
 
+    public void onSurfaceCreated() {
+        mIsSurfaceChanged = false;
+    }
+
     public void onSurfaceChanged(int width, int height) {
         mWidth = width;
         mHeight = height;
 
+        mIsSurfaceChanged = true;
+    }
+
+    public void createObjects(GLESNode parentNode) {
         cancelLoading();
 
         mWaitingTextures.clear();
         mTextureMappingInfos.clear();
 
-        mNumOfImages = mGridInfo.getNumOfImages();
-    }
-
-    public void createObjects(GLESCamera camera, GLESNode parentNode) {
         mObjects = new GalleryObject[mNumOfImages];
 
         for (int i = 0; i < mNumOfImages; i++) {
@@ -200,19 +211,21 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
             mObjects[i].setGLState(mImageGLState);
             mObjects[i].setShader(mTextureShader);
 
-            mObjects[i].setCamera(camera);
+            mObjects[i].setTexture(mDummyTexture);
 
             GLESVertexInfo vertexInfo = GalleryUtils.createImageVertexInfo(mTextureShader, mColumnWidth, mColumnWidth);
             mObjects[i].setVertexInfo(vertexInfo, false, false);
-
-            mObjects[i].setTexture(mDummyTexture);
 
             ImageInfo imageInfo = mBucketInfo.get(i);
             TextureMappingInfo textureMappingInfo = new TextureMappingInfo(mObjects[i], imageInfo);
             mTextureMappingInfos.add(textureMappingInfo);
         }
+    }
 
-        mIsObjectCreated = true;
+    public void setupObjects(GLESCamera camera) {
+        for (int i = 0; i < mNumOfImages; i++) {
+            mObjects[i].setCamera(camera);
+        }
     }
 
     public void setDummyTexture(GLESTexture dummyTexture) {
@@ -257,7 +270,7 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
         mNumOfRows = mGridInfo.getNumOfRows();
         mNumOfRowsInScreen = mGridInfo.getNumOfRowsInScreen();
 
-        if (mIsObjectCreated == false) {
+        if (mIsSurfaceChanged == false) {
             return;
         }
 
