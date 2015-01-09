@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Paint;
 import android.opengl.GLES20;
 
 import com.gomdev.gles.GLESCamera;
@@ -90,19 +91,6 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
     }
 
     public void update() {
-        float xOffset = -(mWidth * 0.5f) + mColumnWidth * 0.5f + mSpacing;
-        float yOffset = (mHeight * 0.5f) - mColumnWidth * 0.5f - mSpacing - mActionBarHeight;
-        for (int i = 0; i < mNumOfImages; i++) {
-            GLESTransform transform = mObjects[i].getTransform();
-            transform.setIdentity();
-
-            int rowIndex = i / mNumOfColumns;
-            int columnIndex = i % mNumOfColumns;
-            float x = xOffset + (mColumnWidth + mSpacing) * columnIndex;
-            float y = yOffset - (mColumnWidth + mSpacing) * rowIndex;
-
-            transform.translate(x, y, 0f);
-        }
     }
 
     public void updateTexture() {
@@ -114,9 +102,6 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
 
             final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
             texture.load(bitmap);
-
-            GLESVertexInfo vertexInfo = object.getVertexInfo();
-            FloatBuffer floatBuffer = (FloatBuffer) vertexInfo.getBuffer(object.getShader().getTexCoordAttribIndex());
 
             object.setTexture(texture.getTexture());
         }
@@ -213,7 +198,12 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
 
             mObjects[i].setTexture(mDummyTexture);
 
-            GLESVertexInfo vertexInfo = GalleryUtils.createImageVertexInfo(mTextureShader, mColumnWidth, mColumnWidth);
+            float x = (i % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
+            float y = mHeight * 0.5f - (mActionBarHeight + (i / mNumOfColumns) * (mColumnWidth + mSpacing));
+
+            GLESVertexInfo vertexInfo = new GLESVertexInfo();
+            vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
+            vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
             mObjects[i].setVertexInfo(vertexInfo, false, false);
 
             ImageInfo imageInfo = mBucketInfo.get(i);
@@ -225,6 +215,26 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
     public void setupObjects(GLESCamera camera) {
         for (int i = 0; i < mNumOfImages; i++) {
             mObjects[i].setCamera(camera);
+
+            float x = (i % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
+            float y = mHeight * 0.5f - (mActionBarHeight + (i / mNumOfColumns) * (mColumnWidth + mSpacing));
+
+            float left = x;
+            float right = x + mColumnWidth;
+            float top = y;
+            float bottom = y - mColumnWidth;
+            float z = 0.0f;
+
+            float[] vertex = {
+                    left, bottom, z,
+                    right, bottom, z,
+                    left, top, z,
+                    right, top, z
+            };
+
+            GLESVertexInfo vertexInfo = mObjects[i].getVertexInfo();
+
+            vertexInfo.setBuffer(mTextureShader.getPositionAttribIndex(), vertex, 3);
         }
     }
 
@@ -279,20 +289,29 @@ public class ImageObjects implements GridInfoChangeListener, ImageLoadingListene
             GLESVertexInfo vertexInfo = mObjects[i].getVertexInfo();
             FloatBuffer buffer = (FloatBuffer) vertexInfo.getBuffer(mTextureShader.getPositionAttribIndex());
 
-            buffer.put(0, -halfScaledWidth);
-            buffer.put(1, -halfScaledWidth);
+            float x = (i % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
+            float y = mHeight * 0.5f - (mActionBarHeight + (i / mNumOfColumns) * (mColumnWidth + mSpacing));
+
+            float left = x;
+            float right = x + mColumnWidth;
+            float top = y;
+            float bottom = y - mColumnWidth;
+            float z = 0.0f;
+
+            buffer.put(0, left);
+            buffer.put(1, bottom);
             buffer.put(2, 0f);
 
-            buffer.put(3, halfScaledWidth);
-            buffer.put(4, -halfScaledWidth);
+            buffer.put(3, right);
+            buffer.put(4, bottom);
             buffer.put(5, 0f);
 
-            buffer.put(6, -halfScaledWidth);
-            buffer.put(7, halfScaledWidth);
+            buffer.put(6, left);
+            buffer.put(7, top);
             buffer.put(8, 0f);
 
-            buffer.put(9, halfScaledWidth);
-            buffer.put(10, halfScaledWidth);
+            buffer.put(9, right);
+            buffer.put(10, top);
             buffer.put(11, 0f);
         }
     }

@@ -57,6 +57,39 @@ public class GalleryUtils {
         return vertexInfo;
     }
 
+    static GLESVertexInfo createImageVertexInfo(GLESShader shader, float x, float y, float width, float height) {
+        float left = x;
+        float right = x + width;
+        float top = y;
+        float bottom = y - height;
+        float z = 0.0f;
+
+        float[] vertex = {
+                left, bottom, z,
+                right, bottom, z,
+                left, top, z,
+                right, top, z
+        };
+
+        GLESVertexInfo vertexInfo = new GLESVertexInfo();
+
+        vertexInfo.setBuffer(shader.getPositionAttribIndex(), vertex, 3);
+
+        float[] texCoord = {
+                0f, 1f,
+                1f, 1f,
+                0f, 0f,
+                1f, 0f
+        };
+
+        vertexInfo.setBuffer(shader.getTexCoordAttribIndex(), texCoord, 2);
+
+        vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
+        vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
+
+        return vertexInfo;
+    }
+
     static GLESVertexInfo createColorVertexInfo(GLESShader shader,
                                                 float x, float y,
                                                 float width, float height,
