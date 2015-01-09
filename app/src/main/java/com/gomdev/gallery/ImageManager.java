@@ -60,7 +60,7 @@ public class ImageManager {
             for (BucketInfo bucketInfo : mBuckets) {
                 Log.d(TAG,
                         "\t name=" + bucketInfo.getName() + " num="
-                                + bucketInfo.getNumOfImageInfos());
+                                + bucketInfo.getNumOfImages());
             }
         }
     }

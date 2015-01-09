@@ -2,7 +2,6 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Paint;
 import android.opengl.GLES20;
 
 import com.gomdev.gles.GLESCamera;
@@ -11,7 +10,6 @@ import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESShaderConstant;
 import com.gomdev.gles.GLESTexture;
-import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 

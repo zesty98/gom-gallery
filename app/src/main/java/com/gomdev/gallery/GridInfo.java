@@ -29,7 +29,7 @@ public class GridInfo {
 
     public GridInfo(Context context, BucketInfo bucketInfo) {
         mBucketInfo = bucketInfo;
-        mNumOfImages = bucketInfo.getNumOfImageInfos();
+        mNumOfImages = bucketInfo.getNumOfImages();
 
         GalleryContext galleryContext = GalleryContext.getInstance();
         mColumnWidth = galleryContext.getColumnWidth();

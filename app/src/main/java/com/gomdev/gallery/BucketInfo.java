@@ -42,7 +42,7 @@ public class BucketInfo {
         return mImageInfos.get(position);
     }
 
-    public int getNumOfImageInfos() {
+    public int getNumOfImages() {
         return mImageInfos.size();
     }
 }

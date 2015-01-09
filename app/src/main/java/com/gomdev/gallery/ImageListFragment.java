@@ -127,7 +127,7 @@ public class ImageListFragment extends Fragment {
         public ImageGridAdapter(Context context) {
             mInflater = LayoutInflater.from(context);
 
-            mNumOfImages = mBucketInfo.getNumOfImageInfos();
+            mNumOfImages = mBucketInfo.getNumOfImages();
 
             mImageViewLayoutParams = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);

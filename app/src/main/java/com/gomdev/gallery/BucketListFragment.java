@@ -175,7 +175,7 @@ public class BucketListFragment extends Fragment {
                     .findViewById(R.id.bucket_info);
             if (textView != null) {
                 textView.setText(bucketInfo.getName() + "\n"
-                        + bucketInfo.getNumOfImageInfos());
+                        + bucketInfo.getNumOfImages());
             }
 
             return layout;
