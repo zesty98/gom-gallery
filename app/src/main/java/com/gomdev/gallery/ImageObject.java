@@ -6,19 +6,21 @@ import com.gomdev.gles.GLESTexture;
 /**
  * Created by gomdev on 14. 12. 18..
  */
-public class GalleryObject extends GLESObject {
+public class ImageObject extends GLESObject {
     static final String CLASS = "GalleryObject";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private int mPosition = -1;
+    private float mLeft = 0;
+    private float mTop = 0;
 
-    public GalleryObject() {
+    public ImageObject() {
         super();
         init();
     }
 
-    public GalleryObject(String name) {
+    public ImageObject(String name) {
         super(name);
         init();
     }
@@ -39,5 +41,18 @@ public class GalleryObject extends GLESObject {
 
     public int getPosition() {
         return mPosition;
+    }
+
+    public void setLeftTop(float x, float y) {
+        mLeft = x;
+        mTop = y;
+    }
+
+    public float getLeft() {
+        return mLeft;
+    }
+
+    public float getTop() {
+        return mTop;
     }
 }

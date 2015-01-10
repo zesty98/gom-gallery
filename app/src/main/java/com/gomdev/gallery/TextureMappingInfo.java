@@ -8,17 +8,17 @@ public class TextureMappingInfo {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private GalleryObject mObject;
+    private ImageObject mObject;
     private GalleryTexture mTexture;
     private ImageInfo mImageInfo;
 
 
-    public TextureMappingInfo(GalleryObject object, ImageInfo imageInfo) {
+    public TextureMappingInfo(ImageObject object, ImageInfo imageInfo) {
         mObject = object;
         mImageInfo = imageInfo;
     }
 
-    public GalleryObject getObject() {
+    public ImageObject getObject() {
         return mObject;
     }
 

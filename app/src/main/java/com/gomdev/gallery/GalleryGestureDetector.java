@@ -7,6 +7,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.widget.EdgeEffectCompat;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.OverScroller;
@@ -37,6 +38,10 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
     private int mScrollableHeight = 0;
     private int mActionBarHeight = 0;
+    private int mDateLabelHeight = 0;
+    private int mColumnWidth = 0;
+    private int mNumOfColumns = 0;
+    private int mSpacing = 0;
 
     private float mSurfaceBufferTop = 0f;
     private float mSurfaceBufferBottom = 0f;
@@ -54,6 +59,9 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     private float mMaxDistance = 0f;
     private float mRotationAngle = 0f;
 
+    private int mWidth = 0;
+    private int mHeight = 0;
+
     public GalleryGestureDetector(Context context, GallerySurfaceView surfaceView) {
         mContext = context;
         mSurfaceView = surfaceView;
@@ -70,12 +78,20 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     public void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
 
+        mColumnWidth = mGridInfo.getColumnWidth();
+        mNumOfColumns = mGridInfo.getNumOfColumns();
+        mSpacing = mGridInfo.getSpacing();
+
         mActionBarHeight = gridInfo.getActionBarHeight();
+        mDateLabelHeight = gridInfo.getDateLabelHeight();
         int columnWidth = GalleryContext.getInstance().getColumnWidth();
         mMaxDistance = (columnWidth + mGridInfo.getSpacing()) * 10f;
     }
 
     public void surfaceChanged(int width, int height) {
+        mWidth = width;
+        mHeight = height;
+
         mContentRect.set(0, 0, width, height);
 
         mScrollableHeight = mGridInfo.getScrollableHeight();
@@ -102,20 +118,48 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     @Override
     public void onGridInfoChanged() {
         mScrollableHeight = mGridInfo.getScrollableHeight();
+        mColumnWidth = mGridInfo.getColumnWidth();
+        mNumOfColumns = mGridInfo.getNumOfColumns();
 
         mSurfaceSizeBuffer.y = mScrollableHeight;
         mSurfaceBufferTop = mScrollableHeight * 0.5f;
         mSurfaceBufferBottom = -mSurfaceBufferTop;
 
-        int row = (int) (mCenterImageIndex / mGridInfo.getNumOfColumns());
-        float y = row * (mGridInfo.getColumnWidth() + mGridInfo.getSpacing());
+        float distFromTop = getDistanceOfSelectedImage(mCenterImageIndex) - mHeight * 0.5f;
+
         float left = mSurfaceBufferLeft;
-        float top = mSurfaceBufferTop - y;
+        float top = mSurfaceBufferTop - distFromTop;
 
         top = Math.min(top, mSurfaceBufferTop);
         top = Math.max(top, mSurfaceBufferBottom + mCurrentViewport.height());
 
         setViewportBottomLeft(left, top);
+    }
+
+    private float getDistanceOfSelectedImage(int index) {
+        float dist = mActionBarHeight;
+        BucketInfo bucketInfo = mGridInfo.getBucketInfo();
+        int numOfDateLabels = mGridInfo.getNumOfDateInfos();
+        for (int i = 0; i < numOfDateLabels; i++) {
+            DateLabelInfo dateLabelInfo = bucketInfo.getDateInfo(i);
+            int firstImagePosition = dateLabelInfo.getFirstImagePosition();
+            int lastImagePosition = dateLabelInfo.getLastImagePosition();
+            if (firstImagePosition <= index && index <= lastImagePosition) {
+                dist += mDateLabelHeight;
+
+                int row = (index - firstImagePosition) / mNumOfColumns;
+                dist += ((mColumnWidth + mSpacing) * row);
+
+                return dist;
+            } else {
+                dist += mDateLabelHeight;
+
+                int numOfRowsInDateLabel = dateLabelInfo.getNumOfRows();
+                dist += ((mColumnWidth + mSpacing) * numOfRowsInDateLabel);
+            }
+        }
+
+        return 0;
     }
 
     public boolean onTouchEvent(MotionEvent event) {
@@ -196,7 +240,10 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             float x = e.getX();
             float y = e.getY();
 
-            int imageIndex = mSurfaceView.getImageIndex(x, y);
+            int imageIndex = mSurfaceView.getSelectedIndex(x, y);
+            if (imageIndex == -1) {
+                return false;
+            }
 
             Intent intent = new Intent(mContext, com.gomdev.gallery.ImageViewActivity.class);
 

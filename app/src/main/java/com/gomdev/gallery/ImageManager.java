@@ -25,6 +25,7 @@ public class ImageManager {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private static final String DISK_CACHE_SUBDIR = "thumbnails";
+    private static final long MS_TO_DAY_CONVERT_UNIt = 86400000l; // 24 * 60 * 60 * 1000;
 
     private static ImageManager sImageManager = null;
     private final Context mContext;
@@ -144,7 +145,10 @@ public class ImageManager {
                 },
                 mOrderClause);
 
+        long prevDateTaken = 0l;
+        DateLabelInfo dateLabelInfo = null;
         int index = 0;
+        int dateIndex = 0;
         if (cursor.moveToFirst() == true) {
             do {
                 int columnIndex = cursor
@@ -169,9 +173,6 @@ public class ImageManager {
 
                 columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
                 long dateTakenInMs = cursor.getLong(columnIndex);
-                int flags = DateUtils.FORMAT_SHOW_YEAR;
-                String date = DateUtils.formatDateTime(mContext, dateTakenInMs, flags);
-                Log.d(TAG, "date=" + date);
 
                 ImageInfo imageInfo = new ImageInfo(index, imageID, orientation);
                 imageInfo.setImagePath(imagePath);
@@ -184,6 +185,25 @@ public class ImageManager {
                     Log.d(TAG, index + " : imageID=" + imageID + " imagePath="
                             + imagePath + " orientation=" + orientation);
                 }
+
+                int flags = DateUtils.FORMAT_SHOW_YEAR;
+                String date = DateUtils.formatDateTime(mContext, dateTakenInMs, flags);
+
+                dateTakenInMs /= MS_TO_DAY_CONVERT_UNIt;
+
+                if (prevDateTaken != dateTakenInMs) {
+                    dateLabelInfo = new DateLabelInfo(dateIndex, date);
+                    dateLabelInfo.add(imageInfo);
+                    dateLabelInfo.setFirstImagePosition(imageInfo.getPosition());
+                    bucketInfo.add(dateLabelInfo);
+
+                    dateIndex++;
+                } else {
+                    dateLabelInfo.add(imageInfo);
+                    dateLabelInfo.setLastImagePosition(imageInfo.getPosition());
+                }
+
+                prevDateTaken = dateTakenInMs;
 
                 index++;
             } while (cursor.moveToNext());

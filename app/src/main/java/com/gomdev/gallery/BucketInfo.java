@@ -1,6 +1,7 @@
 package com.gomdev.gallery;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class BucketInfo {
     static final String CLASS = "BucketInfo";
@@ -10,12 +11,14 @@ public class BucketInfo {
     private final int mPosition;
     private final int mID;
     private String mName;
-    private ArrayList<ImageInfo> mImageInfos = new ArrayList<>();
+    private List<ImageInfo> mImageInfos = new ArrayList<>();
+    private List<DateLabelInfo> mDateInfos = new ArrayList<>();
 
     public BucketInfo(int position, int id) {
         mPosition = position;
         mID = id;
         mImageInfos.clear();
+        mDateInfos.clear();
     }
 
     public int getPosition() {
@@ -44,5 +47,17 @@ public class BucketInfo {
 
     public int getNumOfImages() {
         return mImageInfos.size();
+    }
+
+    public void add(DateLabelInfo dateLabelInfo) {
+        mDateInfos.add(dateLabelInfo);
+    }
+
+    public DateLabelInfo getDateInfo(int position) {
+        return mDateInfos.get(position);
+    }
+
+    public int getNumOfDateInfos() {
+        return mDateInfos.size();
     }
 }

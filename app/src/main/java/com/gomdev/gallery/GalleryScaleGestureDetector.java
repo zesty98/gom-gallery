@@ -83,7 +83,7 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
 
                 if (numOfColumns != mNumOfColumns) {
                     mGridInfo.resize(numOfColumns);
-                    int imageIndex = mSurfaceView.getImageIndex(focusX, focusY);
+                    int imageIndex = mSurfaceView.getNearestIndex(focusX, focusY);
                     mSurfaceView.resize(imageIndex);
                 }
             }

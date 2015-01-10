@@ -125,4 +125,35 @@ public class GalleryUtils {
 
         return vertexInfo;
     }
+
+    static void calcTexCoord(ImageInfo imageInfo) {
+        int width = imageInfo.getThumbnailWidth();
+        int height = imageInfo.getThumbnailHeight();
+
+        float minS = 0f;
+        float minT = 0f;
+        float maxS = 0f;
+        float maxT = 0f;
+        if (width > height) {
+            minS = (float) ((width - height) / 2f) / width;
+            maxS = 1f - minS;
+
+            minT = 0f;
+            maxT = 1f;
+        } else {
+            minT = (float) ((height - width) / 2f) / height;
+            maxT = 1f - minT;
+
+            minS = 0f;
+            maxS = 1f;
+        }
+
+        float[] texCoord = new float[]{
+                minS, maxT,
+                maxS, maxT,
+                minS, minT,
+                maxS, minT
+        };
+        imageInfo.setTexCoord(texCoord);
+    }
 }

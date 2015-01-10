@@ -27,11 +27,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     private GalleryScaleGestureDetector mGalleryScaleGestureDetector = null;
 
     private GridInfo mGridInfo = null;
-    private int mActionBarHeight = 0;
-    private int mColumnWidth = 0;
-    private int mNumOfColumns = 0;
-    private int mSpacing = 0;
-
 
     private Object mLockObject;
 
@@ -116,10 +111,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
     public void resize(int centerImageIndex) {
         synchronized (mLockObject) {
-            mColumnWidth = mGridInfo.getColumnWidth();
-            mNumOfColumns = mGridInfo.getNumOfColumns();
-            mSpacing = mGridInfo.getSpacing();
-
             mGalleryGestureDetector.setCenterImageIndex(centerImageIndex);
             int size = mListeners.size();
             if (size > 0) {
@@ -147,23 +138,20 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     public void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
 
-        mColumnWidth = mGridInfo.getColumnWidth();
-        mNumOfColumns = mGridInfo.getNumOfColumns();
-        mActionBarHeight = mGridInfo.getActionBarHeight();
-        mSpacing = mGridInfo.getSpacing();
-
         mGalleryGestureDetector.setGridInfo(mGridInfo);
         mGalleryScaleGestureDetector.setGridInfo(mGridInfo);
         mRenderer.setGridInfo(mGridInfo);
     }
 
-    public int getImageIndex(float x, float y) {
-        float scrollDistance = mGalleryGestureDetector.getScrollDistance();
-        int row = (int) (((scrollDistance + y) - mActionBarHeight) / (mColumnWidth + mSpacing));
-        int column = (int) (x / (mColumnWidth + mSpacing));
+    public int getSelectedIndex(float x, float y) {
+        int index = mRenderer.getSelectedIndex(x, y);
 
-        int imageIndex = mNumOfColumns * row + column;
+        return index;
+    }
 
-        return imageIndex;
+    public int getNearestIndex(float x, float y) {
+        int index = mRenderer.getNearestIndex(x, y);
+
+        return index;
     }
 }

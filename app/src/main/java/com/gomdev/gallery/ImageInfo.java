@@ -1,6 +1,7 @@
 package com.gomdev.gallery;
 
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 
 public class ImageInfo implements Serializable {
     static final String CLASS = "ImageInfo";
@@ -17,6 +18,8 @@ public class ImageInfo implements Serializable {
     private int mThumbnailHeight;
 
     private float[] mTexCoord = null;
+
+    private WeakReference<ImageObject> mImageObjectRef = null;
 
     public ImageInfo(int position, long id, int orientation) {
         mPosition = position;
@@ -82,6 +85,18 @@ public class ImageInfo implements Serializable {
 
     public float[] getTexCoord() {
         return mTexCoord;
+    }
+
+    public void setImageObjectRef(WeakReference<ImageObject> ref) {
+        mImageObjectRef = ref;
+    }
+
+    public ImageObject getImageObject() {
+        if (mImageObjectRef == null) {
+            return null;
+        }
+
+        return mImageObjectRef.get();
     }
 
     @Override

@@ -41,7 +41,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     private GLESNode mRoot;
     private GLESNode mImageNode;
 
-    private ImageObjects mImageObjects = null;
+    private ObjectManager mObjectManager = null;
     private Scrollbar mScrollbar = null;
 
     private GallerySurfaceView mSurfaceView = null;
@@ -59,7 +59,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
         mRenderer = GLESRenderer.createRenderer();
 
-        mImageObjects = new ImageObjects(context);
+        mObjectManager = new ObjectManager(context);
 
         mScrollbar = new Scrollbar(context);
         mScrollbar.setColor(0.3f, 0.3f, 0.3f, 0.7f);
@@ -75,15 +75,15 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         synchronized (mLockObject) {
-            mImageObjects.update();
+            mObjectManager.update();
 
             mRenderer.updateScene(mSM);
 
             float translateY = getTranslateY();
             mScrollbar.setTranslateY(translateY);
 
-            mImageObjects.updateTexture();
-            mImageObjects.checkVisibility(translateY);
+            mObjectManager.updateTexture();
+            mObjectManager.checkVisibility(translateY);
 
             mRenderer.drawScene(mSM);
         }
@@ -108,7 +108,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
         mRenderer.reset();
 
-        mImageObjects.onSurfaceChanged(width, height);
+        mObjectManager.onSurfaceChanged(width, height);
         mScrollbar.onSurfaceChanged(width, height);
 
         GLESCamera camera = setupCamera(width, height);
@@ -154,10 +154,10 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
         createShader();
 
-        mImageObjects.onSurfaceCreated();
+        mObjectManager.onSurfaceCreated();
 
         mDummyTexture = createDummyTexture();
-        mImageObjects.setDummyTexture(mDummyTexture);
+        mObjectManager.setDummyTexture(mDummyTexture);
 
         createScene();
     }
@@ -167,7 +167,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
             Log.d(TAG, "createShader()");
         }
 
-        boolean res = mImageObjects.createShader(R.raw.texture_20_vs, R.raw.texture_20_fs);
+        boolean res = mObjectManager.createShader(R.raw.texture_20_vs, R.raw.texture_20_fs);
         if (res == false) {
             return false;
         }
@@ -188,22 +188,22 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         mImageNode.setListener(mImageNodeListener);
         mRoot.addChild(mImageNode);
 
-        mImageObjects.createObjects(mImageNode);
+        mObjectManager.createObjects(mImageNode);
         mScrollbar.createObject(mRoot);
     }
 
     private void setupScene(GLESCamera camera) {
-        mImageObjects.setupObjects(camera);
+        mObjectManager.setupObjects(camera);
         mScrollbar.setupObject(camera);
     }
 
     public void setSurfaceView(GallerySurfaceView surfaceView) {
         mSurfaceView = surfaceView;
 
-        mImageObjects.setSurfaceView(surfaceView);
+        mObjectManager.setSurfaceView(surfaceView);
 
         mSurfaceView.setGridInfoChangeListener(mScrollbar);
-        mSurfaceView.setGridInfoChangeListener(mImageObjects);
+        mSurfaceView.setGridInfoChangeListener(mObjectManager);
     }
 
     public void setRendererListener(RendererListener listener) {
@@ -211,8 +211,18 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     }
 
     public void setGridInfo(GridInfo gridInfo) {
-        mImageObjects.setGridInfo(gridInfo);
+        mObjectManager.setGridInfo(gridInfo);
         mScrollbar.setGridInfo(gridInfo);
+    }
+
+    public int getSelectedIndex(float x, float y) {
+        float translateY = getTranslateY();
+        return mObjectManager.getSelectedIndex(x, y, translateY);
+    }
+
+    public int getNearestIndex(float x, float y) {
+        float translateY = getTranslateY();
+        return mObjectManager.getNearestIndex(x, y, translateY);
     }
 
     private GLESNodeListener mImageNodeListener = new GLESNodeListener() {
