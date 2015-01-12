@@ -131,6 +131,9 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         float angle = mGalleryGestureDetector.getAngle();
         transform.rotate(angle, 1f, 0f, 0f);
 
+        float translateZ = mGalleryGestureDetector.getTranslate();
+        transform.translate(0f, 0f, translateZ);
+
         float scrollDistance = mGalleryGestureDetector.getScrollDistance();
         transform.preTranslate(0f, scrollDistance, 0f);
     }

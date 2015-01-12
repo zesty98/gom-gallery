@@ -15,11 +15,6 @@ public class ImageObject extends GLESObject {
     private float mLeft = 0;
     private float mTop = 0;
 
-    public ImageObject() {
-        super();
-        init();
-    }
-
     public ImageObject(String name) {
         super(name);
         init();

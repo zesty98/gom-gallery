@@ -12,6 +12,8 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.OverScroller;
 
+import com.gomdev.gles.GLESUtils;
+
 /**
  * Created by gomdev on 14. 12. 29..
  */
@@ -21,6 +23,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final static float MAX_ROTATION_ANGLE = 15f;
+    private final static float MAX_TRANSLATE_Z_DP = -70f; // dp
 
     private final Context mContext;
 
@@ -58,6 +61,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
     private float mMaxDistance = 0f;
     private float mRotationAngle = 0f;
+    private float mMaxTranslateZ = 0f;
+    private float mTranslateZ = 0f;
 
     private int mWidth = 0;
     private int mHeight = 0;
@@ -73,6 +78,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
         mEdgeEffectTop = new EdgeEffectCompat(context);
         mEdgeEffectBottom = new EdgeEffectCompat(context);
+
+        mMaxTranslateZ = GLESUtils.getPixelFromDpi(mContext, MAX_TRANSLATE_Z_DP);
     }
 
     public void setGridInfo(GridInfo gridInfo) {
@@ -180,6 +187,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     private void calcRotationAngle() {
         if (mScroller.isFinished() == true) {
             mRotationAngle = 0f;
+            mTranslateZ = 0f;
             return;
         }
 
@@ -191,6 +199,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
         if (scrollDistance < mMaxDistance) {
             mRotationAngle = 0f;
+            mTranslateZ = 0f;
             return;
         }
 
@@ -198,8 +207,10 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         distanceToFinalY = Math.abs(distanceToFinalY);
         if (distanceToFinalY < mMaxDistance) {
             mRotationAngle = distanceToFinalY * MAX_ROTATION_ANGLE / mMaxDistance;
+            mTranslateZ = distanceToFinalY * mMaxTranslateZ / mMaxDistance;
         } else {
             mRotationAngle = MAX_ROTATION_ANGLE;
+            mTranslateZ = mMaxTranslateZ;
         }
 
         if (startY > finalY) {
@@ -208,11 +219,16 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
         if (mTranslateY == finalY) {
             mRotationAngle = 0f;
+            mTranslateZ = 0f;
         }
     }
 
     public float getAngle() {
         return mRotationAngle;
+    }
+
+    public float getTranslate() {
+        return mTranslateZ;
     }
 
     public float getScrollDistance() {

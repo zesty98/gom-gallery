@@ -30,6 +30,7 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
+    private final float VISIBILITY_PADDING_DP = 60f;    // dp
     private final float DATE_LABEL_TEXT_SIZE = 18f;
     private final float DATE_LABEL_TEXT_SHADOW_RADIUS = 1f;
     private final float DATE_LABEL_TEXT_SHADOW_DX = 0.5f;
@@ -61,6 +62,8 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
     private int mWidth;
     private int mHeight;
 
+    private float mVisibilityPadding = 0f;
+
     private boolean mIsSurfaceChanged = false;
 
     private ArrayList<TextureMappingInfo> mTextureMappingInfos = new ArrayList<>();
@@ -79,6 +82,9 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
         mImageGLState.setCullFaceState(true);
         mImageGLState.setCullFace(GLES20.GL_BACK);
         mImageGLState.setDepthState(false);
+
+        mVisibilityPadding = GLESUtils.getPixelFromDpi(mContext, VISIBILITY_PADDING_DP);
+        Log.d(TAG, "init() mVisibilityPadding=" + mVisibilityPadding);
 
         mIsSurfaceChanged = false;
     }
@@ -128,7 +134,8 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
             ImageObject object = mImageObjects[i];
 
             float top = object.getTop();
-            if ((top - mColumnWidth) < viewportTop && (top) > viewportBottom) {
+            if ((top - mColumnWidth) < (viewportTop + mVisibilityPadding) &&
+                    (top > (viewportBottom - mVisibilityPadding))) {
                 object.show();
                 mapTexture(i);
             } else {
@@ -228,6 +235,8 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
             vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
             vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
             mDateLabelObjects[i].setVertexInfo(vertexInfo, false, false);
+
+
         }
     }
 
@@ -238,7 +247,7 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
         int index = getImageIndexFromYPos(x, yPos, selectedDateLabelIndex);
 
         DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(selectedDateLabelIndex);
-        int lastImageIndex = dateLabelInfo.get(dateLabelInfo.getNumOfImages() - 1).getPosition();
+        int lastImageIndex = dateLabelInfo.getLastImagePosition();
 
         Log.d(TAG, "getSelectedIndex() DateLabelIndex=" + selectedDateLabelIndex + " lastIndex=" + lastImageIndex + " index=" + index);
 
@@ -256,7 +265,7 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
         int index = getImageIndexFromYPos(x, yPos, selectedDateLabelIndex);
 
         DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(selectedDateLabelIndex);
-        int lastImageIndex = dateLabelInfo.get(dateLabelInfo.getNumOfImages() - 1).getPosition();
+        int lastImageIndex = dateLabelInfo.getLastImagePosition();
 
         if (index > lastImageIndex) {
             return (index - 1);
@@ -273,7 +282,7 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
         int column = (int) (x / (mColumnWidth + mSpacing));
 
         DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(selectedDateLabelIndex);
-        int firstImageIndex = dateLabelInfo.get(0).getPosition();
+        int firstImageIndex = dateLabelInfo.getFirstImagePosition();
 
         return mNumOfColumns * row + column + firstImageIndex;
     }
