@@ -6,7 +6,7 @@ import com.gomdev.gles.GLESTexture;
 /**
  * Created by gomdev on 14. 12. 18..
  */
-public class DateLabelObject extends GLESObject {
+public class GalleryObject extends GLESObject {
     static final String CLASS = "GalleryObject";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -15,15 +15,7 @@ public class DateLabelObject extends GLESObject {
     private float mLeft = 0;
     private float mTop = 0;
 
-    private int mFirstImageIndex = 0;
-    private int mLastImageIndex = 0;
-
-    public DateLabelObject() {
-        super();
-        init();
-    }
-
-    public DateLabelObject(String name) {
+    public GalleryObject(String name) {
         super(name);
         init();
     }

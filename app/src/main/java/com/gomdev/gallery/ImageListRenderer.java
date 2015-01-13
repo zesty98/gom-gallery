@@ -74,8 +74,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         synchronized (mLockObject) {
-            mObjectManager.update();
-
             mRenderer.updateScene(mSM);
 
             float translateY = getTranslateY();

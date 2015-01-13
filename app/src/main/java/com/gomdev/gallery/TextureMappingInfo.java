@@ -10,17 +10,17 @@ public class TextureMappingInfo {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private GLESObject mObject;
+    private GalleryObject mObject;
     private GalleryTexture mTexture;
     private GalleryInfo mGalleryInfo;
 
 
-    public TextureMappingInfo(GLESObject object, GalleryInfo galleryInfo) {
+    public TextureMappingInfo(GalleryObject object, GalleryInfo galleryInfo) {
         mObject = object;
         mGalleryInfo = galleryInfo;
     }
 
-    public GLESObject getObject() {
+    public GalleryObject getObject() {
         return mObject;
     }
 
