@@ -1,6 +1,7 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -20,7 +21,8 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private Context mContext = null;
+    private final Context mContext;
+
     private ImageListRenderer mRenderer = null;
 
     private GalleryGestureDetector mGalleryGestureDetector = null;
@@ -35,21 +37,25 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     public GallerySurfaceView(Context context) {
         super(context);
 
-        init(context);
+        mContext = context;
+
+        init();
     }
 
     public GallerySurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        init(context);
+        mContext = context;
+
+        init();
     }
 
-    private void init(Context context) {
+    private void init() {
         mLockObject = new Object();
 
         mListeners.clear();
 
-        mRenderer = new ImageListRenderer(context, mLockObject);
+        mRenderer = new ImageListRenderer(mContext, mLockObject);
         mRenderer.setSurfaceView(this);
 
         setEGLContextClientVersion(2);
@@ -57,8 +63,8 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         setRenderer(mRenderer);
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 
-        mGalleryGestureDetector = new GalleryGestureDetector(context, this);
-        mGalleryScaleGestureDetector = new GalleryScaleGestureDetector(context, this);
+        mGalleryGestureDetector = new GalleryGestureDetector(mContext, this);
+        mGalleryScaleGestureDetector = new GalleryScaleGestureDetector(mContext, this);
     }
 
     @Override
@@ -90,6 +96,10 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     @Override
     public void onResume() {
         super.onResume();
+
+        SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
+        int currentImageIndex = pref.getInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
+        mGalleryGestureDetector.setCenterImageIndex(currentImageIndex);
     }
 
     @Override

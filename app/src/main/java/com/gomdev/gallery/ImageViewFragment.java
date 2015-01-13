@@ -39,6 +39,7 @@ public class ImageViewFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         if (getArguments() != null) {
             mImageInfo = (ImageInfo) getArguments().getSerializable(GalleryConfig.IMAGE_VIEW_DATA);
         }
@@ -67,8 +68,9 @@ public class ImageViewFragment extends Fragment {
     @Override
     public void onResume() {
         if (DEBUG) {
-            Log.d(TAG, "onResume()");
+            Log.d(TAG, "onResume() position=");
         }
+
         super.onResume();
     }
 

@@ -1,6 +1,7 @@
 package com.gomdev.gallery;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 public class ImageListActivity extends Activity {
@@ -34,6 +35,11 @@ public class ImageListActivity extends Activity {
             mSurfaceView = (GallerySurfaceView) findViewById(R.id.surfaceview);
             mSurfaceView.setGridInfo(mGridInfo);
 
+            SharedPreferences pref = getSharedPreferences(GalleryConfig.PREF_NAME, 0);
+            SharedPreferences.Editor editor = pref.edit();
+            editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
+            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, bucketInfo.getPosition());
+            editor.commit();
 
         } else {
             setContentView(R.layout.activity_main);
@@ -54,16 +60,20 @@ public class ImageListActivity extends Activity {
         int actionBarHeight = GalleryUtils.getActionBarHeight(this);
         galleryContext.setActionbarHeight(actionBarHeight);
 
-        int spacing = getResources().getDimensionPixelSize(
-                R.dimen.gridview_spacing);
-        int columnWidth = getResources().getDimensionPixelSize(R.dimen.gridview_column_width);
-        int numOfColumns = width / (columnWidth + spacing);
+        SharedPreferences pref = getSharedPreferences(GalleryConfig.PREF_NAME, 0);
+        int numOfColumns = pref.getInt(GalleryConfig.PREF_NUM_OF_COLUMNS, 0);
+        int columnWidth = pref.getInt(GalleryConfig.PREF_COLUMNS_WIDTH, 0);
+        if (numOfColumns == 0 || columnWidth == 0) {
+            int spacing = getResources().getDimensionPixelSize(
+                    R.dimen.gridview_spacing);
+            columnWidth = getResources().getDimensionPixelSize(R.dimen.gridview_column_width);
+            numOfColumns = width / (columnWidth + spacing);
+
+            columnWidth = (int) ((width - spacing * (numOfColumns + 1)) / numOfColumns);
+        }
         galleryContext.setNumOfColumns(numOfColumns);
-
-        columnWidth = (int) ((width - spacing * (numOfColumns + 1)) / numOfColumns);
-
-        galleryContext.setScreenSize(width, height);
         galleryContext.setColumnWidth(columnWidth);
+        galleryContext.setScreenSize(width, height);
     }
 
     @Override

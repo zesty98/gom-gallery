@@ -91,7 +91,6 @@ public class BitmapWorker {
                     container.setBitmapDrawable(value);
                 }
             }
-
         }
 
         protected GalleryInfo getData() {

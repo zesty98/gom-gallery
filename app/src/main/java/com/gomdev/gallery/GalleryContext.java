@@ -6,7 +6,7 @@ public class GalleryContext {
     private int mWidth;
     private int mHeight;
 
-    private int mNumOfColumns = GalleryConfig.NUM_OF_COLUMNS;
+    private int mNumOfColumns = GalleryConfig.DEFAULT_NUM_OF_COLUMNS;
     private int mGridColumnWidth;
 
     private int mActionBarHeight = 0;

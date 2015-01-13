@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import android.annotation.TargetApi;
 import android.app.ActionBar;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -39,6 +40,8 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
         mPager.setAdapter(mAdapter);
         mPager.setOffscreenPageLimit(2);
 
+        mPager.setOnPageChangeListener(mOnPageChangeListener);
+
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -46,7 +49,7 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
 
             // Hide title text and set home as up
             actionBar.setDisplayShowTitleEnabled(false);
-            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayHomeAsUpEnabled(false);
 
             // Hide and show the ActionBar as the visibility changes
             mPager.setOnSystemUiVisibilityChangeListener(
@@ -56,7 +59,7 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
                             if ((vis & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
                                 actionBar.hide();
                             } else {
-                                actionBar.show();
+//                                actionBar.show(); // FIX_ME
                             }
                         }
                     });
@@ -101,4 +104,25 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
             return ImageViewFragment.newInstance(mBucketInfo.get(position));
         }
     }
+
+    private ViewPager.OnPageChangeListener mOnPageChangeListener = new ViewPager.OnPageChangeListener() {
+        @Override
+        public void onPageScrolled(int i, float v, int i2) {
+
+        }
+
+        @Override
+        public void onPageSelected(int i) {
+            SharedPreferences pref = ImageViewActivity.this.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
+            SharedPreferences.Editor editor = pref.edit();
+            editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, i);
+            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, mBucketInfo.getPosition());
+            editor.commit();
+        }
+
+        @Override
+        public void onPageScrollStateChanged(int i) {
+
+        }
+    };
 }

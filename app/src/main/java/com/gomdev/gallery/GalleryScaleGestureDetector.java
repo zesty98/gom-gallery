@@ -34,8 +34,8 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
         mGridInfo = gridInfo;
 
         mNumOfColumns = GalleryContext.getInstance().getNumOfColumns();
-        mMinNumOfColumns = mNumOfColumns;
-        mMaxNumOfColumns = 3 * mNumOfColumns;
+        mMinNumOfColumns = GalleryConfig.DEFAULT_NUM_OF_COLUMNS;
+        mMaxNumOfColumns = 3 * mMinNumOfColumns;
     }
 
     public boolean onTouchEvent(MotionEvent event) {

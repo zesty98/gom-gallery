@@ -1,6 +1,7 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 /**
  * Created by gomdev on 14. 12. 20..
@@ -10,6 +11,7 @@ public class GridInfo {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
+    private final Context mContext;
     private final BucketInfo mBucketInfo;
 
     private final int mActionBarHeight;
@@ -29,6 +31,8 @@ public class GridInfo {
 
 
     public GridInfo(Context context, BucketInfo bucketInfo) {
+        mContext = context;
+
         mBucketInfo = bucketInfo;
         mNumOfImages = bucketInfo.getNumOfImages();
         mNumOfDateInfos = bucketInfo.getNumOfDateInfos();
@@ -66,6 +70,12 @@ public class GridInfo {
         mColumnWidth = calcColumnWidth();
         mNumOfRows = calcNumOfRows();
         mScrollableHeight = calcScrollableHeight();
+
+        SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putInt(GalleryConfig.PREF_COLUMNS_WIDTH, mColumnWidth);
+        editor.putInt(GalleryConfig.PREF_NUM_OF_COLUMNS, mNumOfRows);
+        editor.commit();
     }
 
     private int calcColumnWidth() {
