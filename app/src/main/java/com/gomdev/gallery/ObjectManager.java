@@ -15,7 +15,6 @@ import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
-import java.lang.ref.WeakReference;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Queue;
@@ -45,10 +44,12 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
     private DateLabelObject[] mDateLabelObjects;
     private GLESShader mTextureShader;
     private GLESGLState mImageGLState;
-    private GLESTexture mDummyTexture;
+    private GLESTexture mDummyImageTexture;
+    private GLESTexture mDummyDateTexture;
 
     private ImageManager mImageManager = null;
     private GridInfo mGridInfo = null;
+    private DateLabelManager mDateLabelManager = null;
 
     private int mSpacing;
     private int mNumOfColumns;
@@ -84,13 +85,17 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
         mImageGLState.setDepthState(false);
 
         mVisibilityPadding = GLESUtils.getPixelFromDpi(mContext, VISIBILITY_PADDING_DP);
-        Log.d(TAG, "init() mVisibilityPadding=" + mVisibilityPadding);
+
+        mDateLabelManager = new DateLabelManager(mContext);
 
         mIsSurfaceChanged = false;
     }
 
     public void setSurfaceView(GallerySurfaceView surfaceView) {
         mSurfaceView = surfaceView;
+
+        mDateLabelManager.setSurfaceView(surfaceView);
+
     }
 
     public void setGridInfo(GridInfo gridInfo) {
@@ -104,6 +109,8 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
         mNumOfImages = mGridInfo.getNumOfImages();
         mNumOfDateInfos = mGridInfo.getNumOfDateInfos();
         mDateLabelHeight = mGridInfo.getDateLabelHeight();
+
+        mDateLabelManager.setGridInfo(mGridInfo);
     }
 
     public void update() {
@@ -114,7 +121,7 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
 
         if (texture != null) {
             TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(texture.getPosition());
-            final ImageObject object = textureMappingInfo.getObject();
+            final ImageObject object = (ImageObject) textureMappingInfo.getObject();
 
             final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
             texture.load(bitmap);
@@ -125,6 +132,8 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
         if (mWaitingTextures.size() > 0) {
             mSurfaceView.requestRender();
         }
+
+        mDateLabelManager.updateTexture();
     }
 
     public void checkVisibility(float translateY) {
@@ -150,8 +159,10 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
             float top = object.getTop();
             if ((top - mDateLabelHeight) < viewportTop && (top) > viewportBottom) {
                 object.show();
+                mDateLabelManager.mapTexture(i);
             } else {
                 object.hide();
+                mDateLabelManager.unmapTexture(i, mDateLabelObjects[i]);
             }
         }
     }
@@ -159,7 +170,7 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
     private void mapTexture(int position) {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
 
-        ImageInfo imageInfo = textureMappingInfo.getImageInfo();
+        ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
         GalleryTexture texture = textureMappingInfo.getTexture();
         if (texture == null) {
             texture = new GalleryTexture(imageInfo.getWidth(), imageInfo.getHeight());
@@ -175,11 +186,11 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
     }
 
     private void unmapTexture(int position, ImageObject object) {
-        object.setTexture(mDummyTexture);
+        object.setTexture(mDummyImageTexture);
 
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
         GalleryTexture texture = textureMappingInfo.getTexture();
-        mImageManager.cancelWork(texture);
+        BitmapWorker.cancelWork(texture);
         mWaitingTextures.remove(texture);
 
         textureMappingInfo.set(null);
@@ -201,6 +212,7 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
 
         mWaitingTextures.clear();
         mTextureMappingInfos.clear();
+        mDateLabelManager.clear();
 
         mImageObjects = new ImageObject[mNumOfImages];
 
@@ -210,7 +222,7 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
             mImageObjects[i].setGLState(mImageGLState);
             mImageObjects[i].setShader(mTextureShader);
 
-            mImageObjects[i].setTexture(mDummyTexture);
+            mImageObjects[i].setTexture(mDummyImageTexture);
 
             GLESVertexInfo vertexInfo = new GLESVertexInfo();
             vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
@@ -218,8 +230,6 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
             mImageObjects[i].setVertexInfo(vertexInfo, false, false);
 
             ImageInfo imageInfo = mBucketInfo.get(i);
-            imageInfo.setImageObjectRef(new WeakReference<>(mImageObjects[i]));
-
             TextureMappingInfo textureMappingInfo = new TextureMappingInfo(mImageObjects[i], imageInfo);
             mTextureMappingInfos.add(textureMappingInfo);
         }
@@ -230,14 +240,19 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
             parentNode.addChild(mDateLabelObjects[i]);
             mDateLabelObjects[i].setGLState(mImageGLState);
             mDateLabelObjects[i].setShader(mTextureShader);
+            mDateLabelObjects[i].setTexture(mDummyDateTexture);
 
             GLESVertexInfo vertexInfo = new GLESVertexInfo();
             vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
             vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
             mDateLabelObjects[i].setVertexInfo(vertexInfo, false, false);
 
-
+            DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(i);
+            TextureMappingInfo textureMappingInfo = new TextureMappingInfo(mDateLabelObjects[i], dateLabelInfo);
+            mDateLabelManager.addTextureMapingInfo(textureMappingInfo);
         }
+
+        mDateLabelManager.setDummyTexture(mDummyDateTexture);
     }
 
     public int getSelectedIndex(float x, float y, float translateY) {
@@ -355,7 +370,7 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
             float[] texCoord = GLESUtils.makeTexCoord(0f, 0f, 1f, 1f);
             vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);
 
-            setDataLabelTexture(i);
+//            setDataLabelTexture(i);
 
             yOffset -= (mDateLabelHeight + mSpacing);
 
@@ -400,8 +415,12 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
         mDateLabelObjects[index].setTexture(texture);
     }
 
-    public void setDummyTexture(GLESTexture dummyTexture) {
-        mDummyTexture = dummyTexture;
+    public void setDummyImageTexture(GLESTexture dummyTexture) {
+        mDummyImageTexture = dummyTexture;
+    }
+
+    public void setDummyDateLabelTexture(GLESTexture dummyTexture) {
+        mDummyDateTexture = dummyTexture;
     }
 
     public boolean createShader(int vsResID, int fsResID) {
@@ -430,7 +449,7 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
         for (int i = 0; i < size; i++) {
             GalleryTexture texture = mTextureMappingInfos.get(i).getTexture();
             if (texture != null) {
-                mImageManager.cancelWork(mTextureMappingInfos.get(i).getTexture());
+                BitmapWorker.cancelWork(mTextureMappingInfos.get(i).getTexture());
             }
         }
     }
@@ -513,8 +532,8 @@ public class ObjectManager implements GridInfoChangeListener, ImageLoadingListen
     @Override
     public void onImageLoaded(int position, GalleryTexture texture) {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
-        final ImageObject object = textureMappingInfo.getObject();
-        final ImageInfo imageInfo = textureMappingInfo.getImageInfo();
+        final ImageObject object = (ImageObject) textureMappingInfo.getObject();
+        final ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
 
         final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
         imageInfo.setThumbnailWidth(bitmap.getWidth());

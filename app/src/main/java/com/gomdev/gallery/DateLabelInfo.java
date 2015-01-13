@@ -6,19 +6,24 @@ import java.util.List;
 /**
  * Created by gomdev on 15. 1. 9..
  */
-public class DateLabelInfo {
+public class DateLabelInfo implements GalleryInfo {
     static final String CLASS = "DateInfo";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final int mPosition;
     private final String mDate;
-    private List<ImageInfo> mImageInfos = new ArrayList<>();
+
+    private int mWidth = 0;
+    private int mHeight = 0;
+
     private int mNumOfRows = 0;
     private int mNumOfColumns = 0;
 
     private int mFirstImagePosition = 0;
     private int mLastImagePosition = 0;
+
+    private List<ImageInfo> mImageInfos = new ArrayList<>();
 
     public DateLabelInfo(int position, String date) {
         mPosition = position;

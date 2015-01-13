@@ -1,5 +1,7 @@
 package com.gomdev.gallery;
 
+import com.gomdev.gles.GLESObject;
+
 /**
  * Created by gomdev on 14. 12. 23..
  */
@@ -8,17 +10,17 @@ public class TextureMappingInfo {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private ImageObject mObject;
+    private GLESObject mObject;
     private GalleryTexture mTexture;
-    private ImageInfo mImageInfo;
+    private GalleryInfo mGalleryInfo;
 
 
-    public TextureMappingInfo(ImageObject object, ImageInfo imageInfo) {
+    public TextureMappingInfo(GLESObject object, GalleryInfo galleryInfo) {
         mObject = object;
-        mImageInfo = imageInfo;
+        mGalleryInfo = galleryInfo;
     }
 
-    public ImageObject getObject() {
+    public GLESObject getObject() {
         return mObject;
     }
 
@@ -26,8 +28,8 @@ public class TextureMappingInfo {
         return mTexture;
     }
 
-    public ImageInfo getImageInfo() {
-        return mImageInfo;
+    public GalleryInfo getGalleryInfo() {
+        return mGalleryInfo;
     }
 
     public void set(GalleryTexture texture) {

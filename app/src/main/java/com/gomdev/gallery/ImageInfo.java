@@ -3,7 +3,7 @@ package com.gomdev.gallery;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
 
-public class ImageInfo implements Serializable {
+public class ImageInfo implements Serializable, GalleryInfo {
     static final String CLASS = "ImageInfo";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -18,8 +18,6 @@ public class ImageInfo implements Serializable {
     private int mThumbnailHeight;
 
     private float[] mTexCoord = null;
-
-    private WeakReference<ImageObject> mImageObjectRef = null;
 
     public ImageInfo(int position, long id, int orientation) {
         mPosition = position;
@@ -85,18 +83,6 @@ public class ImageInfo implements Serializable {
 
     public float[] getTexCoord() {
         return mTexCoord;
-    }
-
-    public void setImageObjectRef(WeakReference<ImageObject> ref) {
-        mImageObjectRef = ref;
-    }
-
-    public ImageObject getImageObject() {
-        if (mImageObjectRef == null) {
-            return null;
-        }
-
-        return mImageObjectRef.get();
     }
 
     @Override

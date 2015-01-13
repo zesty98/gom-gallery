@@ -94,7 +94,7 @@ public class ImageViewFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         if (mImageView != null) {
-            ImageManager.cancelWork(mImageView);
+            BitmapWorker.cancelWork(mImageView);
             mImageView.setImageDrawable(null);
         }
     }

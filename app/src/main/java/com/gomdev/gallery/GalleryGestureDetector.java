@@ -266,6 +266,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             intent.putExtra(GalleryConfig.BUCKET_POSITION, mGridInfo.getBucketInfo().getPosition());
             intent.putExtra(GalleryConfig.IMAGE_POSITION, imageIndex);
 
+            mCenterImageIndex = imageIndex;
+
             mContext.startActivity(intent);
 
             return true;

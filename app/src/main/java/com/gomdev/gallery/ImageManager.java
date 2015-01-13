@@ -7,14 +7,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
 import android.provider.MediaStore;
 import android.text.format.DateUtils;
 import android.util.Log;
 
 import java.io.FileDescriptor;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -200,8 +197,9 @@ public class ImageManager {
                     dateIndex++;
                 } else {
                     dateLabelInfo.add(imageInfo);
-                    dateLabelInfo.setLastImagePosition(imageInfo.getPosition());
                 }
+
+                dateLabelInfo.setLastImagePosition(imageInfo.getPosition());
 
                 prevDateTaken = dateTakenInMs;
 
@@ -238,8 +236,8 @@ public class ImageManager {
                 Log.d(TAG, "Memory cache hit " + imageInfo.getImagePath());
             }
         } else {
-            if (cancelPotentialWork(imageInfo, container) && container != null) {
-                final BitmapWorkerTask<T> task = new BitmapWorkerTask<>(container);
+            if (BitmapWorker.cancelPotentialWork(imageInfo, container) && container != null) {
+                final BitmapLoaderTask<T> task = new BitmapLoaderTask<>(container);
                 final AsyncDrawable asyncDrawable =
                         new AsyncDrawable(mContext.getResources(),
                                 mLoadingBitmap, task);
@@ -263,8 +261,8 @@ public class ImageManager {
 
     public void loadBitmap(ImageInfo imageInfo, RecyclingImageView imageView,
                            int requestWidth, int requestHeight) {
-        if (cancelPotentialWork(imageInfo, imageView)) {
-            final BitmapWorkerTask<RecyclingImageView> task = new BitmapWorkerTask(imageView,
+        if (BitmapWorker.cancelPotentialWork(imageInfo, imageView)) {
+            final BitmapLoaderTask<RecyclingImageView> task = new BitmapLoaderTask(imageView,
                     requestWidth, requestHeight);
 
             final AsyncDrawable asyncDrawable =
@@ -332,49 +330,6 @@ public class ImageManager {
             }
         }
         return b;
-    }
-
-    private static <T extends CacheContainer> boolean cancelPotentialWork(ImageInfo imageInfo,
-                                                                          T container) {
-        final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(container);
-
-        if (bitmapWorkerTask != null) {
-            final ImageInfo bitmapData = bitmapWorkerTask.getData();
-            // If bitmapData is not yet set or it differs from the new data
-            if (bitmapData == null || bitmapData != imageInfo) {
-                // Cancel previous task
-                bitmapWorkerTask.cancel(true);
-            } else {
-                // The same work is already in progress
-                return false;
-            }
-        }
-        // No task associated with the ImageView, or an existing task was
-        // cancelled
-        return true;
-    }
-
-    public static <T extends CacheContainer> void cancelWork(T container) {
-        final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(container);
-        if (bitmapWorkerTask != null) {
-            bitmapWorkerTask.cancel(true);
-            if (DEBUG) {
-                final Object bitmapData = bitmapWorkerTask.getData();
-                Log.d(TAG, "cancelWork - cancelled work for " + bitmapData);
-            }
-        }
-    }
-
-    private static <T extends CacheContainer> BitmapWorkerTask getBitmapWorkerTask(T container) {
-        if (container != null) {
-            final Drawable drawable = container.getBitmapDrawable();
-            if (drawable instanceof AsyncDrawable) {
-                final AsyncDrawable asyncDrawable = (AsyncDrawable) drawable;
-                return asyncDrawable.getBitmapWorkerTask();
-            }
-        }
-
-        return null;
     }
 
     private static Bitmap decodeSampledBitmapFromFile(ImageInfo imageInfo,
@@ -502,45 +457,45 @@ public class ImageManager {
         return inSampleSize;
     }
 
-    class BitmapWorkerTask<T extends CacheContainer> extends AsyncTask<ImageInfo, Void, BitmapDrawable> {
+    class BitmapLoaderTask<T extends CacheContainer> extends BitmapWorker.BitmapWorkerTask<T> {
 
-        private final WeakReference<T> mReference;
-        private ImageInfo mImageInfo = null;
         private boolean mNeedThumbnail = true;
 
         private int mRequestWidth = 0;
         private int mRequestHeight = 0;
 
-        public BitmapWorkerTask(T container) {
+        public BitmapLoaderTask(T container) {
+            super(container);
             mNeedThumbnail = true;
-            mReference = new WeakReference<>(container);
         }
 
-        public BitmapWorkerTask(T container, int requestWidth,
+        public BitmapLoaderTask(T container, int requestWidth,
                                 int requestHeight) {
+            super(container);
+
             mNeedThumbnail = false;
             mRequestWidth = requestWidth;
             mRequestHeight = requestHeight;
-            mReference = new WeakReference<>(container);
         }
 
         // Decode image in background.
         @Override
-        protected BitmapDrawable doInBackground(ImageInfo... params) {
-            mImageInfo = params[0];
+        protected BitmapDrawable doInBackground(GalleryInfo... params) {
+            mGalleryInfo = params[0];
+            ImageInfo imageInfo = (ImageInfo) params[0];
 
             ImageManager mImageManager = ImageManager.getInstance();
             Bitmap bitmap;
             BitmapDrawable value;
             if (mNeedThumbnail == true) {
-                String imageKey = String.valueOf(mImageInfo.getImageID());
+                String imageKey = String.valueOf(imageInfo.getImageID());
                 bitmap = mImageCache.getBitmapFromDiskCache(imageKey);
                 if (bitmap == null) {
-                    bitmap = mImageManager.getThumbnail(mImageInfo, true);
+                    bitmap = mImageManager.getThumbnail(imageInfo, true);
                 } else {
                     if (DEBUG) {
                         Log.d(TAG,
-                                "Disk cache hit " + mImageInfo.getImagePath());
+                                "Disk cache hit " + imageInfo.getImagePath());
                     }
                 }
 
@@ -548,34 +503,13 @@ public class ImageManager {
 
                 mImageCache.addBitmapToCache(imageKey, value);
             } else {
-                bitmap = mImageManager.getBitmap(mImageInfo, mRequestWidth,
+                bitmap = mImageManager.getBitmap(imageInfo, mRequestWidth,
                         mRequestHeight, true);
 
                 value = new BitmapDrawable(mContext.getResources(), bitmap);
             }
 
             return value;
-        }
-
-        // Once complete, see if ImageView is still around and set bitmap.
-        @Override
-        protected void onPostExecute(BitmapDrawable value) {
-            if (isCancelled()) {
-                value = null;
-            }
-
-            if (mReference != null && value != null) {
-                final T container = mReference.get();
-                final BitmapWorkerTask bitmapWorkerTask =
-                        ImageManager.getBitmapWorkerTask(container);
-                if (this == bitmapWorkerTask && container != null) {
-                    container.setBitmapDrawable(value);
-                }
-            }
-        }
-
-        public ImageInfo getData() {
-            return mImageInfo;
         }
     }
 }

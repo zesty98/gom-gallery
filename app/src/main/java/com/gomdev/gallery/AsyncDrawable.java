@@ -4,22 +4,20 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 
-import com.gomdev.gallery.ImageManager.BitmapWorkerTask;
-
 import java.lang.ref.WeakReference;
 
 class AsyncDrawable extends BitmapDrawable {
 
-    private final WeakReference<BitmapWorkerTask> mBitmapWorkerTaskReference;
+    private final WeakReference<BitmapWorker.BitmapWorkerTask> mBitmapWorkerTaskReference;
 
     public AsyncDrawable(Resources res, Bitmap bitmap,
-                         BitmapWorkerTask bitmapWorkerTask) {
+                         BitmapWorker.BitmapWorkerTask bitmapLoaderTask) {
         super(res, bitmap);
         mBitmapWorkerTaskReference =
-                new WeakReference<>(bitmapWorkerTask);
+                new WeakReference<>(bitmapLoaderTask);
     }
 
-    public BitmapWorkerTask getBitmapWorkerTask() {
+    public BitmapWorker.BitmapWorkerTask getBitmapWorkerTask() {
         return mBitmapWorkerTaskReference.get();
     }
 }

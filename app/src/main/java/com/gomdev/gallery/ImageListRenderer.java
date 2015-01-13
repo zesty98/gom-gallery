@@ -45,7 +45,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     private Scrollbar mScrollbar = null;
 
     private GallerySurfaceView mSurfaceView = null;
-    private GLESTexture mDummyTexture = null;
 
     private RendererListener mListener = null;
 
@@ -117,10 +116,10 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         mIsSurfaceChanged = true;
     }
 
-    private GLESTexture createDummyTexture() {
-        Bitmap bitmap = GLESUtils.makeBitmap(512, 512, Bitmap.Config.ARGB_8888, Color.LTGRAY);
+    private GLESTexture createDummyTexture(int color) {
+        Bitmap bitmap = GLESUtils.makeBitmap(16, 16, Bitmap.Config.ARGB_8888, color);
 
-        GLESTexture dummyTexture = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, 512, 512)
+        GLESTexture dummyTexture = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, 16, 16)
                 .load(bitmap);
 
         return dummyTexture;
@@ -156,8 +155,11 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
         mObjectManager.onSurfaceCreated();
 
-        mDummyTexture = createDummyTexture();
-        mObjectManager.setDummyTexture(mDummyTexture);
+        GLESTexture dummyTexture = createDummyTexture(Color.LTGRAY);
+        mObjectManager.setDummyImageTexture(dummyTexture);
+
+        dummyTexture = createDummyTexture(Color.WHITE);
+        mObjectManager.setDummyDateLabelTexture(dummyTexture);
 
         createScene();
     }
