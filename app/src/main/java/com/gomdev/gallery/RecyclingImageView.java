@@ -7,7 +7,7 @@ import android.graphics.drawable.LayerDrawable;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 
-public class RecyclingImageView extends ImageView implements CacheContainer {
+public class RecyclingImageView extends ImageView implements BitmapContainer {
     static final String CLASS = "RecyclingBitmapDrawable";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;

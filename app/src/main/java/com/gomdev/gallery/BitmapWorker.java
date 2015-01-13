@@ -15,7 +15,7 @@ public class BitmapWorker {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    public static <T extends CacheContainer> boolean cancelPotentialWork(GalleryInfo galleryInfo,
+    public static <T extends BitmapContainer> boolean cancelPotentialWork(GalleryInfo galleryInfo,
                                                                           T container) {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(container);
 
@@ -35,7 +35,7 @@ public class BitmapWorker {
         return true;
     }
 
-    public static <T extends CacheContainer> void cancelWork(T container) {
+    public static <T extends BitmapContainer> void cancelWork(T container) {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(container);
         if (bitmapWorkerTask != null) {
             bitmapWorkerTask.cancel(true);
@@ -46,7 +46,7 @@ public class BitmapWorker {
         }
     }
 
-    private static <T extends CacheContainer> BitmapWorkerTask getBitmapWorkerTask(T container) {
+    private static <T extends BitmapContainer> BitmapWorkerTask getBitmapWorkerTask(T container) {
         if (container != null) {
             final Drawable drawable = container.getBitmapDrawable();
             if (drawable instanceof AsyncDrawable) {
@@ -58,7 +58,7 @@ public class BitmapWorker {
         return null;
     }
 
-    public static class BitmapWorkerTask<T extends CacheContainer> extends AsyncTask<GalleryInfo, Void, BitmapDrawable> {
+    public static class BitmapWorkerTask<T extends BitmapContainer> extends AsyncTask<GalleryInfo, Void, BitmapDrawable> {
         static final String CLASS = "BitmapWorkerTask";
         static final String TAG = GalleryConfig.TAG + "_" + CLASS;
         static final boolean DEBUG = GalleryConfig.DEBUG;

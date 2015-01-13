@@ -25,17 +25,24 @@ public class ImageManager {
     private static final long MS_TO_DAY_CONVERT_UNIt = 86400000l; // 24 * 60 * 60 * 1000;
 
     private static ImageManager sImageManager = null;
+
     private final Context mContext;
+
     private ImageCache mImageCache = null;
+
     private int mNumOfImages = 0;
     private int mNumOfBuckets = 0;
     private ArrayList<BucketInfo> mBuckets = new ArrayList<>();
     private Bitmap mLoadingBitmap = null;
-    private final String mOrderClause;
+    private String mOrderClause;
 
     private ImageManager(Context context) {
         mContext = context;
 
+        init(context);
+    }
+
+    private void init(Context context) {
         ImageCache.ImageCacheParams params = new ImageCache.ImageCacheParams(mContext, DISK_CACHE_SUBDIR);
         params.mCompressFormat = Bitmap.CompressFormat.JPEG;
         params.mCompressQuality = 70;
@@ -226,7 +233,7 @@ public class ImageManager {
         return mBuckets.get(index);
     }
 
-    public <T extends CacheContainer> void loadThumbnail(ImageInfo imageInfo, T container) {
+    public <T extends BitmapContainer> void loadThumbnail(ImageInfo imageInfo, T container) {
         final String imageKey = String.valueOf(imageInfo.getImageID());
         final BitmapDrawable value = mImageCache.getBitmapFromMemCache(imageKey);
 
@@ -247,7 +254,7 @@ public class ImageManager {
         }
     }
 
-    public <T extends CacheContainer> boolean loadThumbnailFromMemCache(ImageInfo imageInfo, T container) {
+    public <T extends BitmapContainer> boolean loadThumbnailFromMemCache(ImageInfo imageInfo, T container) {
         final String imageKey = String.valueOf(imageInfo.getImageID());
         final BitmapDrawable value = mImageCache.getBitmapFromMemCache(imageKey);
 
@@ -362,7 +369,7 @@ public class ImageManager {
 
         if (cache != null) {
             // Try to find a bitmap to use for inBitmap.
-            Bitmap inBitmap = cache.getBitmapFromReusableSet(options);
+            Bitmap inBitmap = ReusableBitmaps.getInstance().getBitmapFromReusableSet(options);
 
             if (inBitmap != null) {
                 // If a suitable bitmap has been found, set it as the value of
@@ -457,7 +464,7 @@ public class ImageManager {
         return inSampleSize;
     }
 
-    class BitmapLoaderTask<T extends CacheContainer> extends BitmapWorker.BitmapWorkerTask<T> {
+    class BitmapLoaderTask<T extends BitmapContainer> extends BitmapWorker.BitmapWorkerTask<T> {
 
         private boolean mNeedThumbnail = true;
 

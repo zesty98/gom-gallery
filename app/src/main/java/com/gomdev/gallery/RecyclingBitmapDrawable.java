@@ -37,10 +37,12 @@ class RecyclingBitmapDrawable extends BitmapDrawable {
     private boolean mHasBeenDisplayed;
 
     private ImageCache mImageCache = null;
+    private ReusableBitmaps mReusableBitmaps = null;
 
     public RecyclingBitmapDrawable(Resources res, Bitmap bitmap, ImageCache cache) {
         super(res, bitmap);
         mImageCache = cache;
+        mReusableBitmaps = ReusableBitmaps.getInstance();
     }
 
     /**
@@ -94,7 +96,7 @@ class RecyclingBitmapDrawable extends BitmapDrawable {
             }
 
             //getBitmap().recycle();
-            mImageCache.addBitmapToResuableSet(getBitmap());
+            mReusableBitmaps.addBitmapToResuableSet(getBitmap());
         }
     }
 
