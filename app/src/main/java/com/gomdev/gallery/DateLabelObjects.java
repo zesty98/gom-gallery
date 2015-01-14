@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Created by gomdev on 15. 1. 12..
  */
 
-public class DateLabelObjects implements ImageLoadingListener {
+public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeListener {
     static final String CLASS = "DateLabelObjects";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -177,8 +177,10 @@ public class DateLabelObjects implements ImageLoadingListener {
         }
     }
 
-    public void onGridInfoChanged(GridInfo gridInfo) {
-        mColumnWidth = gridInfo.getColumnWidth();
+
+    @Override
+    public void onGridInfoChanged() {
+        mColumnWidth = mGridInfo.getColumnWidth();
 
         changeDateLabelObjectPosition();
     }
@@ -270,6 +272,8 @@ public class DateLabelObjects implements ImageLoadingListener {
         mSpacing = gridInfo.getSpacing();
         mColumnWidth = gridInfo.getColumnWidth();
         mActionBarHeight = gridInfo.getActionBarHeight();
+
+        mGridInfo.addListener(this);
     }
 
     public void setDummyTexture(GLESTexture texture) {

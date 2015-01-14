@@ -11,15 +11,9 @@ import android.util.Log;
 
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESContext;
-import com.gomdev.gles.GLESNode;
-import com.gomdev.gles.GLESNodeListener;
 import com.gomdev.gles.GLESRect;
-import com.gomdev.gles.GLESRenderer;
-import com.gomdev.gles.GLESSceneManager;
 import com.gomdev.gles.GLESTexture;
-import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
-import com.gomdev.gles.GLESVector3;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -32,36 +26,14 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private final Context mContext;
-
-    private final Object mLockObject;
-
-    private GLESRenderer mRenderer;
-    private GLESSceneManager mSM;
-    private GLESNode mRoot;
-    private GLESNode mImageNode;
-
     private ObjectManager mObjectManager = null;
-    private Scrollbar mScrollbar = null;
-
-    private GallerySurfaceView mSurfaceView = null;
-
-    private RendererListener mListener = null;
 
     private boolean mIsSurfaceChanged = false;
 
-    public ImageListRenderer(Context context, Object lockObject) {
-        mContext = context;
-        mLockObject = lockObject;
-
+    public ImageListRenderer(Context context) {
         GLESContext.getInstance().setContext(context);
 
-        mRenderer = GLESRenderer.createRenderer();
-
         mObjectManager = new ObjectManager(context);
-
-        mScrollbar = new Scrollbar(context);
-        mScrollbar.setColor(0.3f, 0.3f, 0.3f, 0.7f);
     }
 
     @Override
@@ -73,25 +45,10 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
-        synchronized (mLockObject) {
-            mRenderer.updateScene(mSM);
-
-            float translateY = getTranslateY();
-            mScrollbar.setTranslateY(translateY);
-
-            mObjectManager.updateTexture();
-            mObjectManager.checkVisibility(translateY);
-
-            mRenderer.drawScene(mSM);
+        synchronized (GalleryContext.sLockObject) {
+            mObjectManager.update();
+            mObjectManager.drawFrame();
         }
-
-        mScrollbar.hide();
-    }
-
-    private float getTranslateY() {
-        GLESTransform transform = mImageNode.getTransform();
-        GLESVector3 translate = transform.getPreTranslate();
-        return translate.mY;
     }
 
     @Override
@@ -103,13 +60,10 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
         mIsSurfaceChanged = false;
 
-        mRenderer.reset();
-
         mObjectManager.onSurfaceChanged(width, height);
-        mScrollbar.onSurfaceChanged(width, height);
 
         GLESCamera camera = setupCamera(width, height);
-        setupScene(camera);
+        mObjectManager.setupObjects(camera);
 
         mIsSurfaceChanged = true;
     }
@@ -149,8 +103,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
         GLES20.glClearColor(1f, 1f, 1f, 1f);
 
-        createShader();
-
         mObjectManager.onSurfaceCreated();
 
         GLESTexture dummyTexture = createDummyTexture(Color.LTGRAY);
@@ -159,89 +111,26 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         dummyTexture = createDummyTexture(Color.WHITE);
         mObjectManager.setDummyDateLabelTexture(dummyTexture);
 
-        createScene();
-    }
-
-    private boolean createShader() {
-        if (DEBUG) {
-            Log.d(TAG, "createShader()");
-        }
-
-        boolean res = mObjectManager.createShader(R.raw.texture_20_vs, R.raw.texture_20_fs);
-        if (res == false) {
-            return false;
-        }
-
-        res = mScrollbar.createShader(R.raw.color_20_vs, R.raw.color_20_fs);
-        if (res == false) {
-            return false;
-        }
-
-        return true;
-    }
-
-    private void createScene() {
-        mSM = GLESSceneManager.createSceneManager();
-        mRoot = mSM.createRootNode("root");
-
-        mImageNode = mSM.createNode("imageNode");
-        mImageNode.setListener(mImageNodeListener);
-        mRoot.addChild(mImageNode);
-
-        mObjectManager.createObjects(mImageNode);
-        mScrollbar.createObject(mRoot);
-    }
-
-    private void setupScene(GLESCamera camera) {
-        mObjectManager.setupObjects(camera);
-        mScrollbar.setupObject(camera);
+        mObjectManager.createScene();
     }
 
     public void setSurfaceView(GallerySurfaceView surfaceView) {
-        mSurfaceView = surfaceView;
-
         mObjectManager.setSurfaceView(surfaceView);
-
-        mSurfaceView.setGridInfoChangeListener(mScrollbar);
-        mSurfaceView.setGridInfoChangeListener(mObjectManager);
     }
 
     public void setRendererListener(RendererListener listener) {
-        mListener = listener;
+        mObjectManager.setRendererListener(listener);
     }
 
     public void setGridInfo(GridInfo gridInfo) {
         mObjectManager.setGridInfo(gridInfo);
-        mScrollbar.setGridInfo(gridInfo);
     }
 
     public int getSelectedIndex(float x, float y) {
-        float translateY = getTranslateY();
-        return mObjectManager.getSelectedIndex(x, y, translateY);
+        return mObjectManager.getSelectedIndex(x, y);
     }
 
     public int getNearestIndex(float x, float y) {
-        float translateY = getTranslateY();
-        return mObjectManager.getNearestIndex(x, y, translateY);
+        return mObjectManager.getNearestIndex(x, y);
     }
-
-    private GLESNodeListener mImageNodeListener = new GLESNodeListener() {
-        @Override
-        public void update(GLESNode node) {
-            GLESTransform transform = node.getTransform();
-            float[] matrix = transform.getMatrix();
-            float prevY = matrix[13];
-            if (mListener != null) {
-                mListener.update(node);
-            }
-
-            transform = node.getTransform();
-            matrix = transform.getMatrix();
-            float currentY = matrix[13];
-
-            if (prevY != currentY) {
-                mScrollbar.show();
-            }
-        }
-    };
 }

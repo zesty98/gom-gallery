@@ -3,6 +3,9 @@ package com.gomdev.gallery;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by gomdev on 14. 12. 20..
  */
@@ -25,25 +28,34 @@ public class GridInfo {
     private int mScrollableHeight;
 
     private int mNumOfColumns;
+    private int mMinNumOfColumns;
+    private int mMaxNumOfColumns;
 
     private int mWidth = 0;
     private int mHeight = 0;
 
+    private List<GridInfoChangeListener> mListeners = new ArrayList<>();
 
     public GridInfo(Context context, BucketInfo bucketInfo) {
         mContext = context;
-
         mBucketInfo = bucketInfo;
+
+        mListeners.clear();
+
         mNumOfImages = bucketInfo.getNumOfImages();
         mNumOfDateInfos = bucketInfo.getNumOfDateInfos();
+        mSpacing = context.getResources().getDimensionPixelSize(R.dimen.gridview_spacing);
 
         GalleryContext galleryContext = GalleryContext.getInstance();
-        mColumnWidth = galleryContext.getColumnWidth();
-        mNumOfColumns = galleryContext.getNumOfColumns();
         mActionBarHeight = galleryContext.getActionBarHeight();
         mDateLabelHeight = mActionBarHeight;
 
-        mSpacing = context.getResources().getDimensionPixelSize(R.dimen.gridview_spacing);
+        SharedPreferences pref = context.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
+
+        mColumnWidth = pref.getInt(GalleryConfig.PREF_COLUMNS_WIDTH, 0);
+        mNumOfColumns = pref.getInt(GalleryConfig.PREF_NUM_OF_COLUMNS, 0);
+        mMinNumOfColumns = pref.getInt(GalleryConfig.PREF_MIN_NUM_OF_COLUMNS, 0);
+        mMaxNumOfColumns = pref.getInt(GalleryConfig.PREF_MAX_NUM_OF_COLUMNS, 0);
 
         setNumOfColumnsToDateInfo(mNumOfColumns);
 
@@ -57,24 +69,35 @@ public class GridInfo {
         }
     }
 
+    public void addListener(GridInfoChangeListener listener) {
+        mListeners.add(listener);
+    }
+
     public void setScreenSize(int width, int height) {
         mWidth = width;
         mHeight = height;
     }
 
     public void resize(int numOfColumns) {
-        mNumOfColumns = numOfColumns;
+        synchronized (GalleryContext.sLockObject) {
+            mNumOfColumns = numOfColumns;
 
-        setNumOfColumnsToDateInfo(mNumOfColumns);
+            setNumOfColumnsToDateInfo(mNumOfColumns);
 
-        mColumnWidth = calcColumnWidth();
-        mNumOfRows = calcNumOfRows();
-        mScrollableHeight = calcScrollableHeight();
+            mColumnWidth = calcColumnWidth();
+            mNumOfRows = calcNumOfRows();
+            mScrollableHeight = calcScrollableHeight();
+
+            int size = mListeners.size();
+            for (int i = 0; i < size; i++) {
+                mListeners.get(i).onGridInfoChanged();
+            }
+        }
 
         SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
         SharedPreferences.Editor editor = pref.edit();
         editor.putInt(GalleryConfig.PREF_COLUMNS_WIDTH, mColumnWidth);
-        editor.putInt(GalleryConfig.PREF_NUM_OF_COLUMNS, mNumOfRows);
+        editor.putInt(GalleryConfig.PREF_NUM_OF_COLUMNS, mNumOfColumns);
         editor.commit();
     }
 
@@ -119,6 +142,14 @@ public class GridInfo {
 
     public int getNumOfColumns() {
         return mNumOfColumns;
+    }
+
+    public int getMinNumOfColumns() {
+        return mMinNumOfColumns;
+    }
+
+    public int getMaxNumOfColumns() {
+        return mMaxNumOfColumns;
     }
 
     public int getNumOfImages() {

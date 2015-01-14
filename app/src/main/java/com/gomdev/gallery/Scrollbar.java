@@ -9,9 +9,7 @@ import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESObject;
 import com.gomdev.gles.GLESObjectListener;
 import com.gomdev.gles.GLESShader;
-import com.gomdev.gles.GLESShaderConstant;
 import com.gomdev.gles.GLESTransform;
-import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
 import java.nio.FloatBuffer;
@@ -165,6 +163,8 @@ public class Scrollbar implements GridInfoChangeListener {
         mNumOfColumns = gridInfo.getNumOfColumns();
         mColumnWidth = gridInfo.getColumnWidth();
         mActionBarHeight = gridInfo.getActionBarHeight();
+
+        gridInfo.addListener(this);
     }
 
     public GLESObject createObject(GLESNode parent) {
@@ -190,24 +190,8 @@ public class Scrollbar implements GridInfoChangeListener {
         mScrollbarObject.hide();
     }
 
-    public boolean createShader(int vsResID, int fsResID) {
-        mColorShader = new GLESShader(mContext);
-
-        String vsSource = GLESUtils.getStringFromReosurce(mContext, vsResID);
-        String fsSource = GLESUtils.getStringFromReosurce(mContext, fsResID);
-
-        mColorShader.setShaderSource(vsSource, fsSource);
-        if (mColorShader.load() == false) {
-            return false;
-        }
-
-        String attribName = GLESShaderConstant.ATTRIB_POSITION;
-        mColorShader.setPositionAttribIndex(attribName);
-
-        attribName = GLESShaderConstant.ATTRIB_COLOR;
-        mColorShader.setColorAttribIndex(attribName);
-
-        return true;
+    public void setShader(GLESShader shader) {
+        mColorShader = shader;
     }
 
     public void show() {

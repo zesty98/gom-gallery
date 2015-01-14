@@ -1,7 +1,6 @@
 package com.gomdev.gallery;
 
 import java.io.Serializable;
-import java.lang.ref.WeakReference;
 
 public class ImageInfo implements Serializable, GalleryInfo {
     static final String CLASS = "ImageInfo";

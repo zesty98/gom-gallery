@@ -11,8 +11,6 @@ import android.view.SurfaceHolder;
 import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESTransform;
 
-import java.util.ArrayList;
-
 /**
  * Created by gomdev on 14. 12. 18..
  */
@@ -29,10 +27,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     private GalleryScaleGestureDetector mGalleryScaleGestureDetector = null;
 
     private GridInfo mGridInfo = null;
-
-    private Object mLockObject;
-
-    private ArrayList<GridInfoChangeListener> mListeners = new ArrayList<>();
 
     public GallerySurfaceView(Context context) {
         super(context);
@@ -51,11 +45,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     }
 
     private void init() {
-        mLockObject = new Object();
-
-        mListeners.clear();
-
-        mRenderer = new ImageListRenderer(mContext, mLockObject);
+        mRenderer = new ImageListRenderer(mContext);
         mRenderer.setSurfaceView(this);
 
         setEGLContextClientVersion(2);
@@ -84,13 +74,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         super.surfaceChanged(holder, format, w, h);
         mGridInfo.setScreenSize(w, h);
         mGalleryGestureDetector.surfaceChanged(w, h);
-
-        int size = mListeners.size();
-        if (size > 0) {
-            for (int i = 0; i < size; i++) {
-                mListeners.get(i).onGridInfoChanged();
-            }
-        }
     }
 
     @Override
@@ -112,23 +95,11 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         boolean retVal = mGalleryScaleGestureDetector.onTouchEvent(event);
         retVal = mGalleryGestureDetector.onTouchEvent(event) || retVal;
         return retVal || super.onTouchEvent(event);
-
     }
 
-    public void setGridInfoChangeListener(GridInfoChangeListener listener) {
-        mListeners.add(listener);
-    }
-
-    public void resize(int centerImageIndex) {
-        synchronized (mLockObject) {
-            mGalleryGestureDetector.setCenterImageIndex(centerImageIndex);
-            int size = mListeners.size();
-            if (size > 0) {
-                for (int i = 0; i < size; i++) {
-                    mListeners.get(i).onGridInfoChanged();
-                }
-            }
-        }
+    public void resize(float focusX, float focusY) {
+        int imageIndex = getNearestIndex(focusX, focusY);
+        mGalleryGestureDetector.setCenterImageIndex(imageIndex);
     }
 
     @Override
@@ -151,9 +122,9 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     public void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
 
-        mGalleryGestureDetector.setGridInfo(mGridInfo);
-        mGalleryScaleGestureDetector.setGridInfo(mGridInfo);
-        mRenderer.setGridInfo(mGridInfo);
+        mGalleryGestureDetector.setGridInfo(gridInfo);
+        mGalleryScaleGestureDetector.setGridInfo(gridInfo);
+        mRenderer.setGridInfo(gridInfo);
     }
 
     public int getSelectedIndex(float x, float y) {

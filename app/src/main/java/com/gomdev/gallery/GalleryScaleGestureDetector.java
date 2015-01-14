@@ -27,15 +27,16 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
         mSurfaceView = surfaceView;
 
         mScaleGestureDetector = new ScaleGestureDetector(context, mScaleGestureListener);
-        mSurfaceView.setGridInfoChangeListener(this);
     }
 
     public void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
 
-        mNumOfColumns = GalleryContext.getInstance().getNumOfColumns();
-        mMinNumOfColumns = GalleryConfig.DEFAULT_NUM_OF_COLUMNS;
-        mMaxNumOfColumns = 3 * mMinNumOfColumns;
+        mNumOfColumns = gridInfo.getNumOfColumns();
+        mMinNumOfColumns = gridInfo.getMinNumOfColumns();
+        mMaxNumOfColumns = gridInfo.getMaxNumOfColumns();
+
+        mGridInfo.addListener(this);
     }
 
     public boolean onTouchEvent(MotionEvent event) {
@@ -71,7 +72,7 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
             if (absDragDistance > mDragDistance) {
                 mLastSpan = span;
 
-                int numOfColumns = mGridInfo.getNumOfColumns();
+                int numOfColumns = mNumOfColumns;
                 if (dragDistance > 0) {
                     numOfColumns--;
                 } else {
@@ -83,8 +84,7 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
 
                 if (numOfColumns != mNumOfColumns) {
                     mGridInfo.resize(numOfColumns);
-                    int imageIndex = mSurfaceView.getNearestIndex(focusX, focusY);
-                    mSurfaceView.resize(imageIndex);
+                    mSurfaceView.resize(focusX, focusY);
                 }
             }
 

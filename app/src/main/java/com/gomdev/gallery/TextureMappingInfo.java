@@ -1,7 +1,5 @@
 package com.gomdev.gallery;
 
-import com.gomdev.gles.GLESObject;
-
 /**
  * Created by gomdev on 14. 12. 23..
  */

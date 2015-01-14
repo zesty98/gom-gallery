@@ -1,6 +1,7 @@
 package com.gomdev.gallery;
 
 public class GalleryContext {
+    static final Object sLockObject = new Object();
     private static GalleryContext sGalleryContext = new GalleryContext();
 
     private int mWidth;

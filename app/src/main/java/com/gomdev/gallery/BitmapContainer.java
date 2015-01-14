@@ -7,5 +7,6 @@ import android.graphics.drawable.BitmapDrawable;
  */
 public interface BitmapContainer {
     public void setBitmapDrawable(BitmapDrawable drawable);
+
     public BitmapDrawable getBitmapDrawable();
 }

@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * Created by gomdev on 15. 1. 13..
  */
-public class ImageObjects implements ImageLoadingListener {
+public class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     static final String CLASS = "ImageObjects";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -175,9 +175,10 @@ public class ImageObjects implements ImageLoadingListener {
         }
     }
 
-    public void onGridInfoChanged(GridInfo gridInfo) {
-        mColumnWidth = gridInfo.getColumnWidth();
-        mNumOfColumns = gridInfo.getNumOfColumns();
+    @Override
+    public void onGridInfoChanged() {
+        mColumnWidth = mGridInfo.getColumnWidth();
+        mNumOfColumns = mGridInfo.getNumOfColumns();
 
         changeImageObjectPosition();
     }
@@ -277,6 +278,8 @@ public class ImageObjects implements ImageLoadingListener {
         mNumOfImages = mGridInfo.getNumOfImages();
         mNumOfDateInfos = mGridInfo.getNumOfDateInfos();
         mDateLabelHeight = mGridInfo.getDateLabelHeight();
+
+        mGridInfo.addListener(this);
     }
 
     public void setShader(GLESShader shader) {

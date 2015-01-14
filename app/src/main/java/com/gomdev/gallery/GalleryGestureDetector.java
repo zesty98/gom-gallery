@@ -73,7 +73,6 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         mSurfaceView = surfaceView;
 
         mGestureDetector = new GestureDetectorCompat(context, mGestureListener);
-        mSurfaceView.setGridInfoChangeListener(this);
 
         mScroller = new OverScroller(context);
 
@@ -94,6 +93,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         mDateLabelHeight = gridInfo.getDateLabelHeight();
         int columnWidth = GalleryContext.getInstance().getColumnWidth();
         mMaxDistance = (columnWidth + mGridInfo.getSpacing()) * 10f;
+
+        gridInfo.addListener(this);
     }
 
     public void surfaceChanged(int width, int height) {
@@ -121,6 +122,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             // OpenGL ES coordiante.
             mCurrentViewport = new RectF(left, bottom, right, top);
         }
+
+        adjustViewport();
     }
 
     @Override
@@ -133,6 +136,10 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         mSurfaceBufferTop = mScrollableHeight * 0.5f;
         mSurfaceBufferBottom = -mSurfaceBufferTop;
 
+        adjustViewport();
+    }
+
+    private void adjustViewport() {
         float distFromTop = getDistanceOfSelectedImage(mCenterImageIndex) - mHeight * 0.5f;
 
         float left = mSurfaceBufferLeft;
@@ -173,7 +180,6 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     public boolean onTouchEvent(MotionEvent event) {
         return mGestureDetector.onTouchEvent(event);
     }
-
 
     public void update() {
         float currVelocity = mScroller.getCurrVelocity();

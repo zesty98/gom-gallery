@@ -10,7 +10,6 @@ public class ImageListActivity extends Activity {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private GallerySurfaceView mSurfaceView = null;
-
     private GridInfo mGridInfo = null;
 
     @Override
@@ -64,16 +63,17 @@ public class ImageListActivity extends Activity {
         int numOfColumns = pref.getInt(GalleryConfig.PREF_NUM_OF_COLUMNS, 0);
         int columnWidth = pref.getInt(GalleryConfig.PREF_COLUMNS_WIDTH, 0);
         if (numOfColumns == 0 || columnWidth == 0) {
-            int spacing = getResources().getDimensionPixelSize(
-                    R.dimen.gridview_spacing);
-            columnWidth = getResources().getDimensionPixelSize(R.dimen.gridview_column_width);
-            numOfColumns = width / (columnWidth + spacing);
+            numOfColumns = galleryContext.getNumOfColumns();
+            columnWidth = galleryContext.getColumnWidth();
 
-            columnWidth = (int) ((width - spacing * (numOfColumns + 1)) / numOfColumns);
+            SharedPreferences.Editor editor = pref.edit();
+            editor.putInt(GalleryConfig.PREF_COLUMNS_WIDTH, columnWidth);
+            editor.putInt(GalleryConfig.PREF_NUM_OF_COLUMNS, numOfColumns);
+            editor.putInt(GalleryConfig.PREF_MIN_NUM_OF_COLUMNS, numOfColumns);
+            editor.putInt(GalleryConfig.PREF_MAX_NUM_OF_COLUMNS, numOfColumns * 3);
+            editor.commit();
         }
-        galleryContext.setNumOfColumns(numOfColumns);
-        galleryContext.setColumnWidth(columnWidth);
-        galleryContext.setScreenSize(width, height);
+
     }
 
     @Override
