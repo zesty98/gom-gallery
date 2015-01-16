@@ -133,4 +133,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     public int getNearestIndex(float x, float y) {
         return mObjectManager.getNearestIndex(x, y);
     }
+
+    public GalleryObject getObjectByIndex(int index) {
+        return mObjectManager.getObjectByIndex(index);
+    }
 }

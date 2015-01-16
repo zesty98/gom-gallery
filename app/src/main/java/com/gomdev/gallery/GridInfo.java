@@ -24,6 +24,7 @@ public class GridInfo {
     private final int mNumOfDateInfos;
 
     private int mColumnWidth;
+    private float mColumnWidthOnAnimation;
     private int mNumOfRows;
     private int mScrollableHeight;
 
@@ -166,5 +167,13 @@ public class GridInfo {
 
     public int getScrollableHeight() {
         return mScrollableHeight;
+    }
+
+    public void setColumnWidthOnAnimation(float columnWidth) {
+        mColumnWidthOnAnimation = columnWidth;
+    }
+
+    public float getColumnWidthOnAnimation() {
+        return mColumnWidthOnAnimation;
     }
 }

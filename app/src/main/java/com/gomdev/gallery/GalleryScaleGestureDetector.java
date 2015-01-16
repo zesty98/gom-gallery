@@ -57,6 +57,11 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
         public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
             mLastSpan = scaleGestureDetector.getCurrentSpan();
             mDragDistance = mContext.getResources().getDimensionPixelSize(R.dimen.drag_distance);
+
+            float focusX = scaleGestureDetector.getFocusX();
+            float focusY = scaleGestureDetector.getFocusY();
+
+            mSurfaceView.onScaleBegin(focusX, focusY);
             return true;
         }
 
@@ -83,8 +88,9 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
                 numOfColumns = Math.min(numOfColumns, mMaxNumOfColumns);
 
                 if (numOfColumns != mNumOfColumns) {
-                    mGridInfo.resize(numOfColumns);
                     mSurfaceView.resize(focusX, focusY);
+                    mGridInfo.resize(numOfColumns);
+//                    mSurfaceView.resize(focusX, focusY);
                 }
             }
 
@@ -93,6 +99,7 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
 
         @Override
         public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
+            mSurfaceView.onScaleEnd();
         }
     };
 }

@@ -6,13 +6,22 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
+import android.util.Log;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 
+import com.gomdev.gles.GLESAnimator;
+import com.gomdev.gles.GLESAnimatorCallback;
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
 import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESUtils;
+import com.gomdev.gles.GLESVector3;
 import com.gomdev.gles.GLESVertexInfo;
 
 import java.nio.FloatBuffer;
@@ -57,12 +66,15 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
     private List<TextureMappingInfo> mTextureMappingInfos = new ArrayList<>();
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
 
+    private List<GLESAnimator> mAnimators = new ArrayList<>();
+    private Interpolator mInterpolator = new LinearInterpolator();
 
     public DateLabelObjects(Context context) {
         mContext = context;
         mReusableBitmaps = ReusableBitmaps.getInstance();
 
         mTextureMappingInfos.clear();
+        mAnimators.clear();
     }
 
     public void clear() {
@@ -72,13 +84,28 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
 
     // Rendering
 
+    public void update() {
+        int requestRenderCount = 0;
+
+        int size = mAnimators.size();
+        for (int i = 0; i < size; i++) {
+            if (mAnimators.get(i).doAnimation() == true) {
+                requestRenderCount++;
+            }
+        }
+
+        if (requestRenderCount > 0) {
+            mSurfaceView.requestRender();
+        }
+    }
+
     // this function should be called on GLThread
     public void updateTexture() {
         GalleryTexture texture = mWaitingTextures.poll();
 
         if (texture != null) {
             TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(texture.getPosition());
-            final GalleryObject object = (GalleryObject) textureMappingInfo.getObject();
+            final GalleryObject object = textureMappingInfo.getObject();
 
             final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
             texture.load(bitmap);
@@ -161,6 +188,7 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
             float height = mDateLabelHeight;
 
             mObjects[i].setLeftTop(left, top);
+            mObjects[i].setSize(width, height);
 
             float[] vertex = GLESUtils.makePositionCoord(left, top, width, height);
 
@@ -182,7 +210,21 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
     public void onGridInfoChanged() {
         mColumnWidth = mGridInfo.getColumnWidth();
 
-        changeDateLabelObjectPosition();
+//        changeDateLabelObjectPosition();
+
+        int size = mAnimators.size();
+        for (int i = 0; i < size; i++) {
+            mAnimators.get(i).cancel();
+        }
+
+        mAnimators.clear();
+
+        setAnimationInfo();
+
+        size = mAnimators.size();
+        for (int i = 0; i < size; i++) {
+            mAnimators.get(i).start();
+        }
     }
 
     private void changeDateLabelObjectPosition() {
@@ -218,6 +260,41 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
         }
     }
 
+    private void setAnimationInfo() {
+        float yOffset = mHeight * 0.5f - mActionBarHeight;
+        for (int i = 0; i < mNumOfDateInfos; i++) {
+
+            float left = mSpacing - mWidth * 0.5f;
+            float top = yOffset;
+
+            GalleryObject object = mObjects[i];
+
+            float prevLeft = object.getLeft();
+            float prevTop = object.getTop();
+
+            DateLabelAnimatorCallback cb = new DateLabelAnimatorCallback(mObjects[i]);
+            GLESAnimator animator = new GLESAnimator(cb);
+
+            animator.setDuration(0L, GalleryConfig.ANIMATION_DURATION);
+
+            GLESVector3 from = new GLESVector3(prevLeft, prevTop, 0);
+            GLESVector3 to = new GLESVector3(left, top, 0);
+            animator.setValues(from, to);
+            animator.setInterpolator(mInterpolator);
+
+            if (i == (mNumOfDateInfos - 1)) {
+                Log.d(TAG, "setAnimationInfo() from=" + from + " to=" + to);
+            }
+
+            mAnimators.add(animator);
+
+            yOffset -= (mDateLabelHeight + mSpacing);
+
+            DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(i);
+            yOffset -= (dateLabelInfo.getNumOfRows() * (mColumnWidth + mSpacing));
+        }
+    }
+
     // onSurfaceCreated
 
     public void createObjects(GLESNode parentNode) {
@@ -229,6 +306,7 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
             mObjects[i].setGLState(mGLState);
             mObjects[i].setShader(mTextureShader);
             mObjects[i].setTexture(mDummyTexture);
+            mObjects[i].setPosition(i);
 
             GLESVertexInfo vertexInfo = new GLESVertexInfo();
             vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
@@ -297,6 +375,58 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
             object.setTexture(mDummyTexture);
             texture.setBitmapDrawable(asyncDrawable);
             task.execute(dateLableInfo);
+        }
+    }
+
+    class DateLabelAnimatorCallback implements GLESAnimatorCallback {
+
+        private final GalleryObject mObject;
+
+        public DateLabelAnimatorCallback(GalleryObject object) {
+            mObject = object;
+        }
+
+        @Override
+        public void onAnimation(GLESVector3 current) {
+            GLESVertexInfo vertexInfo = mObject.getVertexInfo();
+            GLESShader shader = mObject.getShader();
+            float width = mObject.getWidth();
+            float height = mObject.getHeight();
+
+            FloatBuffer position = (FloatBuffer) vertexInfo.getBuffer(shader.getPositionAttribIndex());
+
+            float left = current.mX;
+            float right = left + width;
+            float top = current.mY;
+            float bottom = top - height;
+
+            position.put(0, left);
+            position.put(1, bottom);
+
+            position.put(3, right);
+            position.put(4, bottom);
+
+            position.put(6, left);
+            position.put(7, top);
+
+            position.put(9, right);
+            position.put(10, top);
+
+            mObject.setLeftTop(left, top);
+
+            if (mObject.getPosition() == (mNumOfDateInfos - 1)) {
+                Log.d(TAG, "onAnimation() current=" + current);
+            }
+        }
+
+        @Override
+        public void onCancel() {
+
+        }
+
+        @Override
+        public void onFinished() {
+
         }
     }
 

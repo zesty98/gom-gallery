@@ -1,7 +1,11 @@
 package com.gomdev.gallery;
 
+import android.view.animation.Interpolator;
+
+import com.gomdev.gles.GLESAnimator;
 import com.gomdev.gles.GLESObject;
 import com.gomdev.gles.GLESTexture;
+import com.gomdev.gles.GLESVector3;
 
 /**
  * Created by gomdev on 14. 12. 18..
@@ -11,9 +15,13 @@ public class GalleryObject extends GLESObject {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private int mPosition = -1;
-    private float mLeft = 0;
-    private float mTop = 0;
+    protected int mPosition = -1;
+
+    protected float mWidth = 0;
+    protected float mHeight = 0;
+
+    protected float mLeft = 0f;
+    protected float mTop = 0f;
 
     public GalleryObject(String name) {
         super(name);
@@ -49,5 +57,18 @@ public class GalleryObject extends GLESObject {
 
     public float getTop() {
         return mTop;
+    }
+
+    public void setSize(float width, float height) {
+        mWidth = width;
+        mHeight = height;
+    }
+
+    public float getWidth() {
+        return mWidth;
+    }
+
+    public float getHeight() {
+        return mHeight;
     }
 }

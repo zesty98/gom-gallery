@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.opengl.GLES20;
+import android.util.Log;
 
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
@@ -80,6 +81,10 @@ public class ObjectManager implements GridInfoChangeListener {
     // rendering
 
     public void update() {
+
+        mDateLabelObjects.update();
+        mImageObjects.update();
+
         mRenderer.updateScene(mSM);
 
         float translateY = getTranslateY();
@@ -233,8 +238,9 @@ public class ObjectManager implements GridInfoChangeListener {
         mColumnWidth = mGridInfo.getColumnWidth();
         mNumOfColumns = mGridInfo.getNumOfColumns();
 
-        mDateLabelObjects.setGridInfo(mGridInfo);
+
         mImageObjects.setGridInfo(mGridInfo);
+        mDateLabelObjects.setGridInfo(mGridInfo);
         mScrollbar.setGridInfo(gridInfo);
 
         gridInfo.addListener(this);
@@ -282,7 +288,7 @@ public class ObjectManager implements GridInfoChangeListener {
         int lastImageIndex = dateLabelInfo.getLastImagePosition();
 
         if (index > lastImageIndex) {
-            return (index - 1);
+            return lastImageIndex;
         }
 
         return index;
@@ -314,6 +320,10 @@ public class ObjectManager implements GridInfoChangeListener {
         }
 
         return selectedDateLabelIndex;
+    }
+
+    public GalleryObject getObjectByIndex(int index) {
+        return mImageObjects.getObject(index);
     }
 
     @Override
