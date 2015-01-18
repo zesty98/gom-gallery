@@ -93,50 +93,18 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         boolean retVal = mGalleryScaleGestureDetector.onTouchEvent(event);
-        if (mIsOnAnimation == false) {
-            retVal = mGalleryGestureDetector.onTouchEvent(event) || retVal;
-        }
+        retVal = mGalleryGestureDetector.onTouchEvent(event) || retVal;
         return retVal || super.onTouchEvent(event);
     }
 
-    private GalleryObject mCenterObject = null;
-    private float mFocusX = 0f;
-    private float mFocusY = 0f;
-    private boolean mIsOnAnimation = false;
-
     public void resize(float focusX, float focusY) {
-        mFocusX = focusX;
-        mFocusY = focusY;
-
         int imageIndex = getNearestIndex(focusX, focusY);
         mGalleryGestureDetector.setCenterImageIndex(imageIndex);
-        mCenterObject = mRenderer.getObjectByIndex(imageIndex);
-
-        mGalleryGestureDetector.adjustViewport(mCenterObject.getTop() + mFocusY);
-
-        mIsOnAnimation = true;
-    }
-
-    public void onScaleBegin(float focusX, float focusY) {
-    }
-
-    public void onScaleEnd() {
-
-    }
-
-    public void finishAnimation() {
-        mIsOnAnimation = false;
     }
 
     @Override
     public void update(final GLESNode node) {
-
-
         mGalleryGestureDetector.update();
-
-        if (mCenterObject != null && mIsOnAnimation == true) {
-            mGalleryGestureDetector.adjustViewport(mCenterObject.getTop() + mFocusY);
-        }
 
         GLESTransform transform = node.getTransform();
         transform.setIdentity();

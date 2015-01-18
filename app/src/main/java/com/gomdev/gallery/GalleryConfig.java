@@ -18,7 +18,6 @@ public class GalleryConfig {
     static final String PREF_IMAGE_INDEX = "image_index";
 
     static final int DEFAULT_NUM_OF_COLUMNS = 3;
-    static final int ANIMATION_DURATION = 3000;
 
     static boolean sUseGLES = true;
 }
