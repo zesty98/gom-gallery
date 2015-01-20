@@ -1,6 +1,8 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -131,15 +133,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
     @Override
     public void onGridInfoChanged() {
-//        mScrollableHeight = mGridInfo.getScrollableHeight();
         mColumnWidth = mGridInfo.getColumnWidth();
         mNumOfColumns = mGridInfo.getNumOfColumns();
-
-//        mSurfaceSizeBuffer.y = mScrollableHeight;
-//        mSurfaceBufferTop = mHeight * 0.5f;
-//        mSurfaceBufferBottom = mSurfaceBufferTop - mScrollableHeight;
-
-//        adjustViewport();
     }
 
     private void adjustViewport() {
@@ -199,7 +194,6 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
         calcRotationAngle();
     }
-
 
     private void calcRotationAngle() {
         if (mScroller.isFinished() == true) {
@@ -270,31 +264,31 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
-//            float x = e.getX();
-//            float y = e.getY();
-//
-//            int imageIndex = mSurfaceView.getSelectedIndex(x, y);
-//            if (imageIndex == -1) {
-//                return false;
-//            }
-//
-//            Intent intent = new Intent(mContext, com.gomdev.gallery.ImageViewActivity.class);
-//
-//            int bucketIndex = mGridInfo.getBucketInfo().getPosition();
-//            intent.putExtra(GalleryConfig.BUCKET_POSITION, bucketIndex);
-//            intent.putExtra(GalleryConfig.IMAGE_POSITION, imageIndex);
-//
-//            SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
-//            SharedPreferences.Editor editor = pref.edit();
-//
-//            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, bucketIndex);
-//            editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, imageIndex);
-//
-//            editor.commit();
-//
-//            mCenterImageIndex = imageIndex;
-//
-//            mContext.startActivity(intent);
+            float x = e.getX();
+            float y = e.getY();
+
+            int imageIndex = mSurfaceView.getSelectedIndex(x, y);
+            if (imageIndex == -1) {
+                return false;
+            }
+
+            Intent intent = new Intent(mContext, com.gomdev.gallery.ImageViewActivity.class);
+
+            int bucketIndex = mGridInfo.getBucketInfo().getPosition();
+            intent.putExtra(GalleryConfig.BUCKET_POSITION, bucketIndex);
+            intent.putExtra(GalleryConfig.IMAGE_POSITION, imageIndex);
+
+            SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
+            SharedPreferences.Editor editor = pref.edit();
+
+            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, bucketIndex);
+            editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, imageIndex);
+
+            editor.commit();
+
+            mCenterImageIndex = imageIndex;
+
+            mContext.startActivity(intent);
 
             return true;
         }
@@ -314,12 +308,12 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             }
 
             if (numOfColumns > mMaxNumOfColumns) {
-                numOfColumns = mMaxNumOfColumns;
+                numOfColumns = mMaxNumOfColumns - 1;
                 mToScaleDown = false;
             }
 
             if (numOfColumns < mMinNumOfColumns) {
-                numOfColumns = mMinNumOfColumns;
+                numOfColumns = mMinNumOfColumns + 1;
                 mToScaleDown = true;
             }
 

@@ -51,13 +51,14 @@ public class ImageListActivity extends Activity {
     }
 
     private void init() {
-        int width = getResources().getDisplayMetrics().widthPixels;
-        int height = getResources().getDisplayMetrics().heightPixels;
+        ImageManager imageManager = ImageManager.getInstance();
+        if (imageManager == null) {
+            imageManager.newInstance(this);
+
+            GalleryUtils.setDefaultInfo(this);
+        }
 
         GalleryContext galleryContext = GalleryContext.getInstance();
-
-        int actionBarHeight = GalleryUtils.getActionBarHeight(this);
-        galleryContext.setActionbarHeight(actionBarHeight);
 
         SharedPreferences pref = getSharedPreferences(GalleryConfig.PREF_NAME, 0);
         int numOfColumns = pref.getInt(GalleryConfig.PREF_NUM_OF_COLUMNS, 0);
@@ -73,7 +74,6 @@ public class ImageListActivity extends Activity {
             editor.putInt(GalleryConfig.PREF_MAX_NUM_OF_COLUMNS, numOfColumns * 3);
             editor.commit();
         }
-
     }
 
     @Override

@@ -73,12 +73,9 @@ public class ObjectManager implements GridInfoChangeListener {
         glState = new GLESGLState();
         glState.setCullFaceState(true);
         glState.setCullFace(GLES20.GL_BACK);
-//        glState.setDepthState(true);
-//        glState.setDepthFunc(GLES20.GL_LEQUAL);
         glState.setBlendState(true);
         glState.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
-        mImageObjects.setGLState(glState);
         mDateLabelObjects.setGLState(glState);
 
 

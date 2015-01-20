@@ -33,7 +33,11 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
         int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_POSITION, 0);
-        mBucketInfo = ImageManager.getInstance().getBucketInfo(bucketPosition);
+        ImageManager imageManager = ImageManager.getInstance();
+        if (imageManager == null) {
+            imageManager = ImageManager.newInstance(this);
+        }
+        mBucketInfo = imageManager.getBucketInfo(bucketPosition);
 
         mAdapter = new ImagePagerAdapter(getSupportFragmentManager(), mBucketInfo.getNumOfImages());
         mPager = (ViewPager) findViewById(R.id.pager);

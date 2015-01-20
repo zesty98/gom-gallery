@@ -1,6 +1,7 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.util.TypedValue;
 
 import com.gomdev.gles.GLESShader;
@@ -10,6 +11,12 @@ import com.gomdev.gles.GLESVertexInfo;
  * Created by gomdev on 14. 12. 27..
  */
 public class GalleryUtils {
+
+    // prevent to create instance
+    private GalleryUtils() {
+
+    }
+
     static int getActionBarHeight(Context context) {
         TypedValue tv = new TypedValue();
         if (context.getTheme().resolveAttribute(
@@ -22,6 +29,28 @@ public class GalleryUtils {
         }
 
         return 0;
+    }
+
+    static void setDefaultInfo(Context context) {
+        Resources res = context.getResources();
+
+        int width = res.getDisplayMetrics().widthPixels;
+        int height = res.getDisplayMetrics().heightPixels;
+
+        GalleryContext galleryContext = GalleryContext.getInstance();
+
+        int actionBarHeight = GalleryUtils.getActionBarHeight(context);
+        galleryContext.setActionbarHeight(actionBarHeight);
+
+        int spacing = res.getDimensionPixelSize(
+                R.dimen.gridview_spacing);
+        int columnWidth = res.getDimensionPixelSize(R.dimen.gridview_column_width);
+        int numOfColumns = width / (columnWidth + spacing);
+        galleryContext.setNumOfColumns(numOfColumns);
+
+        columnWidth = (int) ((width - spacing * (numOfColumns + 1)) / numOfColumns);
+
+        galleryContext.setColumnWidth(columnWidth);
     }
 
     static GLESVertexInfo createImageVertexInfo(GLESShader shader, float width, float height) {

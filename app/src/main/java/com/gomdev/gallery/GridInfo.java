@@ -36,7 +36,6 @@ public class GridInfo {
     private int mHeight = 0;
 
     private float mScale = 1f;
-    private float mScrollableHeightOnAnimation;
 
     private List<GridInfoChangeListener> mListeners = new ArrayList<>();
 
@@ -175,11 +174,6 @@ public class GridInfo {
 
     public int getScrollableHeight() {
         return mScrollableHeight;
-    }
-
-    public float getScrollableHeightOnAnimation(float scale) {
-        float scrollableHeight = mActionBarHeight + (mDefaultColumnWidth * scale + mSpacing) * mNumOfRows + (mDateLabelHeight + mSpacing) * mNumOfDateInfos + mSpacing;
-        return scrollableHeight;
     }
 
     public void setScale(float scale) {

@@ -26,24 +26,7 @@ public class MainActivity extends Activity {
     }
 
     private void init() {
-        int width = getResources().getDisplayMetrics().widthPixels;
-        int height = getResources().getDisplayMetrics().heightPixels;
-
-        GalleryContext galleryContext = GalleryContext.getInstance();
-
-        int actionBarHeight = GalleryUtils.getActionBarHeight(this);
-        galleryContext.setActionbarHeight(actionBarHeight);
-
-        int spacing = getResources().getDimensionPixelSize(
-                R.dimen.gridview_spacing);
-        int columnWidth = getResources().getDimensionPixelSize(R.dimen.gridview_column_width);
-        int numOfColumns = width / (columnWidth + spacing);
-        galleryContext.setNumOfColumns(numOfColumns);
-
-        columnWidth = (int) ((width - spacing * (numOfColumns + 1)) / numOfColumns);
-
-        galleryContext.setScreenSize(width, height);
-        galleryContext.setColumnWidth(columnWidth);
+        GalleryUtils.setDefaultInfo(this);
 
         ImageManager.newInstance(this);
 
@@ -53,7 +36,7 @@ public class MainActivity extends Activity {
                     this.getPackageName(), 0);
 
             if (packageInfo != null) {
-                galleryContext.setVersionCode(packageInfo.versionCode);
+                GalleryContext.getInstance().setVersionCode(packageInfo.versionCode);
             }
         } catch (NameNotFoundException e) {
             // TODO Auto-generated catch block

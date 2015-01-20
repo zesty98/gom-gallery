@@ -13,8 +13,8 @@ public class GalleryConfig {
     static final String PREF_MIN_NUM_OF_COLUMNS = "min_num_of_columns";
     static final String PREF_MAX_NUM_OF_COLUMNS = "max_num_of_columns";
     static final String PREF_COLUMNS_WIDTH = "columns_width";
+    static final String PREF_DEFAULT_COLUMNS_WIDTH = "default_columns_width";
     static final String PREF_BUCKET_INDEX = "bucket_index";
-    static final String PREF_DATE_LABEL_INDEX = "date_label_index";
     static final String PREF_IMAGE_INDEX = "image_index";
 
     static final int DEFAULT_NUM_OF_COLUMNS = 3;

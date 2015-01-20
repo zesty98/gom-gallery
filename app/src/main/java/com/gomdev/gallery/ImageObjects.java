@@ -105,7 +105,6 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         if (texture != null) {
             TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(texture.getPosition());
             final GalleryObject object = textureMappingInfo.getObject();
-
             final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
             texture.load(bitmap);
 
@@ -243,7 +242,6 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
                 float left = mSpacing + (j % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
                 float top = yOffset - ((j / mNumOfColumns) * (mColumnWidth + mSpacing));
                 float scale = (float) mColumnWidth / mDefaultColumnWidth;
-
 
                 float prevLeft = mObjects[index].getLeft();
                 float prevTop = mObjects[index].getTop();
