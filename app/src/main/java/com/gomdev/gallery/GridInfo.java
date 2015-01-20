@@ -24,6 +24,7 @@ public class GridInfo {
     private final int mNumOfDateInfos;
 
     private int mColumnWidth;
+    private int mDefaultColumnWidth;
     private int mNumOfRows;
     private int mScrollableHeight;
 
@@ -33,6 +34,9 @@ public class GridInfo {
 
     private int mWidth = 0;
     private int mHeight = 0;
+
+    private float mScale = 1f;
+    private float mScrollableHeightOnAnimation;
 
     private List<GridInfoChangeListener> mListeners = new ArrayList<>();
 
@@ -49,6 +53,7 @@ public class GridInfo {
         GalleryContext galleryContext = GalleryContext.getInstance();
         mActionBarHeight = galleryContext.getActionBarHeight();
         mDateLabelHeight = mActionBarHeight;
+        mDefaultColumnWidth = galleryContext.getColumnWidth();
 
         SharedPreferences pref = context.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
 
@@ -140,6 +145,10 @@ public class GridInfo {
         return mColumnWidth;
     }
 
+    public int getDefaultColumnWidth() {
+        return mDefaultColumnWidth;
+    }
+
     public int getNumOfColumns() {
         return mNumOfColumns;
     }
@@ -166,5 +175,18 @@ public class GridInfo {
 
     public int getScrollableHeight() {
         return mScrollableHeight;
+    }
+
+    public float getScrollableHeightOnAnimation(float scale) {
+        float scrollableHeight = mActionBarHeight + (mDefaultColumnWidth * scale + mSpacing) * mNumOfRows + (mDateLabelHeight + mSpacing) * mNumOfDateInfos + mSpacing;
+        return scrollableHeight;
+    }
+
+    public void setScale(float scale) {
+        mScale = scale;
+    }
+
+    public float getScale() {
+        return mScale;
     }
 }

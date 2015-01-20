@@ -43,11 +43,37 @@ public class GalleryObject extends GLESObject {
         mTop = y;
     }
 
+
     public float getLeft() {
         return mLeft;
     }
 
     public float getTop() {
         return mTop;
+    }
+
+    private float mTranslateX = 0f;
+    private float mTranslateY = 0f;
+    private float mScale = 1f;
+
+    public void setTranslate(float x, float y) {
+        mTranslateX = x;
+        mTranslateY = y;
+    }
+
+    public void setScale(float scale) {
+        mScale = scale;
+    }
+
+    public float getTranslateX() {
+        return mTranslateX;
+    }
+
+    public float getTranslateY() {
+        return mTranslateY;
+    }
+
+    public float getScale() {
+        return mScale;
     }
 }

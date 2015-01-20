@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.opengl.GLES20;
+import android.util.Log;
 
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
@@ -68,8 +69,19 @@ public class ObjectManager implements GridInfoChangeListener {
         glState.setCullFace(GLES20.GL_BACK);
         glState.setDepthState(false);
 
-        mDateLabelObjects.setGLState(glState);
         mImageObjects.setGLState(glState);
+
+        glState = new GLESGLState();
+        glState.setCullFaceState(true);
+        glState.setCullFace(GLES20.GL_BACK);
+//        glState.setDepthState(true);
+//        glState.setDepthFunc(GLES20.GL_LEQUAL);
+        glState.setBlendState(true);
+        glState.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+        mImageObjects.setGLState(glState);
+        mDateLabelObjects.setGLState(glState);
+
 
         mScrollbar = new Scrollbar(mContext);
         mScrollbar.setColor(0.3f, 0.3f, 0.3f, 0.7f);
@@ -80,6 +92,7 @@ public class ObjectManager implements GridInfoChangeListener {
     // rendering
 
     public void update() {
+
         mRenderer.updateScene(mSM);
 
         float translateY = getTranslateY();
@@ -89,6 +102,9 @@ public class ObjectManager implements GridInfoChangeListener {
         updateTexture();
 
         checkVisibility(translateY);
+
+        mImageObjects.update();
+        mDateLabelObjects.update();
     }
 
     private float getTranslateY() {
@@ -149,7 +165,12 @@ public class ObjectManager implements GridInfoChangeListener {
         }
 
         mImageObjects.setShader(textureShader);
-        mDateLabelObjects.setShader(textureShader);
+
+        GLESShader textureAlphaShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_alpha_20_fs);
+        if (textureAlphaShader == null) {
+            return false;
+        }
+        mDateLabelObjects.setShader(textureAlphaShader);
 
         GLESShader colorShader = createColorShader(R.raw.color_20_vs, R.raw.color_20_fs);
         if (colorShader == null) {
@@ -282,7 +303,7 @@ public class ObjectManager implements GridInfoChangeListener {
         int lastImageIndex = dateLabelInfo.getLastImagePosition();
 
         if (index > lastImageIndex) {
-            return (index - 1);
+            return lastImageIndex;
         }
 
         return index;
@@ -293,10 +314,16 @@ public class ObjectManager implements GridInfoChangeListener {
         float imageStartOffset = dateLabelObject.getTop() - mDateLabelHeight - mSpacing;
         float yDistFromDateLabel = imageStartOffset - yPos;
 
+        DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(selectedDateLabelIndex);
+
         int row = (int) (yDistFromDateLabel / (mColumnWidth + mSpacing));
         int column = (int) (x / (mColumnWidth + mSpacing));
+        int lastRowColumn = dateLabelInfo.getNumOfImages() % mNumOfColumns;
 
-        DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(selectedDateLabelIndex);
+        if (column > lastRowColumn) {
+            column = lastRowColumn;
+        }
+
         int firstImageIndex = dateLabelInfo.getFirstImagePosition();
 
         return mNumOfColumns * row + column + firstImageIndex;
@@ -316,6 +343,10 @@ public class ObjectManager implements GridInfoChangeListener {
         return selectedDateLabelIndex;
     }
 
+    public GalleryObject getImageObject(int index) {
+        return mImageObjects.getObject(index);
+    }
+
     @Override
     public void onGridInfoChanged() {
         mColumnWidth = mGridInfo.getColumnWidth();
@@ -324,6 +355,8 @@ public class ObjectManager implements GridInfoChangeListener {
         if (mIsSurfaceChanged == false) {
             return;
         }
+
+        mDateLabelObjects.hide();
     }
 
     private GLESNodeListener mImageNodeListener = new GLESNodeListener() {

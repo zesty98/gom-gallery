@@ -6,16 +6,22 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
+import android.opengl.GLES20;
 
+import com.gomdev.gles.GLESAnimator;
+import com.gomdev.gles.GLESAnimatorCallback;
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
 import com.gomdev.gles.GLESNode;
+import com.gomdev.gles.GLESObject;
+import com.gomdev.gles.GLESObjectListener;
 import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESTexture;
+import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
+import com.gomdev.gles.GLESVector3;
 import com.gomdev.gles.GLESVertexInfo;
 
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -57,6 +63,9 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
     private List<TextureMappingInfo> mTextureMappingInfos = new ArrayList<>();
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
 
+    private List<GLESAnimator> mAnimators = new ArrayList<GLESAnimator>();
+    private int mAnimationFinishCount = 0;
+    private float mAlpha = 1.0f;
 
     public DateLabelObjects(Context context) {
         mContext = context;
@@ -71,6 +80,21 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
     }
 
     // Rendering
+
+    public void update() {
+        int requestRenderCount = 0;
+
+        int size = mAnimators.size();
+        for (int i = 0; i < size; i++) {
+            if (mAnimators.get(i).doAnimation() == true) {
+                requestRenderCount++;
+            }
+        }
+
+        if (requestRenderCount > 0) {
+            mSurfaceView.requestRender();
+        }
+    }
 
     // this function should be called on GLThread
     public void updateTexture() {
@@ -162,7 +186,9 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
 
             mObjects[i].setLeftTop(left, top);
 
-            float[] vertex = GLESUtils.makePositionCoord(left, top, width, height);
+            mObjects[i].setTranslate(left - (-width * 0.5f), top - (height * 0.5f));
+
+            float[] vertex = GLESUtils.makePositionCoord(-width * 0.5f, height * 0.5f, width, height);
 
             GLESVertexInfo vertexInfo = mObjects[i].getVertexInfo();
             vertexInfo.setBuffer(mTextureShader.getPositionAttribIndex(), vertex, 3);
@@ -183,6 +209,21 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
         mColumnWidth = mGridInfo.getColumnWidth();
 
         changeDateLabelObjectPosition();
+
+        int size = mAnimators.size();
+        for (int i = 0; i < size; i++) {
+            mAnimators.get(i).cancel();
+        }
+
+        mAnimators.clear();
+
+        setupAnimations();
+
+        mAnimationFinishCount = 0;
+        size = mAnimators.size();
+        for (int i = 0; i < size; i++) {
+            mAnimators.get(i).start();
+        }
     }
 
     private void changeDateLabelObjectPosition() {
@@ -196,25 +237,26 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
 
             mObjects[i].setLeftTop(left, top);
 
-            GLESVertexInfo vertexInfo = mObjects[i].getVertexInfo();
-            FloatBuffer buffer = (FloatBuffer) vertexInfo.getBuffer(mTextureShader.getPositionAttribIndex());
-
-            buffer.put(0, left);
-            buffer.put(1, bottom);
-
-            buffer.put(3, right);
-            buffer.put(4, bottom);
-
-            buffer.put(6, left);
-            buffer.put(7, top);
-
-            buffer.put(9, right);
-            buffer.put(10, top);
+            mObjects[i].setTranslate(left - (-mWidth * 0.5f), top - (mDateLabelHeight * 0.5f));
 
             yOffset -= (mDateLabelHeight + mSpacing);
 
             DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(i);
             yOffset -= (dateLabelInfo.getNumOfRows() * (mColumnWidth + mSpacing));
+        }
+    }
+
+    private void setupAnimations() {
+        for (int i = 0; i < mNumOfDateInfos; i++) {
+
+            float from = 0f;
+            float to = 1f;
+
+            GLESAnimator animator = new GLESAnimator(new GalleryAnimatorCallback(mObjects[i]));
+            animator.setValues(from, to);
+            animator.setDuration(GalleryConfig.DATE_LABEL_ANIMATION_START_OFFSET, GalleryConfig.DATE_LABEL_ANIMATION_END_OFFSET);
+
+            mAnimators.add(animator);
         }
     }
 
@@ -229,6 +271,8 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
             mObjects[i].setGLState(mGLState);
             mObjects[i].setShader(mTextureShader);
             mObjects[i].setTexture(mDummyTexture);
+            mObjects[i].setListener(mObjectListener);
+            mObjects[i].setPosition(i);
 
             GLESVertexInfo vertexInfo = new GLESVertexInfo();
             vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
@@ -261,6 +305,9 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
 
     public void setShader(GLESShader shader) {
         mTextureShader = shader;
+
+        int location = mTextureShader.getUniformLocation("uAlpha");
+        GLES20.glUniform1f(location, 0.5f);
     }
 
     public void setGridInfo(GridInfo gridInfo) {
@@ -278,6 +325,10 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
 
     public void setDummyTexture(GLESTexture texture) {
         mDummyTexture = texture;
+    }
+
+    public void hide() {
+        mAlpha = 0f;
     }
 
     @Override
@@ -369,6 +420,57 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
             BitmapDrawable drawable = new BitmapDrawable(mContext.getResources(), bitmap);
 
             return drawable;
+        }
+    }
+
+    private void onAnimationFinished() {
+        mAnimationFinishCount++;
+
+        int size = mAnimators.size();
+        if (mAnimationFinishCount >= size) {
+            mSurfaceView.onAnimationFinished();
+            mAnimationFinishCount = 0;
+        }
+    }
+
+    private GLESObjectListener mObjectListener = new GLESObjectListener() {
+        @Override
+        public void update(GLESObject object) {
+            GalleryObject galleryObject = (GalleryObject) object;
+            GLESTransform transform = object.getTransform();
+            transform.setIdentity();
+            transform.setTranslate(galleryObject.getTranslateX(), galleryObject.getTranslateY(), 0f);
+        }
+
+        @Override
+        public void apply(GLESObject object) {
+            int location = mTextureShader.getUniformLocation("uAlpha");
+            GLES20.glUniform1f(location, mAlpha);
+        }
+    };
+
+
+    class GalleryAnimatorCallback implements GLESAnimatorCallback {
+        private final GalleryObject mObject;
+
+        GalleryAnimatorCallback(GalleryObject object) {
+            mObject = object;
+        }
+
+        @Override
+        public void onAnimation(GLESVector3 current) {
+            mAlpha = current.mX;
+        }
+
+
+        @Override
+        public void onCancel() {
+
+        }
+
+        @Override
+        public void onFinished() {
+            onAnimationFinished();
         }
     }
 }

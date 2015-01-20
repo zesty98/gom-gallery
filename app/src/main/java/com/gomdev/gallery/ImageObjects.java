@@ -3,16 +3,22 @@ package com.gomdev.gallery;
 import android.content.Context;
 import android.graphics.Bitmap;
 
+import com.gomdev.gles.GLESAnimator;
+import com.gomdev.gles.GLESAnimatorCallback;
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
 import com.gomdev.gles.GLESNode;
+import com.gomdev.gles.GLESObject;
+import com.gomdev.gles.GLESObjectListener;
 import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESTexture;
+import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
+import com.gomdev.gles.GLESVector3;
 import com.gomdev.gles.GLESVertexInfo;
 
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -31,7 +37,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     private GallerySurfaceView mSurfaceView = null;
     private ImageManager mImageManager = null;
 
-    private GalleryObject[] mImageObjects;
+    private GalleryObject[] mObjects;
 
     private GLESShader mTextureShader = null;
     private GLESGLState mGLState = null;
@@ -48,6 +54,8 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     private int mNumOfImages = 0;
     private int mNumOfDateInfos = 0;
     private int mColumnWidth = 0;
+    private int mPrevColumnWidth = 0;
+    private int mDefaultColumnWidth = 0;
     private int mActionBarHeight = 0;
     private int mDateLabelHeight = 0;
 
@@ -55,6 +63,11 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
     private ArrayList<TextureMappingInfo> mTextureMappingInfos = new ArrayList<>();
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
+
+    private List<GLESAnimator> mAnimators = new ArrayList<GLESAnimator>();
+    private int mAnimationFinishCount = 0;
+    private int mAnimationCancelCount = 0;
+    private float mScale = 1f;
 
     public ImageObjects(Context context) {
         mContext = context;
@@ -71,12 +84,27 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
     // rendering
 
+    public void update() {
+        int requestRenderCount = 0;
+
+        int size = mAnimators.size();
+        for (int i = 0; i < size; i++) {
+            if (mAnimators.get(i).doAnimation() == true) {
+                requestRenderCount++;
+            }
+        }
+
+        if (requestRenderCount > 0) {
+            mSurfaceView.requestRender();
+        }
+    }
+
     public void updateTexture() {
         GalleryTexture texture = mWaitingTextures.poll();
 
         if (texture != null) {
             TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(texture.getPosition());
-            final GalleryObject object = (GalleryObject) textureMappingInfo.getObject();
+            final GalleryObject object = textureMappingInfo.getObject();
 
             final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
             texture.load(bitmap);
@@ -94,7 +122,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         float viewportBottom = viewportTop - mHeight;
 
         for (int i = 0; i < mNumOfImages; i++) {
-            GalleryObject object = mImageObjects[i];
+            GalleryObject object = mObjects[i];
 
             float top = object.getTop();
             if ((top - mColumnWidth) < (viewportTop + mVisibilityPadding) &&
@@ -156,17 +184,20 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(i);
             int numOfImages = dateLabelInfo.getNumOfImages();
             for (int j = 0; j < numOfImages; j++) {
-                mImageObjects[imageIndex].setCamera(camera);
+                mObjects[imageIndex].setCamera(camera);
 
                 float left = mSpacing + (j % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
                 float top = yOffset - ((j / mNumOfColumns) * (mColumnWidth + mSpacing));
 
-                float[] vertex = GLESUtils.makePositionCoord(left, top, mColumnWidth, mColumnWidth);
+                mObjects[imageIndex].setTranslate(left - (-mColumnWidth * 0.5f), top - (mColumnWidth * 0.5f));
+                mObjects[imageIndex].setScale(mScale);
 
-                GLESVertexInfo vertexInfo = mImageObjects[imageIndex].getVertexInfo();
+                float[] vertex = GLESUtils.makePositionCoord(-mDefaultColumnWidth * 0.5f, mDefaultColumnWidth * 0.5f, mDefaultColumnWidth, mDefaultColumnWidth);
+
+                GLESVertexInfo vertexInfo = mObjects[imageIndex].getVertexInfo();
                 vertexInfo.setBuffer(mTextureShader.getPositionAttribIndex(), vertex, 3);
 
-                mImageObjects[imageIndex].setLeftTop(left, top);
+                mObjects[imageIndex].setLeftTop(left, top);
 
                 imageIndex++;
             }
@@ -177,10 +208,30 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
     @Override
     public void onGridInfoChanged() {
+        mPrevColumnWidth = mColumnWidth;
+
         mColumnWidth = mGridInfo.getColumnWidth();
         mNumOfColumns = mGridInfo.getNumOfColumns();
 
-        changeImageObjectPosition();
+        mScale = (float) mColumnWidth / mDefaultColumnWidth;
+
+//        changeImageObjectPosition();
+
+        int size = mAnimators.size();
+        for (int i = 0; i < size; i++) {
+            mAnimators.get(i).cancel();
+        }
+
+        mAnimationCancelCount = 0;
+        mAnimators.clear();
+
+        setupAnimations();
+
+        mAnimationFinishCount = 0;
+        size = mAnimators.size();
+        for (int i = 0; i < size; i++) {
+            mAnimators.get(i).start();
+        }
     }
 
     private void changeImageObjectPosition() {
@@ -192,26 +243,44 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             int numOfImages = dateLabelInfo.getNumOfImages();
             for (int j = 0; j < numOfImages; j++) {
                 float left = mSpacing + (j % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
-                float right = left + mColumnWidth;
                 float top = yOffset - ((j / mNumOfColumns) * (mColumnWidth + mSpacing));
-                float bottom = top - mColumnWidth;
 
-                mImageObjects[index].setLeftTop(left, top);
+                mObjects[index].setLeftTop(left, top);
 
-                GLESVertexInfo vertexInfo = mImageObjects[index].getVertexInfo();
-                FloatBuffer buffer = (FloatBuffer) vertexInfo.getBuffer(mTextureShader.getPositionAttribIndex());
+                mObjects[index].setTranslate(left - (-mColumnWidth * 0.5f), top - (mColumnWidth * 0.5f));
 
-                buffer.put(0, left);
-                buffer.put(1, bottom);
+                index++;
+            }
 
-                buffer.put(3, right);
-                buffer.put(4, bottom);
+            yOffset -= (dateLabelInfo.getNumOfRows() * (mColumnWidth + mSpacing));
+        }
+    }
 
-                buffer.put(6, left);
-                buffer.put(7, top);
+    private void setupAnimations() {
+        int index = 0;
+        float yOffset = mHeight * 0.5f - mActionBarHeight;
+        for (int i = 0; i < mNumOfDateInfos; i++) {
+            yOffset -= (mDateLabelHeight + mSpacing);
+            DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(i);
+            int numOfImages = dateLabelInfo.getNumOfImages();
+            for (int j = 0; j < numOfImages; j++) {
+                float left = mSpacing + (j % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
+                float top = yOffset - ((j / mNumOfColumns) * (mColumnWidth + mSpacing));
+                float scale = (float) mColumnWidth / mDefaultColumnWidth;
 
-                buffer.put(9, right);
-                buffer.put(10, top);
+
+                float prevLeft = mObjects[index].getLeft();
+                float prevTop = mObjects[index].getTop();
+                float prevScale = (float) mPrevColumnWidth / mDefaultColumnWidth;
+
+                GLESVector3 from = new GLESVector3(prevLeft, prevTop, prevScale);
+                GLESVector3 to = new GLESVector3(left, top, scale);
+
+                GLESAnimator animator = new GLESAnimator(new GalleryAnimatorCallback(mObjects[index]));
+                animator.setValues(from, to);
+                animator.setDuration(GalleryConfig.IMAGE_ANIMATION_START_OFFSET, GalleryConfig.IMAGE_ANIMATION_END_OFFSET);
+
+                mAnimators.add(animator);
 
                 index++;
             }
@@ -227,24 +296,26 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
         mWaitingTextures.clear();
         mTextureMappingInfos.clear();
+        mAnimators.clear();
 
-        mImageObjects = new GalleryObject[mNumOfImages];
+        mObjects = new GalleryObject[mNumOfImages];
 
         for (int i = 0; i < mNumOfImages; i++) {
-            mImageObjects[i] = new GalleryObject("image" + i);
-            parentNode.addChild(mImageObjects[i]);
-            mImageObjects[i].setGLState(mGLState);
-            mImageObjects[i].setShader(mTextureShader);
-
-            mImageObjects[i].setTexture(mDummyTexture);
+            mObjects[i] = new GalleryObject("image" + i);
+            parentNode.addChild(mObjects[i]);
+            mObjects[i].setGLState(mGLState);
+            mObjects[i].setShader(mTextureShader);
+            mObjects[i].setTexture(mDummyTexture);
+            mObjects[i].setListener(mObjectListener);
+            mObjects[i].setPosition(i);
 
             GLESVertexInfo vertexInfo = new GLESVertexInfo();
             vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
             vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
-            mImageObjects[i].setVertexInfo(vertexInfo, false, false);
+            mObjects[i].setVertexInfo(vertexInfo, false, false);
 
             ImageInfo imageInfo = mBucketInfo.get(i);
-            TextureMappingInfo textureMappingInfo = new TextureMappingInfo(mImageObjects[i], imageInfo);
+            TextureMappingInfo textureMappingInfo = new TextureMappingInfo(mObjects[i], imageInfo);
             mTextureMappingInfos.add(textureMappingInfo);
         }
     }
@@ -273,11 +344,15 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         mSpacing = gridInfo.getSpacing();
         mNumOfColumns = gridInfo.getNumOfColumns();
         mColumnWidth = gridInfo.getColumnWidth();
+        mPrevColumnWidth = mColumnWidth;
+        mDefaultColumnWidth = gridInfo.getDefaultColumnWidth();
         mActionBarHeight = gridInfo.getActionBarHeight();
         mBucketInfo = gridInfo.getBucketInfo();
         mNumOfImages = mGridInfo.getNumOfImages();
         mNumOfDateInfos = mGridInfo.getNumOfDateInfos();
         mDateLabelHeight = mGridInfo.getDateLabelHeight();
+
+        mScale = (float) mColumnWidth / mDefaultColumnWidth;
 
         mGridInfo.addListener(this);
     }
@@ -292,6 +367,10 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
     public void setDummyTexture(GLESTexture texture) {
         mDummyTexture = texture;
+    }
+
+    public GalleryObject getObject(int index) {
+        return mObjects[index];
     }
 
     @Override
@@ -312,5 +391,77 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
         mWaitingTextures.add(texture);
         mSurfaceView.requestRender();
+    }
+
+    private void onAnimationFinished() {
+        mAnimationFinishCount++;
+
+        int size = mAnimators.size();
+        if (mAnimationFinishCount >= size) {
+            mSurfaceView.onAnimationFinished();
+            mAnimationFinishCount = 0;
+        }
+    }
+
+    private void onAnimationCanceled() {
+        mAnimationCancelCount++;
+
+        int size = mAnimators.size();
+        if (mAnimationCancelCount >= size) {
+//            mSurfaceView.onAnimationFinished();
+            mAnimationCancelCount = 0;
+        }
+    }
+
+    private GLESObjectListener mObjectListener = new GLESObjectListener() {
+        @Override
+        public void update(GLESObject object) {
+            GalleryObject galleryObject = (GalleryObject) object;
+            GLESTransform transform = object.getTransform();
+            transform.setIdentity();
+            transform.setTranslate(
+                    galleryObject.getTranslateX(),
+                    galleryObject.getTranslateY(),
+                    0f);
+
+            transform.scale(galleryObject.getScale());
+        }
+
+        @Override
+        public void apply(GLESObject object) {
+
+        }
+    };
+
+    class GalleryAnimatorCallback implements GLESAnimatorCallback {
+        private final GalleryObject mObject;
+
+        GalleryAnimatorCallback(GalleryObject object) {
+            mObject = object;
+        }
+
+        @Override
+        public void onAnimation(GLESVector3 current) {
+            mObject.setLeftTop(current.mX, current.mY);
+
+            mScale = current.mZ;
+
+            mGridInfo.setScale(mScale);
+
+            float translateX = current.mX - (-mDefaultColumnWidth * mScale * 0.5f);
+            float translateY = current.mY - (mDefaultColumnWidth * mScale * 0.5f);
+            mObject.setTranslate(translateX, translateY);
+            mObject.setScale(current.mZ);
+        }
+
+        @Override
+        public void onCancel() {
+            onAnimationCanceled();
+        }
+
+        @Override
+        public void onFinished() {
+            onAnimationFinished();
+        }
     }
 }

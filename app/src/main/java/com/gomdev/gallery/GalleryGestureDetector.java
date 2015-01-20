@@ -44,8 +44,10 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     private int mActionBarHeight = 0;
     private int mDateLabelHeight = 0;
     private int mColumnWidth = 0;
-    private int mNumOfColumns = 0;
     private int mSpacing = 0;
+    private int mNumOfColumns = 0;
+    private int mMinNumOfColumns;
+    private int mMaxNumOfColumns;
 
     private float mSurfaceBufferTop = 0f;
     private float mSurfaceBufferBottom = 0f;
@@ -94,6 +96,10 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         int columnWidth = GalleryContext.getInstance().getColumnWidth();
         mMaxDistance = (columnWidth + mGridInfo.getSpacing()) * 10f;
 
+        mNumOfColumns = gridInfo.getNumOfColumns();
+        mMinNumOfColumns = gridInfo.getMinNumOfColumns();
+        mMaxNumOfColumns = gridInfo.getMaxNumOfColumns();
+
         gridInfo.addListener(this);
     }
 
@@ -110,8 +116,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
         float surfaceBufferRight = width * 0.5f;
         mSurfaceBufferLeft = -surfaceBufferRight;
-        mSurfaceBufferTop = mScrollableHeight * 0.5f;
-        mSurfaceBufferBottom = -mSurfaceBufferTop;
+        mSurfaceBufferTop = height * 0.5f;
+        mSurfaceBufferBottom = mSurfaceBufferTop - mScrollableHeight;
 
         if (mCurrentViewport == null) {
             float right = width * 0.5f;
@@ -128,15 +134,15 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
     @Override
     public void onGridInfoChanged() {
-        mScrollableHeight = mGridInfo.getScrollableHeight();
+//        mScrollableHeight = mGridInfo.getScrollableHeight();
         mColumnWidth = mGridInfo.getColumnWidth();
         mNumOfColumns = mGridInfo.getNumOfColumns();
 
-        mSurfaceSizeBuffer.y = mScrollableHeight;
-        mSurfaceBufferTop = mScrollableHeight * 0.5f;
-        mSurfaceBufferBottom = -mSurfaceBufferTop;
+//        mSurfaceSizeBuffer.y = mScrollableHeight;
+//        mSurfaceBufferTop = mHeight * 0.5f;
+//        mSurfaceBufferBottom = mSurfaceBufferTop - mScrollableHeight;
 
-        adjustViewport();
+//        adjustViewport();
     }
 
     private void adjustViewport() {
@@ -145,10 +151,17 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         float left = mSurfaceBufferLeft;
         float top = mSurfaceBufferTop - distFromTop;
 
-        top = Math.min(top, mSurfaceBufferTop);
-        top = Math.max(top, mSurfaceBufferBottom + mCurrentViewport.height());
+        setViewportBottomLeft(left, top, true);
+    }
 
-        setViewportBottomLeft(left, top);
+    public void adjustViewport(float top, float bottom) {
+        float left = mSurfaceBufferLeft;
+
+        mSurfaceBufferBottom = bottom;
+        mScrollableHeight = (int) (mHeight * 0.5f - bottom);
+        mSurfaceSizeBuffer.y = mScrollableHeight;
+
+        setViewportBottomLeft(left, top, true);
     }
 
     private float getDistanceOfSelectedImage(int index) {
@@ -260,31 +273,65 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
+//            float x = e.getX();
+//            float y = e.getY();
+//
+//            int imageIndex = mSurfaceView.getSelectedIndex(x, y);
+//            if (imageIndex == -1) {
+//                return false;
+//            }
+//
+//            Intent intent = new Intent(mContext, com.gomdev.gallery.ImageViewActivity.class);
+//
+//            int bucketIndex = mGridInfo.getBucketInfo().getPosition();
+//            intent.putExtra(GalleryConfig.BUCKET_POSITION, bucketIndex);
+//            intent.putExtra(GalleryConfig.IMAGE_POSITION, imageIndex);
+//
+//            SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
+//            SharedPreferences.Editor editor = pref.edit();
+//
+//            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, bucketIndex);
+//            editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, imageIndex);
+//
+//            editor.commit();
+//
+//            mCenterImageIndex = imageIndex;
+//
+//            mContext.startActivity(intent);
+
+            return true;
+        }
+
+        private boolean mToScaleDown = true;
+
+        @Override
+        public boolean onDoubleTap(MotionEvent e) {
             float x = e.getX();
             float y = e.getY();
 
-            int imageIndex = mSurfaceView.getSelectedIndex(x, y);
-            if (imageIndex == -1) {
-                return false;
+            int numOfColumns = mNumOfColumns;
+            if (mToScaleDown == true) {
+                numOfColumns++;
+            } else {
+                numOfColumns--;
             }
 
-            Intent intent = new Intent(mContext, com.gomdev.gallery.ImageViewActivity.class);
+            if (numOfColumns > mMaxNumOfColumns) {
+                numOfColumns = mMaxNumOfColumns;
+                mToScaleDown = false;
+            }
 
-            int bucketIndex = mGridInfo.getBucketInfo().getPosition();
-            intent.putExtra(GalleryConfig.BUCKET_POSITION, bucketIndex);
-            intent.putExtra(GalleryConfig.IMAGE_POSITION, imageIndex);
+            if (numOfColumns < mMinNumOfColumns) {
+                numOfColumns = mMinNumOfColumns;
+                mToScaleDown = true;
+            }
 
-            SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
-            SharedPreferences.Editor editor = pref.edit();
+            if (numOfColumns != mNumOfColumns) {
+                mSurfaceView.resize(x, y);
+                mGridInfo.resize(numOfColumns);
+            }
 
-            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, bucketIndex);
-            editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, imageIndex);
-
-            editor.commit();
-
-            mCenterImageIndex = imageIndex;
-
-            mContext.startActivity(intent);
+            mSurfaceView.requestRender();
 
             return true;
         }
@@ -298,7 +345,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             boolean canScrollY = mCurrentViewport.top > mSurfaceBufferBottom
                     || mCurrentViewport.bottom < mSurfaceBufferTop;
             setViewportBottomLeft(mCurrentViewport.left,
-                    (mCurrentViewport.bottom + viewportOffsetY));
+                    (mCurrentViewport.bottom + viewportOffsetY), true);
 
             if (canScrollY && scrolledY < 0) {
                 mEdgeEffectTop.onPull(scrolledY / (float) mContentRect.height());
@@ -371,18 +418,20 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             }
 
             float currYRange = (mSurfaceBufferTop) - currY;
-            setViewportBottomLeft(mSurfaceBufferLeft, currYRange);
+            setViewportBottomLeft(mSurfaceBufferLeft, currYRange, true);
         }
     }
 
-    private void setViewportBottomLeft(float leftX, float topY) {
+    private void setViewportBottomLeft(float leftX, float topY, boolean checkBound) {
         float curWidth = mCurrentViewport.width();
         float curHeight = mCurrentViewport.height();
 
-        if (mSurfaceSizeBuffer.y < curHeight) {
-            topY = mSurfaceBufferTop;
-        } else {
-            topY = Math.max(mSurfaceBufferBottom + curHeight, Math.min(topY, mSurfaceBufferTop));
+        if (checkBound == true) {
+            if (mSurfaceSizeBuffer.y < curHeight) {
+                topY = mSurfaceBufferTop;
+            } else {
+                topY = Math.max(mSurfaceBufferBottom + curHeight, Math.min(topY, mSurfaceBufferTop));
+            }
         }
 
         mCurrentViewport.set(leftX, topY - curHeight, leftX + curWidth, topY);

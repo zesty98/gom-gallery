@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -27,6 +28,15 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     private GalleryScaleGestureDetector mGalleryScaleGestureDetector = null;
 
     private GridInfo mGridInfo = null;
+    private int mSpacing = 0;
+    private int mDefaultColumnWidth = 0;
+
+    private GalleryObject mCenterObject = null;
+    private GalleryObject mLastObject = null;
+    private float mFocusY = 0f;
+    private boolean mInOnAnimation = false;
+    private boolean mIsOnScale = false;
+    private float mHeight = 0f;
 
     public GallerySurfaceView(Context context) {
         super(context);
@@ -50,6 +60,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
         setEGLContextClientVersion(2);
         setEGLConfigChooser(8, 8, 8, 8, 16, 0);
+        getHolder().setFormat(PixelFormat.TRANSLUCENT);
         setRenderer(mRenderer);
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 
@@ -72,6 +83,9 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         }
 
         super.surfaceChanged(holder, format, w, h);
+
+        mHeight = h;
+
         mGridInfo.setScreenSize(w, h);
         mGalleryGestureDetector.surfaceChanged(w, h);
     }
@@ -93,17 +107,35 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         boolean retVal = mGalleryScaleGestureDetector.onTouchEvent(event);
-        retVal = mGalleryGestureDetector.onTouchEvent(event) || retVal;
+        if (mIsOnScale == false && mInOnAnimation == false) {
+            retVal = mGalleryGestureDetector.onTouchEvent(event) || retVal;
+        }
         return retVal || super.onTouchEvent(event);
     }
 
+
     public void resize(float focusX, float focusY) {
+        mFocusY = focusY;
         int imageIndex = getNearestIndex(focusX, focusY);
+        mCenterObject = mRenderer.getImageObject(imageIndex);
+        mLastObject = mRenderer.getImageObject(mGridInfo.getBucketInfo().getNumOfImages() - 1);
         mGalleryGestureDetector.setCenterImageIndex(imageIndex);
+        Log.d(TAG, "resize() center=" + mCenterObject.getName() + " last=" + mLastObject.getName());
+        Log.d(TAG, "resize() mFocusY=" + mFocusY);
+
+        mInOnAnimation = true;
     }
 
     @Override
     public void update(final GLESNode node) {
+        if (mCenterObject != null && mInOnAnimation == true) {
+            float columnWidth = mDefaultColumnWidth * mGridInfo.getScale();
+            float bottom = mLastObject.getTop() - columnWidth + mSpacing;
+            float pos = mCenterObject.getTop() + mFocusY - columnWidth * 0.5f;
+            Log.d(TAG, "update() pos=" + pos + " bottom=" + bottom);
+            mGalleryGestureDetector.adjustViewport(pos, bottom);
+        }
+
         mGalleryGestureDetector.update();
 
         GLESTransform transform = node.getTransform();
@@ -122,6 +154,9 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     public void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
 
+        mSpacing = gridInfo.getSpacing();
+        mDefaultColumnWidth = gridInfo.getDefaultColumnWidth();
+
         mGalleryGestureDetector.setGridInfo(gridInfo);
         mGalleryScaleGestureDetector.setGridInfo(gridInfo);
         mRenderer.setGridInfo(gridInfo);
@@ -137,5 +172,20 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         int index = mRenderer.getNearestIndex(x, y);
 
         return index;
+    }
+
+    public void onAnimationFinished() {
+        Log.d(TAG, "onAnimationFinished()");
+        mInOnAnimation = false;
+    }
+
+    public void onScaleBegin() {
+        Log.d(TAG, "onScaleBegin()");
+        mIsOnScale = true;
+    }
+
+    public void onScaleEnd() {
+        Log.d(TAG, "onScaleEnd()");
+        mIsOnScale = false;
     }
 }
