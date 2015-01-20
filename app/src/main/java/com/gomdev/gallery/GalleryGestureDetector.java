@@ -26,9 +26,11 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     private final static float MAX_TRANSLATE_Z_DP = -70f; // dp
 
     private final Context mContext;
+    private final ImageListRenderer mRenderer;
+
+    private GallerySurfaceView mSurfaceView = null;
 
     private GridInfo mGridInfo = null;
-    private GallerySurfaceView mSurfaceView = null;
 
     private GestureDetectorCompat mGestureDetector;
 
@@ -69,9 +71,9 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     private int mWidth = 0;
     private int mHeight = 0;
 
-    public GalleryGestureDetector(Context context, GallerySurfaceView surfaceView) {
+    public GalleryGestureDetector(Context context, ImageListRenderer renderer) {
         mContext = context;
-        mSurfaceView = surfaceView;
+        mRenderer = renderer;
 
         mGestureDetector = new GestureDetectorCompat(context, mGestureListener);
 
@@ -81,6 +83,10 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         mEdgeEffectBottom = new EdgeEffectCompat(context);
 
         mMaxTranslateZ = GLESUtils.getPixelFromDpi(mContext, MAX_TRANSLATE_Z_DP);
+    }
+
+    public void setSurfaceView(GallerySurfaceView surfaceView) {
+        mSurfaceView = surfaceView;
     }
 
     public void setGridInfo(GridInfo gridInfo) {
@@ -258,7 +264,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             float x = e.getX();
             float y = e.getY();
 
-            int imageIndex = mSurfaceView.getSelectedIndex(x, y);
+            int imageIndex = mRenderer.getSelectedIndex(x, y);
             if (imageIndex == -1) {
                 return false;
             }
@@ -309,7 +315,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             }
 
             if (numOfColumns != mNumOfColumns) {
-                mSurfaceView.resize(x, y);
+                mRenderer.resize(x, y);
                 mGridInfo.resize(numOfColumns);
             }
 

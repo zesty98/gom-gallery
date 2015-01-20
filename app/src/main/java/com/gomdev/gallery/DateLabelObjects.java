@@ -37,6 +37,7 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final Context mContext;
+    private final ImageListRenderer mRenderer;
     private final ReusableBitmaps mReusableBitmaps;
 
     private GallerySurfaceView mSurfaceView = null;
@@ -67,8 +68,9 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
     private int mAnimationFinishCount = 0;
     private float mAlpha = 1.0f;
 
-    public DateLabelObjects(Context context) {
+    public DateLabelObjects(Context context, ImageListRenderer renderer) {
         mContext = context;
+        mRenderer = renderer;
         mReusableBitmaps = ReusableBitmaps.getInstance();
 
         mTextureMappingInfos.clear();
@@ -428,7 +430,7 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
 
         int size = mAnimators.size();
         if (mAnimationFinishCount >= size) {
-            mSurfaceView.onAnimationFinished();
+            mRenderer.onAnimationFinished();
             mAnimationFinishCount = 0;
         }
     }

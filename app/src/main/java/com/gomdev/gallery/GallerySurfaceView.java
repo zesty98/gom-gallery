@@ -24,19 +24,6 @@ public class GallerySurfaceView extends GLSurfaceView {
 
     private ImageListRenderer mRenderer = null;
 
-    private GalleryGestureDetector mGalleryGestureDetector = null;
-    private GalleryScaleGestureDetector mGalleryScaleGestureDetector = null;
-
-    private GridInfo mGridInfo = null;
-    private int mSpacing = 0;
-    private int mDefaultColumnWidth = 0;
-
-    private GalleryObject mCenterObject = null;
-    private GalleryObject mLastObject = null;
-    private float mFocusY = 0f;
-    private boolean mIsOnAnimation = false;
-    private boolean mIsOnScale = false;
-
     public GallerySurfaceView(Context context) {
         super(context);
 
@@ -62,9 +49,6 @@ public class GallerySurfaceView extends GLSurfaceView {
         getHolder().setFormat(PixelFormat.TRANSLUCENT);
         setRenderer(mRenderer);
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-
-        mGalleryGestureDetector = new GalleryGestureDetector(mContext, this);
-        mGalleryScaleGestureDetector = new GalleryScaleGestureDetector(mContext, this);
     }
 
     @Override
@@ -75,100 +59,35 @@ public class GallerySurfaceView extends GLSurfaceView {
     }
 
     @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
-        if (DEBUG) {
-            Log.d(TAG, "surfaceChanged()");
-        }
-
-        super.surfaceChanged(holder, format, w, h);
-
-        mGridInfo.setScreenSize(w, h);
-        mGalleryGestureDetector.surfaceChanged(w, h);
-    }
-
-    @Override
     public void onResume() {
         super.onResume();
 
-        SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
-        int currentImageIndex = pref.getInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
-        mGalleryGestureDetector.setCenterImageIndex(currentImageIndex);
+        if (mRenderer != null) {
+            mRenderer.onResume();
+        }
     }
 
     @Override
     public void onPause() {
+        if (mRenderer != null) {
+            mRenderer.onPause();
+        }
+
         super.onPause();
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        boolean retVal = mGalleryScaleGestureDetector.onTouchEvent(event);
-        if (mIsOnScale == false && mIsOnAnimation == false) {
-            retVal = mGalleryGestureDetector.onTouchEvent(event) || retVal;
+        boolean retVal = false;
+
+        if (mRenderer != null) {
+            retVal = mRenderer.onTouchEvent(event);
         }
+
         return retVal || super.onTouchEvent(event);
     }
 
-
-    public void resize(float focusX, float focusY) {
-        mFocusY = focusY;
-        int imageIndex = getNearestIndex(focusX, focusY);
-        mCenterObject = mRenderer.getImageObject(imageIndex);
-        mLastObject = mRenderer.getImageObject(mGridInfo.getBucketInfo().getNumOfImages() - 1);
-        mGalleryGestureDetector.setCenterImageIndex(imageIndex);
-    }
-
-    public void update() {
-        if (mCenterObject != null && mIsOnAnimation == true) {
-            float columnWidth = mDefaultColumnWidth * mGridInfo.getScale();
-            float bottom = mLastObject.getTop() - columnWidth + mSpacing;
-            float pos = mCenterObject.getTop() + mFocusY - columnWidth * 0.5f;
-            mGalleryGestureDetector.adjustViewport(pos, bottom);
-        }
-
-        mGalleryGestureDetector.update();
-    }
-
     public void setGridInfo(GridInfo gridInfo) {
-        mGridInfo = gridInfo;
-
-        mSpacing = gridInfo.getSpacing();
-        mDefaultColumnWidth = gridInfo.getDefaultColumnWidth();
-
-        mGalleryGestureDetector.setGridInfo(gridInfo);
-        mGalleryScaleGestureDetector.setGridInfo(gridInfo);
         mRenderer.setGridInfo(gridInfo);
-    }
-
-    public int getSelectedIndex(float x, float y) {
-        int index = mRenderer.getSelectedIndex(x, y);
-
-        return index;
-    }
-
-    public int getNearestIndex(float x, float y) {
-        int index = mRenderer.getNearestIndex(x, y);
-
-        return index;
-    }
-
-    public void onAnimationStarted() {
-        mIsOnAnimation = true;
-    }
-
-    public void onAnimationFinished() {
-        mIsOnAnimation = false;
-    }
-
-    public void onAnimationCanceled() {
-        mIsOnAnimation = false;
-    }
-
-    public void onScaleBegin() {
-        mIsOnScale = true;
-    }
-
-    public void onScaleEnd() {
-        mIsOnScale = false;
     }
 }

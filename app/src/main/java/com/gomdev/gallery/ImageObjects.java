@@ -33,6 +33,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     private final float VISIBILITY_PADDING_DP = 60f;    // dp
 
     private final Context mContext;
+    private final ImageListRenderer mRenderer;
 
     private GallerySurfaceView mSurfaceView = null;
     private ImageManager mImageManager = null;
@@ -69,8 +70,9 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     private int mAnimationCancelCount = 0;
     private float mScale = 1f;
 
-    public ImageObjects(Context context) {
+    public ImageObjects(Context context, ImageListRenderer renderer) {
         mContext = context;
+        mRenderer = renderer;
 
         init();
     }
@@ -230,7 +232,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             mAnimators.get(i).start();
         }
 
-        mSurfaceView.onAnimationStarted();
+        mRenderer.onAnimationStarted();
     }
 
     private void setupAnimations() {
@@ -374,7 +376,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
         int size = mAnimators.size();
         if (mAnimationFinishCount >= size) {
-            mSurfaceView.onAnimationFinished();
+            mRenderer.onAnimationFinished();
             mAnimationFinishCount = 0;
         }
     }
@@ -384,7 +386,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
         int size = mAnimators.size();
         if (mAnimationCancelCount >= size) {
-            mSurfaceView.onAnimationCanceled();
+            mRenderer.onAnimationCanceled();
             mAnimationCancelCount = 0;
         }
     }

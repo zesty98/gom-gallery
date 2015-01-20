@@ -2,12 +2,14 @@ package com.gomdev.gallery;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.util.Log;
+import android.view.MotionEvent;
 
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESContext;
@@ -26,17 +28,37 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private GallerySurfaceView mSurfaceView = null;
+    private final Context mContext;
 
     private ObjectManager mObjectManager = null;
+
+    private GalleryGestureDetector mGalleryGestureDetector = null;
+    private GalleryScaleGestureDetector mGalleryScaleGestureDetector = null;
+
+    private GridInfo mGridInfo = null;
+    private int mSpacing = 0;
+    private int mDefaultColumnWidth = 0;
+
+    private GalleryObject mCenterObject = null;
+    private GalleryObject mLastObject = null;
+    private float mFocusY = 0f;
+    private boolean mIsOnAnimation = false;
+    private boolean mIsOnScale = false;
 
     private boolean mIsSurfaceChanged = false;
 
     public ImageListRenderer(Context context) {
+        mContext = context;
+
         GLESContext.getInstance().setContext(context);
 
-        mObjectManager = new ObjectManager(context);
+        mObjectManager = new ObjectManager(context, this);
+
+        mGalleryGestureDetector = new GalleryGestureDetector(mContext, this);
+        mGalleryScaleGestureDetector = new GalleryScaleGestureDetector(mContext, this);
     }
+
+    // rendering
 
     @Override
     public void onDrawFrame(GL10 gl) {
@@ -47,13 +69,26 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
-        mSurfaceView.update();
+        udpateGestureDetector();
 
         synchronized (GalleryContext.sLockObject) {
             mObjectManager.update();
             mObjectManager.drawFrame();
         }
     }
+
+    private void udpateGestureDetector() {
+        if (mCenterObject != null && mIsOnAnimation == true) {
+            float columnWidth = mDefaultColumnWidth * mGridInfo.getScale();
+            float bottom = mLastObject.getTop() - columnWidth + mSpacing;
+            float pos = mCenterObject.getTop() + mFocusY - columnWidth * 0.5f;
+            mGalleryGestureDetector.adjustViewport(pos, bottom);
+        }
+
+        mGalleryGestureDetector.update();
+    }
+
+    // onSurfaceChanged
 
     @Override
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -63,6 +98,9 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         }
 
         mIsSurfaceChanged = false;
+
+        mGridInfo.setScreenSize(width, height);
+        mGalleryGestureDetector.surfaceChanged(width, height);
 
         mObjectManager.onSurfaceChanged(width, height);
 
@@ -99,6 +137,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         return camera;
     }
 
+    // onSurfaceCreated
+
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         if (DEBUG) {
@@ -118,25 +158,82 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         mObjectManager.createScene();
     }
 
+    // touch
 
+    public boolean onTouchEvent(MotionEvent event) {
+        boolean retVal = mGalleryScaleGestureDetector.onTouchEvent(event);
+        if (mIsOnScale == false && mIsOnAnimation == false) {
+            retVal = mGalleryGestureDetector.onTouchEvent(event) || retVal;
+        }
+
+        return retVal;
+    }
+
+    // Listener
+
+    public void resize(float focusX, float focusY) {
+        mFocusY = focusY;
+        int imageIndex = mObjectManager.getNearestIndex(focusX, focusY);
+        mCenterObject = mObjectManager.getImageObject(imageIndex);
+        int lastIndex = mGridInfo.getBucketInfo().getNumOfImages() - 1;
+        mLastObject = mObjectManager.getImageObject(lastIndex);
+        mGalleryGestureDetector.setCenterImageIndex(imageIndex);
+    }
+
+    public void onAnimationStarted() {
+        mIsOnAnimation = true;
+    }
+
+    public void onAnimationFinished() {
+        mIsOnAnimation = false;
+    }
+
+    public void onAnimationCanceled() {
+        mIsOnAnimation = false;
+    }
+
+    public void onScaleBegin() {
+        mIsOnScale = true;
+    }
+
+    public void onScaleEnd() {
+        mIsOnScale = false;
+    }
+
+    // resume
+
+    public void onResume() {
+        SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
+        int currentImageIndex = pref.getInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
+        mGalleryGestureDetector.setCenterImageIndex(currentImageIndex);
+    }
+
+    // pause
+
+    public void onPause() {
+
+    }
+
+    // set / get
     public void setSurfaceView(GallerySurfaceView surfaceView) {
-        mSurfaceView = surfaceView;
         mObjectManager.setSurfaceView(surfaceView);
+        mGalleryGestureDetector.setSurfaceView(surfaceView);
+        mGalleryScaleGestureDetector.setSurfaceView(surfaceView);
     }
 
     public void setGridInfo(GridInfo gridInfo) {
+        mGridInfo = gridInfo;
+
+        mSpacing = gridInfo.getSpacing();
+        mDefaultColumnWidth = gridInfo.getDefaultColumnWidth();
+
+        mGalleryGestureDetector.setGridInfo(gridInfo);
+        mGalleryScaleGestureDetector.setGridInfo(gridInfo);
+
         mObjectManager.setGridInfo(gridInfo);
     }
 
     public int getSelectedIndex(float x, float y) {
         return mObjectManager.getSelectedIndex(x, y);
-    }
-
-    public int getNearestIndex(float x, float y) {
-        return mObjectManager.getNearestIndex(x, y);
-    }
-
-    public GalleryObject getImageObject(int index) {
-        return mObjectManager.getImageObject(index);
     }
 }

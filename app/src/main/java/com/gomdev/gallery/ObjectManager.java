@@ -2,7 +2,6 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.opengl.GLES20;
-import android.util.Log;
 
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
@@ -15,7 +14,6 @@ import com.gomdev.gles.GLESShaderConstant;
 import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
-import com.gomdev.gles.GLESVector3;
 
 /**
  * Created by gomdev on 14. 12. 31..
@@ -26,8 +24,9 @@ public class ObjectManager implements GridInfoChangeListener {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final Context mContext;
+    private final ImageListRenderer mRenderer;
 
-    private GLESRenderer mRenderer;
+    private GLESRenderer mGLESRenderer;
     private GLESSceneManager mSM;
     private GLESNode mRoot;
     private GLESNode mImageNode;
@@ -50,17 +49,18 @@ public class ObjectManager implements GridInfoChangeListener {
 
     private boolean mIsSurfaceChanged = false;
 
-    public ObjectManager(Context context) {
+    public ObjectManager(Context context, ImageListRenderer renderer) {
         mContext = context;
+        mRenderer = renderer;
 
         init();
     }
 
     private void init() {
-        mRenderer = GLESRenderer.createRenderer();
+        mGLESRenderer = GLESRenderer.createRenderer();
 
-        mDateLabelObjects = new DateLabelObjects(mContext);
-        mImageObjects = new ImageObjects(mContext);
+        mDateLabelObjects = new DateLabelObjects(mContext, mRenderer);
+        mImageObjects = new ImageObjects(mContext, mRenderer);
 
         GLESGLState glState = new GLESGLState();
         glState.setCullFaceState(true);
@@ -88,7 +88,7 @@ public class ObjectManager implements GridInfoChangeListener {
 
     public void update() {
 
-        mRenderer.updateScene(mSM);
+        mGLESRenderer.updateScene(mSM);
 
         float translateY = mGridInfo.getTranslateY();
 
@@ -113,7 +113,7 @@ public class ObjectManager implements GridInfoChangeListener {
     }
 
     public void drawFrame() {
-        mRenderer.drawScene(mSM);
+        mGLESRenderer.drawScene(mSM);
 
         mScrollbar.hide();
     }
@@ -124,7 +124,7 @@ public class ObjectManager implements GridInfoChangeListener {
         mWidth = width;
         mHeight = height;
 
-        mRenderer.reset();
+        mGLESRenderer.reset();
 
         mDateLabelObjects.onSurfaceChanged(width, height);
         mImageObjects.onSurfaceChanged(width, height);

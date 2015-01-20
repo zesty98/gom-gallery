@@ -13,7 +13,9 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final Context mContext;
-    private final GallerySurfaceView mSurfaceView;
+    private final ImageListRenderer mRenderer;
+
+    private GallerySurfaceView mSurfaceView = null;
 
     private GridInfo mGridInfo = null;
     private ScaleGestureDetector mScaleGestureDetector = null;
@@ -22,11 +24,15 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
     private int mMinNumOfColumns;
     private int mMaxNumOfColumns;
 
-    public GalleryScaleGestureDetector(Context context, GallerySurfaceView surfaceView) {
+    public GalleryScaleGestureDetector(Context context, ImageListRenderer renderer) {
         mContext = context;
-        mSurfaceView = surfaceView;
+        mRenderer = renderer;
 
         mScaleGestureDetector = new ScaleGestureDetector(context, mScaleGestureListener);
+    }
+
+    public void setSurfaceView(GallerySurfaceView surfaceView) {
+        mSurfaceView = surfaceView;
     }
 
     public void setGridInfo(GridInfo gridInfo) {
@@ -57,7 +63,7 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
         public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
             mLastSpan = scaleGestureDetector.getCurrentSpan();
             mDragDistance = mContext.getResources().getDimensionPixelSize(R.dimen.drag_distance);
-            mSurfaceView.onScaleBegin();
+            mRenderer.onScaleBegin();
             return true;
         }
 
@@ -84,7 +90,7 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
                 numOfColumns = Math.min(numOfColumns, mMaxNumOfColumns);
 
                 if (numOfColumns != mNumOfColumns) {
-                    mSurfaceView.resize(focusX, focusY);
+                    mRenderer.resize(focusX, focusY);
                     mGridInfo.resize(numOfColumns);
                 }
             }
@@ -96,7 +102,7 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
 
         @Override
         public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
-            mSurfaceView.onScaleEnd();
+            mRenderer.onScaleEnd();
         }
     };
 }
