@@ -15,7 +15,7 @@ import com.gomdev.gles.GLESTransform;
 /**
  * Created by gomdev on 14. 12. 18..
  */
-public class GallerySurfaceView extends GLSurfaceView implements RendererListener {
+public class GallerySurfaceView extends GLSurfaceView {
     static final String CLASS = "GallerySurfaceView";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -72,7 +72,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         super.setRenderer(renderer);
 
         mRenderer = (ImageListRenderer) renderer;
-        mRenderer.setRendererListener(this);
     }
 
     @Override
@@ -119,8 +118,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         mGalleryGestureDetector.setCenterImageIndex(imageIndex);
     }
 
-    @Override
-    public void update(final GLESNode node) {
+    public void update() {
         if (mCenterObject != null && mIsOnAnimation == true) {
             float columnWidth = mDefaultColumnWidth * mGridInfo.getScale();
             float bottom = mLastObject.getTop() - columnWidth + mSpacing;
@@ -129,18 +127,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         }
 
         mGalleryGestureDetector.update();
-
-        GLESTransform transform = node.getTransform();
-        transform.setIdentity();
-
-        float angle = mGalleryGestureDetector.getAngle();
-        transform.rotate(angle, 1f, 0f, 0f);
-
-        float translateZ = mGalleryGestureDetector.getTranslate();
-        transform.translate(0f, 0f, translateZ);
-
-        float scrollDistance = mGalleryGestureDetector.getScrollDistance();
-        transform.preTranslate(0f, scrollDistance, 0f);
     }
 
     public void setGridInfo(GridInfo gridInfo) {

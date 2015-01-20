@@ -47,8 +47,6 @@ public class ObjectManager implements GridInfoChangeListener {
     private int mWidth;
     private int mHeight;
 
-    private RendererListener mListener = null;
-
     private boolean mIsSurfaceChanged = false;
 
     public ObjectManager(Context context) {
@@ -91,7 +89,7 @@ public class ObjectManager implements GridInfoChangeListener {
 
         mRenderer.updateScene(mSM);
 
-        float translateY = getTranslateY();
+        float translateY = mGridInfo.getTranslateY();
 
         mScrollbar.setTranslateY(translateY);
 
@@ -101,12 +99,6 @@ public class ObjectManager implements GridInfoChangeListener {
 
         mImageObjects.update();
         mDateLabelObjects.update();
-    }
-
-    private float getTranslateY() {
-        GLESTransform transform = mImageNode.getTransform();
-        GLESVector3 translate = transform.getPreTranslate();
-        return translate.mY;
     }
 
     private void updateTexture() {
@@ -257,10 +249,6 @@ public class ObjectManager implements GridInfoChangeListener {
         gridInfo.addListener(this);
     }
 
-    public void setRendererListener(RendererListener listener) {
-        mListener = listener;
-    }
-
     public void setDummyImageTexture(GLESTexture dummyTexture) {
         mImageObjects.setDummyTexture(dummyTexture);
     }
@@ -270,7 +258,7 @@ public class ObjectManager implements GridInfoChangeListener {
     }
 
     public int getSelectedIndex(float x, float y) {
-        float translateY = getTranslateY();
+        float translateY = mGridInfo.getTranslateY();
 
         float yPos = mHeight * 0.5f - (y + translateY);
 
@@ -288,7 +276,7 @@ public class ObjectManager implements GridInfoChangeListener {
     }
 
     public int getNearestIndex(float x, float y) {
-        float translateY = getTranslateY();
+        float translateY = mGridInfo.getTranslateY();
 
         float yPos = mHeight * 0.5f - (y + translateY);
 
@@ -361,13 +349,19 @@ public class ObjectManager implements GridInfoChangeListener {
             GLESTransform transform = node.getTransform();
             float[] matrix = transform.getMatrix();
             float prevY = matrix[13];
-            if (mListener != null) {
-                mListener.update(node);
-            }
 
-            transform = node.getTransform();
-            matrix = transform.getMatrix();
-            float currentY = matrix[13];
+            transform.setIdentity();
+
+            float angle = mGridInfo.getRotateX();
+            transform.rotate(angle, 1f, 0f, 0f);
+
+            float translateZ = mGridInfo.getTranslateZ();
+            transform.translate(0f, 0f, translateZ);
+
+            float scrollDistance = mGridInfo.getTranslateY();
+            transform.preTranslate(0f, scrollDistance, 0f);
+
+            float currentY = scrollDistance;
 
             if (prevY != currentY) {
                 mScrollbar.show();

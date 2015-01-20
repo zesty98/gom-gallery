@@ -26,6 +26,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
+    private GallerySurfaceView mSurfaceView = null;
+
     private ObjectManager mObjectManager = null;
 
     private boolean mIsSurfaceChanged = false;
@@ -44,6 +46,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         }
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+
+        mSurfaceView.update();
 
         synchronized (GalleryContext.sLockObject) {
             mObjectManager.update();
@@ -114,12 +118,10 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         mObjectManager.createScene();
     }
 
-    public void setSurfaceView(GallerySurfaceView surfaceView) {
-        mObjectManager.setSurfaceView(surfaceView);
-    }
 
-    public void setRendererListener(RendererListener listener) {
-        mObjectManager.setRendererListener(listener);
+    public void setSurfaceView(GallerySurfaceView surfaceView) {
+        mSurfaceView = surfaceView;
+        mObjectManager.setSurfaceView(surfaceView);
     }
 
     public void setGridInfo(GridInfo gridInfo) {

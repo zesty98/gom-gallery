@@ -193,6 +193,9 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         }
 
         calcRotationAngle();
+
+        mGridInfo.setRotateX(mRotationAngle);
+        mGridInfo.setTranslateZ(mTranslateZ);
     }
 
     private void calcRotationAngle() {
@@ -232,18 +235,6 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             mRotationAngle = 0f;
             mTranslateZ = 0f;
         }
-    }
-
-    public float getAngle() {
-        return mRotationAngle;
-    }
-
-    public float getTranslate() {
-        return mTranslateZ;
-    }
-
-    public float getScrollDistance() {
-        return mTranslateY;
     }
 
     public void setCenterImageIndex(int index) {
@@ -428,6 +419,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         mCurrentViewport.set(leftX, topY - curHeight, leftX + curWidth, topY);
 
         mTranslateY = (mSurfaceBufferTop - mCurrentViewport.bottom);
+        mGridInfo.setTranslateY(mTranslateY);
 
         mSurfaceView.requestRender();
     }

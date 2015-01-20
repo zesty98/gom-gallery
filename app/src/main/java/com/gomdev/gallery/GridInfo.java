@@ -37,6 +37,7 @@ public class GridInfo {
 
     private float mScale = 1f;
 
+
     private List<GridInfoChangeListener> mListeners = new ArrayList<>();
 
     public GridInfo(Context context, BucketInfo bucketInfo) {
@@ -182,5 +183,33 @@ public class GridInfo {
 
     public float getScale() {
         return mScale;
+    }
+
+    private float mTranslateY = 0f;
+    private float mTranslateZ = 0f;
+    private float mRotateX = 0f;
+    
+    public void setTranslateY(float y) {
+        mTranslateY = y;
+    }
+
+    public float getTranslateY() {
+        return mTranslateY;
+    }
+
+    public void setTranslateZ(float z) {
+        mTranslateZ = z;
+    }
+
+    public float getTranslateZ() {
+        return mTranslateZ;
+    }
+
+    public void setRotateX(float angle) {
+        mRotateX = angle;
+    }
+
+    public float getRotateX() {
+        return mRotateX;
     }
 }
