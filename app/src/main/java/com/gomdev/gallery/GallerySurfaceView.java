@@ -34,9 +34,8 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     private GalleryObject mCenterObject = null;
     private GalleryObject mLastObject = null;
     private float mFocusY = 0f;
-    private boolean mInOnAnimation = false;
+    private boolean mIsOnAnimation = false;
     private boolean mIsOnScale = false;
-    private float mHeight = 0f;
 
     public GallerySurfaceView(Context context) {
         super(context);
@@ -84,8 +83,6 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
 
         super.surfaceChanged(holder, format, w, h);
 
-        mHeight = h;
-
         mGridInfo.setScreenSize(w, h);
         mGalleryGestureDetector.surfaceChanged(w, h);
     }
@@ -107,7 +104,7 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         boolean retVal = mGalleryScaleGestureDetector.onTouchEvent(event);
-        if (mIsOnScale == false && mInOnAnimation == false) {
+        if (mIsOnScale == false && mIsOnAnimation == false) {
             retVal = mGalleryGestureDetector.onTouchEvent(event) || retVal;
         }
         return retVal || super.onTouchEvent(event);
@@ -120,19 +117,14 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         mCenterObject = mRenderer.getImageObject(imageIndex);
         mLastObject = mRenderer.getImageObject(mGridInfo.getBucketInfo().getNumOfImages() - 1);
         mGalleryGestureDetector.setCenterImageIndex(imageIndex);
-        Log.d(TAG, "resize() center=" + mCenterObject.getName() + " last=" + mLastObject.getName());
-        Log.d(TAG, "resize() mFocusY=" + mFocusY);
-
-        mInOnAnimation = true;
     }
 
     @Override
     public void update(final GLESNode node) {
-        if (mCenterObject != null && mInOnAnimation == true) {
+        if (mCenterObject != null && mIsOnAnimation == true) {
             float columnWidth = mDefaultColumnWidth * mGridInfo.getScale();
             float bottom = mLastObject.getTop() - columnWidth + mSpacing;
             float pos = mCenterObject.getTop() + mFocusY - columnWidth * 0.5f;
-            Log.d(TAG, "update() pos=" + pos + " bottom=" + bottom);
             mGalleryGestureDetector.adjustViewport(pos, bottom);
         }
 
@@ -174,18 +166,23 @@ public class GallerySurfaceView extends GLSurfaceView implements RendererListene
         return index;
     }
 
+    public void onAnimationStarted() {
+        mIsOnAnimation = true;
+    }
+
     public void onAnimationFinished() {
-        Log.d(TAG, "onAnimationFinished()");
-        mInOnAnimation = false;
+        mIsOnAnimation = false;
+    }
+
+    public void onAnimationCanceled() {
+        mIsOnAnimation = false;
     }
 
     public void onScaleBegin() {
-        Log.d(TAG, "onScaleBegin()");
         mIsOnScale = true;
     }
 
     public void onScaleEnd() {
-        Log.d(TAG, "onScaleEnd()");
         mIsOnScale = false;
     }
 }

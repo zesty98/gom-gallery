@@ -229,6 +229,8 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         for (int i = 0; i < size; i++) {
             mAnimators.get(i).start();
         }
+
+        mSurfaceView.onAnimationStarted();
     }
 
     private void setupAnimations() {
@@ -382,7 +384,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
         int size = mAnimators.size();
         if (mAnimationCancelCount >= size) {
-//            mSurfaceView.onAnimationFinished();
+            mSurfaceView.onAnimationCanceled();
             mAnimationCancelCount = 0;
         }
     }
