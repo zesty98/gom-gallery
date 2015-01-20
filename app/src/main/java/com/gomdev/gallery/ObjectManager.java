@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.opengl.GLES20;
+import android.util.Log;
 
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
@@ -302,11 +303,6 @@ public class ObjectManager implements GridInfoChangeListener {
 
         int row = (int) (yDistFromDateLabel / (mColumnWidth + mSpacing));
         int column = (int) (x / (mColumnWidth + mSpacing));
-        int lastRowColumn = dateLabelInfo.getNumOfImages() % mNumOfColumns;
-
-        if (column > lastRowColumn) {
-            column = lastRowColumn;
-        }
 
         int firstImageIndex = dateLabelInfo.getFirstImagePosition();
 
