@@ -1,14 +1,11 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.widget.EdgeEffectCompat;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.OverScroller;

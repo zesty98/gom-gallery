@@ -215,8 +215,6 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
         mScale = (float) mColumnWidth / mDefaultColumnWidth;
 
-//        changeImageObjectPosition();
-
         int size = mAnimators.size();
         for (int i = 0; i < size; i++) {
             mAnimators.get(i).cancel();
@@ -231,28 +229,6 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         size = mAnimators.size();
         for (int i = 0; i < size; i++) {
             mAnimators.get(i).start();
-        }
-    }
-
-    private void changeImageObjectPosition() {
-        int index = 0;
-        float yOffset = mHeight * 0.5f - mActionBarHeight;
-        for (int i = 0; i < mNumOfDateInfos; i++) {
-            yOffset -= (mDateLabelHeight + mSpacing);
-            DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(i);
-            int numOfImages = dateLabelInfo.getNumOfImages();
-            for (int j = 0; j < numOfImages; j++) {
-                float left = mSpacing + (j % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
-                float top = yOffset - ((j / mNumOfColumns) * (mColumnWidth + mSpacing));
-
-                mObjects[index].setLeftTop(left, top);
-
-                mObjects[index].setTranslate(left - (-mColumnWidth * 0.5f), top - (mColumnWidth * 0.5f));
-
-                index++;
-            }
-
-            yOffset -= (dateLabelInfo.getNumOfRows() * (mColumnWidth + mSpacing));
         }
     }
 

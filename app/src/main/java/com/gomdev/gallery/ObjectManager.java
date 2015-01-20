@@ -2,7 +2,6 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.opengl.GLES20;
-import android.util.Log;
 
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
