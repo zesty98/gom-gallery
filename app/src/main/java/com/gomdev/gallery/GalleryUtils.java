@@ -155,7 +155,7 @@ public class GalleryUtils {
         return vertexInfo;
     }
 
-    static void calcTexCoord(ImageInfo imageInfo) {
+    static float[] calcTexCoord(ImageInfo imageInfo) {
         int width = imageInfo.getThumbnailWidth();
         int height = imageInfo.getThumbnailHeight();
 
@@ -183,6 +183,7 @@ public class GalleryUtils {
                 minS, minT,
                 maxS, minT
         };
-        imageInfo.setTexCoord(texCoord);
+
+        return texCoord;
     }
 }

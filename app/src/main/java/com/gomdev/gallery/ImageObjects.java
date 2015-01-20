@@ -359,11 +359,11 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         imageInfo.setThumbnailWidth(bitmap.getWidth());
         imageInfo.setThumbnailHeight(bitmap.getHeight());
 
-        GalleryUtils.calcTexCoord(imageInfo);
+        float[] texCoord = GalleryUtils.calcTexCoord(imageInfo);
 
         GLESVertexInfo vertexInfo = object.getVertexInfo();
         GLESShader shader = object.getShader();
-        vertexInfo.setBuffer(shader.getTexCoordAttribIndex(), imageInfo.getTexCoord(), 2);
+        vertexInfo.setBuffer(shader.getTexCoordAttribIndex(), texCoord, 2);
 
         mWaitingTextures.add(texture);
         mSurfaceView.requestRender();

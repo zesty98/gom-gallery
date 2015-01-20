@@ -16,8 +16,6 @@ public class ImageInfo implements Serializable, GalleryInfo {
     private int mThumbnailWidth;
     private int mThumbnailHeight;
 
-    private float[] mTexCoord = null;
-
     public ImageInfo(int position, long id, int orientation) {
         mPosition = position;
         mImageID = id;
@@ -74,14 +72,6 @@ public class ImageInfo implements Serializable, GalleryInfo {
 
     public void setThumbnailHeight(int height) {
         mThumbnailHeight = height;
-    }
-
-    public void setTexCoord(float[] texCoord) {
-        mTexCoord = texCoord;
-    }
-
-    public float[] getTexCoord() {
-        return mTexCoord;
     }
 
     @Override
