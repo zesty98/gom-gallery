@@ -51,6 +51,7 @@ public class BucketInfo {
 
     public void add(DateLabelInfo dateLabelInfo) {
         mDateInfos.add(dateLabelInfo);
+        dateLabelInfo.setBucketInfo(this);
     }
 
     public DateLabelInfo getDateInfo(int position) {

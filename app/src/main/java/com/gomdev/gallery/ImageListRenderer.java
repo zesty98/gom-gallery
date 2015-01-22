@@ -173,7 +173,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
 
     public void resize(float focusX, float focusY) {
         mFocusY = focusY;
-        int imageIndex = mObjectManager.getNearestIndex(focusX, focusY);
+        int imageIndex = mObjectManager.getNearestImageIndex(focusX, focusY);
         mCenterObject = mObjectManager.getImageObject(imageIndex);
         int lastIndex = mGridInfo.getBucketInfo().getNumOfImages() - 1;
         mLastObject = mObjectManager.getImageObject(lastIndex);
@@ -233,7 +233,11 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         mObjectManager.setGridInfo(gridInfo);
     }
 
-    public int getSelectedIndex(float x, float y) {
-        return mObjectManager.getSelectedIndex(x, y);
+    public int getSelectedImageIndex(float x, float y) {
+        return mObjectManager.getSelectedImageIndex(x, y);
+    }
+
+    public int getDateLabelIndex(float y) {
+        return mObjectManager.getDateLabelIndex(y);
     }
 }

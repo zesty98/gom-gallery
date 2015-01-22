@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -23,6 +24,7 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
     private ViewPager mPager;
 
     private BucketInfo mBucketInfo = null;
+    private DateLabelInfo mDateLabelInfo = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,11 +35,15 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
         int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_POSITION, 0);
+
         ImageManager imageManager = ImageManager.getInstance();
         if (imageManager == null) {
             imageManager = ImageManager.newInstance(this);
         }
         mBucketInfo = imageManager.getBucketInfo(bucketPosition);
+
+        int dateLabelIndex = getIntent().getIntExtra(GalleryConfig.DATE_LABEL_POSITION, 0);
+        mDateLabelInfo = mBucketInfo.getDateInfo(dateLabelIndex);
 
         mAdapter = new ImagePagerAdapter(getSupportFragmentManager(), mBucketInfo.getNumOfImages());
         mPager = (ViewPager) findViewById(R.id.pager);
@@ -52,8 +58,9 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
             final ActionBar actionBar = getActionBar();
 
             // Hide title text and set home as up
-            actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setDisplayShowTitleEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(false);
+            actionBar.setTitle(mDateLabelInfo.getDate());
 
             // Hide and show the ActionBar as the visibility changes
             mPager.setOnSystemUiVisibilityChangeListener(
@@ -63,7 +70,7 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
                             if ((vis & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
                                 actionBar.hide();
                             } else {
-//                                actionBar.show(); // FIX_ME
+                                actionBar.show();
                             }
                         }
                     });
@@ -117,6 +124,10 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
 
         @Override
         public void onPageSelected(int i) {
+            ImageInfo imageInfo = mBucketInfo.get(i);
+            DateLabelInfo dateLabelInfo = imageInfo.getDateLabelInfo();
+            getActionBar().setTitle(dateLabelInfo.getDate());
+
             SharedPreferences pref = ImageViewActivity.this.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
             SharedPreferences.Editor editor = pref.edit();
             editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, i);

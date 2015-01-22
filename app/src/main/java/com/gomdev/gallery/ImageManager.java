@@ -22,7 +22,7 @@ public class ImageManager {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private static final String DISK_CACHE_SUBDIR = "thumbnails";
-    private static final long MS_TO_DAY_CONVERT_UNIt = 86400000l; // 24 * 60 * 60 * 1000;
+    private static final long MS_TO_DAY_CONVERT_UNIT = 86400000l; // 24 * 60 * 60 * 1000;
 
     private static ImageManager sImageManager = null;
 
@@ -193,7 +193,7 @@ public class ImageManager {
                 int flags = DateUtils.FORMAT_SHOW_YEAR;
                 String date = DateUtils.formatDateTime(mContext, dateTakenInMs, flags);
 
-                dateTakenInMs /= MS_TO_DAY_CONVERT_UNIt;
+                dateTakenInMs /= MS_TO_DAY_CONVERT_UNIT;
 
                 if (prevDateTaken != dateTakenInMs) {
                     dateLabelInfo = new DateLabelInfo(dateIndex, date);

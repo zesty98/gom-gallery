@@ -258,7 +258,17 @@ public class ObjectManager implements GridInfoChangeListener {
         mDateLabelObjects.setDummyTexture(dummyTexture);
     }
 
-    public int getSelectedIndex(float x, float y) {
+    public int getDateLabelIndex(float y) {
+        float translateY = mGridInfo.getTranslateY();
+
+        float yPos = mHeight * 0.5f - (y + translateY);
+
+        int selectedDateLabelIndex = getDateLabelIndexFromYPos(yPos);
+
+        return selectedDateLabelIndex;
+    }
+
+    public int getSelectedImageIndex(float x, float y) {
         float translateY = mGridInfo.getTranslateY();
 
         float yPos = mHeight * 0.5f - (y + translateY);
@@ -276,7 +286,7 @@ public class ObjectManager implements GridInfoChangeListener {
         return index;
     }
 
-    public int getNearestIndex(float x, float y) {
+    public int getNearestImageIndex(float x, float y) {
         float translateY = mGridInfo.getTranslateY();
 
         float yPos = mHeight * 0.5f - (y + translateY);

@@ -264,7 +264,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             float x = e.getX();
             float y = e.getY();
 
-            int imageIndex = mRenderer.getSelectedIndex(x, y);
+            int dateLabelIndex = mRenderer.getDateLabelIndex(y);
+            int imageIndex = mRenderer.getSelectedImageIndex(x, y);
             if (imageIndex == -1) {
                 return false;
             }
@@ -274,11 +275,13 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             int bucketIndex = mGridInfo.getBucketInfo().getPosition();
             intent.putExtra(GalleryConfig.BUCKET_POSITION, bucketIndex);
             intent.putExtra(GalleryConfig.IMAGE_POSITION, imageIndex);
+            intent.putExtra(GalleryConfig.DATE_LABEL_POSITION, dateLabelIndex);
 
             SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
             SharedPreferences.Editor editor = pref.edit();
 
             editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, bucketIndex);
+            editor.putInt(GalleryConfig.PREF_DATE_LABEL_INDEX, dateLabelIndex);
             editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, imageIndex);
 
             editor.commit();

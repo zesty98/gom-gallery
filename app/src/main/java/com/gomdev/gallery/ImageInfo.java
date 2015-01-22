@@ -16,10 +16,20 @@ public class ImageInfo implements Serializable, GalleryInfo {
     private int mThumbnailWidth;
     private int mThumbnailHeight;
 
+    private DateLabelInfo mDateLabelInfo = null;
+
     public ImageInfo(int position, long id, int orientation) {
         mPosition = position;
         mImageID = id;
         mOrientation = orientation;
+    }
+
+    public void setDateLabelInfo(DateLabelInfo dateLabelInfo) {
+        mDateLabelInfo = dateLabelInfo;
+    }
+
+    public DateLabelInfo getDateLabelInfo() {
+        return mDateLabelInfo;
     }
 
     public int getPosition() {

@@ -22,7 +22,7 @@ public class ImageListActivity extends Activity {
     private void init(Bundle savedInstanceState) {
         ImageManager imageManager = ImageManager.getInstance();
         if (imageManager == null) {
-            imageManager.newInstance(this);
+            imageManager = ImageManager.newInstance(this);
 
             GalleryUtils.setDefaultInfo(this);
         }
