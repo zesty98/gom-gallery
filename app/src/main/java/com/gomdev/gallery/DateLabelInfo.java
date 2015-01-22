@@ -1,12 +1,13 @@
 package com.gomdev.gallery;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by gomdev on 15. 1. 9..
  */
-public class DateLabelInfo implements GalleryInfo {
+public class DateLabelInfo implements Serializable, GalleryInfo {
     static final String CLASS = "DateInfo";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;

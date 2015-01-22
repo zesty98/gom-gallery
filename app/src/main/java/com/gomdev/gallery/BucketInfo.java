@@ -1,9 +1,10 @@
 package com.gomdev.gallery;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BucketInfo {
+public class BucketInfo implements Serializable {
     static final String CLASS = "BucketInfo";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;

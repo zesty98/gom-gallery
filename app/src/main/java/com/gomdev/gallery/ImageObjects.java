@@ -36,7 +36,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     private final ImageListRenderer mRenderer;
 
     private GallerySurfaceView mSurfaceView = null;
-    private ImageManager mImageManager = null;
+    private ImageLoader mImageLoader = null;
 
     private GalleryObject[] mObjects;
 
@@ -78,7 +78,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     }
 
     private void init() {
-        mImageManager = ImageManager.getInstance();
+        mImageLoader = ImageLoader.getInstance();
 
         mVisibilityPadding = GLESUtils.getPixelFromDpi(mContext, VISIBILITY_PADDING_DP);
     }
@@ -149,7 +149,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         }
 
         if ((texture != null && texture.isTextureLoadingNeeded() == true)) {
-            mImageManager.loadThumbnail(imageInfo, texture);
+            mImageLoader.loadThumbnail(imageInfo, texture);
             textureMappingInfo.set(texture);
             mSurfaceView.requestRender();
         }

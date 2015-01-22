@@ -1,8 +1,10 @@
 package com.gomdev.gallery;
 
+import android.content.Context;
+
 public class GalleryContext {
     static final Object sLockObject = new Object();
-    private static GalleryContext sGalleryContext = new GalleryContext();
+    private static GalleryContext sGalleryContext;
 
     private int mWidth;
     private int mHeight;
@@ -14,13 +16,22 @@ public class GalleryContext {
 
     private int mVersionCode = 100;
 
-    private GalleryContext() {
-
+    public static GalleryContext newInstance(Context context) {
+        sGalleryContext = new GalleryContext();
+        ImageManager.newInstance();
+        ImageLoader.newInstance(context);
+        return sGalleryContext;
     }
 
     public static GalleryContext getInstance() {
         return sGalleryContext;
     }
+
+    private GalleryContext() {
+
+    }
+
+
 
     public void setScreenSize(int width, int height) {
         mWidth = width;

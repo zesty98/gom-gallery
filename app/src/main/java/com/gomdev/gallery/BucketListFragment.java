@@ -35,9 +35,9 @@ public class BucketListFragment extends Fragment {
         sLoadingBitmap = GLESUtils.makeBitmap(512, 512, Bitmap.Config.ARGB_8888, Color.BLACK);
     }
 
-    private ImageManager mImageManager;
+    private ImageLoader mImageLoader = null;
+    private ImageManager mImageManager = null;
     private int mNumOfColumns = 0;
-
 
     public BucketListFragment() {
 
@@ -54,6 +54,7 @@ public class BucketListFragment extends Fragment {
                 false);
 
         mImageManager = ImageManager.getInstance();
+        mImageLoader = ImageLoader.getInstance();
 
         Activity activity = getActivity();
 
@@ -82,7 +83,7 @@ public class BucketListFragment extends Fragment {
 
         super.onResume();
 
-        mImageManager.setLoadingBitmap(sLoadingBitmap);
+        mImageLoader.setLoadingBitmap(sLoadingBitmap);
     }
 
     public class BucketGridAdapter extends BaseAdapter {
@@ -101,7 +102,7 @@ public class BucketListFragment extends Fragment {
         public BucketGridAdapter(Context context) {
             mInflater = LayoutInflater.from(context);
 
-            mNumOfBuckets = mImageManager.getNumOfBuckets();
+            mNumOfBuckets = mImageManager.getNumOfBucketInfos();
             mActionBarHeight = GalleryContext.getInstance().getActionBarHeight();
 
             mImageViewLayoutParams = new FrameLayout.LayoutParams(
@@ -165,11 +166,12 @@ public class BucketListFragment extends Fragment {
             RecyclingImageView imageView = (RecyclingImageView) layout
                     .findViewById(R.id.image);
             BucketInfo bucketInfo = mImageManager.getBucketInfo(position - mNumOfColumns);
-            ImageInfo imageInfo = bucketInfo.get(0);
+            DateLabelInfo dateLabelInfo = bucketInfo.getDateInfo(0);
+            ImageInfo imageInfo = dateLabelInfo.get(0);
 
             imageView.setLayoutParams(mImageViewLayoutParams);
 
-            mImageManager.loadThumbnail(imageInfo, imageView);
+            mImageLoader.loadThumbnail(imageInfo, imageView);
 
             TextView textView = (TextView) layout
                     .findViewById(R.id.bucket_info);

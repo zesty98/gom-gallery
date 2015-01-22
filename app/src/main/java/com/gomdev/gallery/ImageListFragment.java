@@ -35,7 +35,8 @@ public class ImageListFragment extends Fragment {
         sLoadingBitmap = GLESUtils.makeBitmap(512, 512, Bitmap.Config.ARGB_8888, Color.BLACK);
     }
 
-    private ImageManager mImageManager;
+    private ImageLoader mImageLoader = null;
+    private ImageManager mImageManager = null;
     private BucketInfo mBucketInfo;
     private int mNumOfColumns = 0;
 
@@ -53,7 +54,7 @@ public class ImageListFragment extends Fragment {
                 false);
 
         mImageManager = ImageManager.getInstance();
-
+        mImageLoader = ImageLoader.getInstance();
 
         Activity activity = getActivity();
 
@@ -105,7 +106,7 @@ public class ImageListFragment extends Fragment {
             Log.d(TAG, "onResume()");
         }
 
-        mImageManager.setLoadingBitmap(sLoadingBitmap);
+        mImageLoader.setLoadingBitmap(sLoadingBitmap);
 
         super.onResume();
 
@@ -206,7 +207,7 @@ public class ImageListFragment extends Fragment {
                     .findViewById(R.id.image);
             imageView.setLayoutParams(mImageViewLayoutParams);
             ImageInfo imageInfo = mBucketInfo.get(position - mNumOfColumns);
-            mImageManager.loadThumbnail(imageInfo, imageView);
+            mImageLoader.loadThumbnail(imageInfo, imageView);
 
             return layout;
         }

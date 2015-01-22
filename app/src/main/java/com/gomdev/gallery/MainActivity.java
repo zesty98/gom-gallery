@@ -26,9 +26,12 @@ public class MainActivity extends Activity {
     }
 
     private void init() {
-        GalleryUtils.setDefaultInfo(this);
+        GalleryContext galleryContext = GalleryContext.getInstance();
+        if (galleryContext == null) {
+            GalleryContext.newInstance(this);
+        }
 
-        ImageManager.newInstance(this);
+        GalleryUtils.setDefaultInfo(this);
 
         PackageInfo packageInfo;
         try {

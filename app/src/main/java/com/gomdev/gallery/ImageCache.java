@@ -240,7 +240,7 @@ public class ImageCache {
                             // Decode bitmap, but we don't want to sample so
                             // give
                             // MAX_VALUE as the target dimensions
-                            bitmap = ImageManager.decodeSampledBitmapFromDescriptor(
+                            bitmap = ImageLoader.decodeSampledBitmapFromDescriptor(
                                     fd, Integer.MAX_VALUE,
                                     Integer.MAX_VALUE, this);
 //                            bitmap = ImageManager.decodeSampledBitmapFromDescriptor(

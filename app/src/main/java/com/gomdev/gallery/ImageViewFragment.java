@@ -17,7 +17,7 @@ public class ImageViewFragment extends Fragment {
 
     private RecyclingImageView mImageView = null;
 
-    private ImageManager mImageManager = null;
+    private ImageLoader mImageLoader = null;
     private ImageInfo mImageInfo = null;
 
     private int mWidth = 0;
@@ -56,8 +56,8 @@ public class ImageViewFragment extends Fragment {
             Log.d(TAG, "onCreateView()");
         }
 
-        mImageManager = ImageManager.getInstance();
-        mImageManager.setLoadingBitmap(null);
+        mImageLoader = ImageLoader.getInstance();
+        mImageLoader.setLoadingBitmap(null);
 
         final View v = inflater.inflate(R.layout.image_detail_fragment, container, false);
         mImageView = (RecyclingImageView) v.findViewById(R.id.imageView);
@@ -81,8 +81,8 @@ public class ImageViewFragment extends Fragment {
         // Use the parent activity to load the image asynchronously into the ImageView (so a single
         // cache can be used over all pages in the ViewPager
         if (ImageViewActivity.class.isInstance(getActivity())) {
-            mImageManager = ImageManager.getInstance();
-            mImageManager.loadBitmap(mImageInfo, mImageView, mWidth, mHeight);
+            mImageLoader = ImageLoader.getInstance();
+            mImageLoader.loadBitmap(mImageInfo, mImageView, mWidth, mHeight);
         }
 
         // Pass clicks on the ImageView to the parent activity to handle

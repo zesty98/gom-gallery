@@ -11,7 +11,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -36,11 +35,11 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
 
         int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_POSITION, 0);
 
-        ImageManager imageManager = ImageManager.getInstance();
-        if (imageManager == null) {
-            imageManager = ImageManager.newInstance(this);
+        GalleryContext galleryContext = GalleryContext.getInstance();
+        if (galleryContext == null) {
+            GalleryContext.newInstance(this);
         }
-        mBucketInfo = imageManager.getBucketInfo(bucketPosition);
+        mBucketInfo = ImageManager.getInstance().getBucketInfo(bucketPosition);
 
         int dateLabelIndex = getIntent().getIntExtra(GalleryConfig.DATE_LABEL_POSITION, 0);
         mDateLabelInfo = mBucketInfo.getDateInfo(dateLabelIndex);

@@ -20,18 +20,17 @@ public class ImageListActivity extends Activity {
     }
 
     private void init(Bundle savedInstanceState) {
-        ImageManager imageManager = ImageManager.getInstance();
-        if (imageManager == null) {
-            imageManager = ImageManager.newInstance(this);
-
+        GalleryContext galleryContext = GalleryContext.getInstance();
+        if (galleryContext == null) {
+            galleryContext = GalleryContext.newInstance(this);
             GalleryUtils.setDefaultInfo(this);
         }
+
+        ImageManager imageManager = ImageManager.getInstance();
 
         int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_POSITION, 0);
         BucketInfo bucketInfo = imageManager.getBucketInfo(bucketPosition);
         getActionBar().setTitle(bucketInfo.getName());
-
-        GalleryContext galleryContext = GalleryContext.getInstance();
 
         SharedPreferences pref = getSharedPreferences(GalleryConfig.PREF_NAME, 0);
         int numOfColumns = pref.getInt(GalleryConfig.PREF_NUM_OF_COLUMNS, 0);
