@@ -277,7 +277,9 @@ public class ObjectManager implements GridInfoChangeListener {
         int index = getImageIndexFromYPos(x, yPos, selectedDateLabelIndex);
 
         DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(selectedDateLabelIndex);
-        int lastImageIndex = dateLabelInfo.getLastImagePosition();
+        int numOfImages = dateLabelInfo.getNumOfImages();
+        ImageInfo lastImageInfo = dateLabelInfo.get(numOfImages - 1);
+        int lastImageIndex = mBucketInfo.getIndex(lastImageInfo);
 
         if (index > lastImageIndex) {
             return -1;
@@ -295,13 +297,25 @@ public class ObjectManager implements GridInfoChangeListener {
         int index = getImageIndexFromYPos(x, yPos, selectedDateLabelIndex);
 
         DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(selectedDateLabelIndex);
-        int lastImageIndex = dateLabelInfo.getLastImagePosition();
+        int numOfImages = dateLabelInfo.getNumOfImages();
+        ImageInfo lastImageInfo = dateLabelInfo.get(numOfImages - 1);
+        int lastImageIndex = mBucketInfo.getIndex(lastImageInfo);
 
         if (index > lastImageIndex) {
             return lastImageIndex;
         }
 
         return index;
+    }
+
+    public void deleteImage(int index) {
+        mImageObjects.delete(index);
+        mGridInfo.deleteImageInfo();
+    }
+
+    public void deleteDateLabel(int index) {
+        mDateLabelObjects.delete(index);
+        mGridInfo.deleteDateLabelInfo();
     }
 
     private int getImageIndexFromYPos(float x, float yPos, int selectedDateLabelIndex) {
@@ -314,7 +328,8 @@ public class ObjectManager implements GridInfoChangeListener {
         int row = (int) (yDistFromDateLabel / (mColumnWidth + mSpacing));
         int column = (int) (x / (mColumnWidth + mSpacing));
 
-        int firstImageIndex = dateLabelInfo.getFirstImagePosition();
+        ImageInfo firstImageInfo = dateLabelInfo.get(0);
+        int firstImageIndex = mBucketInfo.getIndex(firstImageInfo);
 
         return mNumOfColumns * row + column + firstImageIndex;
     }
@@ -338,7 +353,7 @@ public class ObjectManager implements GridInfoChangeListener {
     }
 
     @Override
-    public void onGridInfoChanged() {
+    public void onColumnWidthChanged() {
         mColumnWidth = mGridInfo.getColumnWidth();
         mNumOfColumns = mGridInfo.getNumOfColumns();
 
@@ -347,6 +362,16 @@ public class ObjectManager implements GridInfoChangeListener {
         }
 
         mDateLabelObjects.hide();
+    }
+
+    @Override
+    public void onNumOfImageInfosChanged() {
+
+    }
+
+    @Override
+    public void onNumOfDateLabelInfosChanged() {
+        mNumOfDateInfos = mGridInfo.getNumOfDateInfos();
     }
 
     private GLESNodeListener mImageNodeListener = new GLESNodeListener() {

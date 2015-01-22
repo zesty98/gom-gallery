@@ -11,6 +11,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.DisplayMetrics;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -22,8 +24,12 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
     private ImagePagerAdapter mAdapter;
     private ViewPager mPager;
 
+    private ImageManager mImageManager = null;
+
     private BucketInfo mBucketInfo = null;
     private DateLabelInfo mDateLabelInfo = null;
+
+    private int mCurrentImageIndex = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +45,9 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
         if (galleryContext == null) {
             GalleryContext.newInstance(this);
         }
-        mBucketInfo = ImageManager.getInstance().getBucketInfo(bucketPosition);
+
+        mImageManager = ImageManager.getInstance();
+        mBucketInfo = mImageManager.getBucketInfo(bucketPosition);
 
         int dateLabelIndex = getIntent().getIntExtra(GalleryConfig.DATE_LABEL_POSITION, 0);
         mDateLabelInfo = mBucketInfo.getDateInfo(dateLabelIndex);
@@ -96,6 +104,23 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_delete) {
+            ImageManager.getInstance().deleteImage(mCurrentImageIndex);
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     private class ImagePagerAdapter extends FragmentStatePagerAdapter {
         private final int mSize;
 
@@ -123,6 +148,8 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
 
         @Override
         public void onPageSelected(int i) {
+            mCurrentImageIndex = i;
+
             ImageInfo imageInfo = mBucketInfo.getImageInfo(i);
             DateLabelInfo dateLabelInfo = imageInfo.getDateLabelInfo();
             getActionBar().setTitle(dateLabelInfo.getDate());
@@ -130,7 +157,7 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
             SharedPreferences pref = ImageViewActivity.this.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
             SharedPreferences.Editor editor = pref.edit();
             editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, i);
-            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, mBucketInfo.getPosition());
+            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, mImageManager.getIndex(mBucketInfo));
             editor.commit();
         }
 

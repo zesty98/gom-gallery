@@ -37,7 +37,9 @@ public class BucketListFragment extends Fragment {
 
     private ImageLoader mImageLoader = null;
     private ImageManager mImageManager = null;
+    private BucketGridAdapter mAdapter = null;
     private int mNumOfColumns = 0;
+    private int mTotalNumOfImages = 0;
 
     public BucketListFragment() {
 
@@ -56,19 +58,21 @@ public class BucketListFragment extends Fragment {
         mImageManager = ImageManager.getInstance();
         mImageLoader = ImageLoader.getInstance();
 
+        mTotalNumOfImages = mImageManager.getNumOfImages();
+
         Activity activity = getActivity();
 
-        BucketGridAdapter adapter = new BucketGridAdapter(activity);
+        mAdapter = new BucketGridAdapter(activity);
 
         GridView gridview = (GridView) rootView.findViewById(R.id.gridview);
-        gridview.setAdapter(adapter);
+        gridview.setAdapter(mAdapter);
 
         GalleryContext context = GalleryContext.getInstance();
         int columnWidth = context.getColumnWidth();
         mNumOfColumns = context.getNumOfColumns();
 
         gridview.setColumnWidth(columnWidth);
-        adapter.setItemHeight(columnWidth);
+        mAdapter.setItemHeight(columnWidth);
 
         gridview.setOnItemClickListener(mOnItemClickListener);
 
@@ -84,6 +88,11 @@ public class BucketListFragment extends Fragment {
         super.onResume();
 
         mImageLoader.setLoadingBitmap(sLoadingBitmap);
+
+        int totalNumOfImages = mImageManager.getNumOfImages();
+        if (mTotalNumOfImages != totalNumOfImages) {
+            mAdapter.notifyDataSetChanged();
+        }
     }
 
     public class BucketGridAdapter extends BaseAdapter {
@@ -93,7 +102,6 @@ public class BucketListFragment extends Fragment {
 
         private final LayoutInflater mInflater;
 
-        private final int mNumOfBuckets;
         private final int mActionBarHeight;
         private int mItemHeight = 0;
         private FrameLayout.LayoutParams mImageViewLayoutParams;
@@ -102,7 +110,6 @@ public class BucketListFragment extends Fragment {
         public BucketGridAdapter(Context context) {
             mInflater = LayoutInflater.from(context);
 
-            mNumOfBuckets = mImageManager.getNumOfBucketInfos();
             mActionBarHeight = GalleryContext.getInstance().getActionBarHeight();
 
             mImageViewLayoutParams = new FrameLayout.LayoutParams(
@@ -111,7 +118,7 @@ public class BucketListFragment extends Fragment {
 
         @Override
         public int getCount() {
-            return mNumOfBuckets + mNumOfColumns;
+            return mImageManager.getNumOfBucketInfos() + mNumOfColumns;
         }
 
         @Override
@@ -200,6 +207,7 @@ public class BucketListFragment extends Fragment {
             Intent intent = new Intent(getActivity(),
                     com.gomdev.gallery.ImageListActivity.class);
             intent.putExtra(GalleryConfig.BUCKET_POSITION, position - mNumOfColumns);
+            mImageManager.setCurrentBucketInfo(position - mNumOfColumns);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 // makeThumbnailScaleUpAnimation() looks kind of ugly here as the loading spinner may
                 // show plus the thumbnail image in GridView is cropped. so using

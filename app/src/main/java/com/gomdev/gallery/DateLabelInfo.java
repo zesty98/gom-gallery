@@ -1,7 +1,7 @@
 package com.gomdev.gallery;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -12,7 +12,6 @@ public class DateLabelInfo implements Serializable, GalleryInfo {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private final int mPosition;
     private final String mDate;
 
     private int mWidth = 0;
@@ -24,16 +23,11 @@ public class DateLabelInfo implements Serializable, GalleryInfo {
     private int mFirstImagePosition = 0;
     private int mLastImagePosition = 0;
 
-    private List<ImageInfo> mImageInfos = new ArrayList<>();
+    private List<ImageInfo> mImageInfos = new LinkedList<>();
 
-    public DateLabelInfo(int position, String date) {
-        mPosition = position;
+    public DateLabelInfo(String date) {
         mDate = date;
         mImageInfos.clear();
-    }
-
-    public int getPosition() {
-        return mPosition;
     }
 
     public String getDate() {
@@ -54,10 +48,8 @@ public class DateLabelInfo implements Serializable, GalleryInfo {
     }
 
     public void setNumOfColumns(int numOfColumns) {
-        if (mNumOfColumns != numOfColumns) {
-            mNumOfRows = (int) Math.ceil((double) mImageInfos.size() / numOfColumns);
-            mNumOfColumns = numOfColumns;
-        }
+        mNumOfRows = (int) Math.ceil((double) mImageInfos.size() / numOfColumns);
+        mNumOfColumns = numOfColumns;
     }
 
     public int getNumOfRows() {
@@ -78,5 +70,13 @@ public class DateLabelInfo implements Serializable, GalleryInfo {
 
     public int getLastImagePosition() {
         return mLastImagePosition;
+    }
+
+    public int getIndex(ImageInfo imageInfo) {
+        return mImageInfos.indexOf(imageInfo);
+    }
+
+    public void deleteImageInfo(ImageInfo imageInfo) {
+        mImageInfos.remove(imageInfo);
     }
 }

@@ -50,8 +50,16 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
     }
 
     @Override
-    public void onGridInfoChanged() {
+    public void onColumnWidthChanged() {
         mNumOfColumns = mGridInfo.getNumOfColumns();
+    }
+
+    @Override
+    public void onNumOfImageInfosChanged() {
+    }
+
+    @Override
+    public void onNumOfDateLabelInfosChanged() {
     }
 
     private final ScaleGestureDetector.OnScaleGestureListener mScaleGestureListener

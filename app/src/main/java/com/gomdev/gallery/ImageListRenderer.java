@@ -23,7 +23,7 @@ import javax.microedition.khronos.opengles.GL10;
 /**
  * Created by gomdev on 14. 12. 16..
  */
-public class ImageListRenderer implements GLSurfaceView.Renderer {
+public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListener {
     static final String CLASS = "ImageListRenderer";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -51,8 +51,10 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         mContext = context;
 
         GLESContext.getInstance().setContext(context);
+        ImageManager imageManager = ImageManager.getInstance();
 
         mObjectManager = new ObjectManager(context, this);
+        imageManager.setObjectManager(mObjectManager);
 
         mGalleryGestureDetector = new GalleryGestureDetector(mContext, this);
         mGalleryScaleGestureDetector = new GalleryScaleGestureDetector(mContext, this);
@@ -110,16 +112,6 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         mIsSurfaceChanged = true;
     }
 
-    private GLESTexture createDummyTexture(int color) {
-        Bitmap bitmap = GLESUtils.makeBitmap(16, 16, Bitmap.Config.ARGB_8888, color);
-
-        GLESTexture dummyTexture = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, 16, 16)
-                .load(bitmap);
-
-        return dummyTexture;
-    }
-
-
     private GLESCamera setupCamera(int width, int height) {
         GLESCamera camera = new GLESCamera();
 
@@ -158,6 +150,15 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         mObjectManager.createScene();
     }
 
+    private GLESTexture createDummyTexture(int color) {
+        Bitmap bitmap = GLESUtils.makeBitmap(16, 16, Bitmap.Config.ARGB_8888, color);
+
+        GLESTexture dummyTexture = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, 16, 16)
+                .load(bitmap);
+
+        return dummyTexture;
+    }
+
     // touch
 
     public boolean onTouchEvent(MotionEvent event) {
@@ -178,6 +179,19 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         int lastIndex = mGridInfo.getBucketInfo().getNumOfImages() - 1;
         mLastObject = mObjectManager.getImageObject(lastIndex);
         mGalleryGestureDetector.setCenterImageIndex(imageIndex);
+    }
+
+    @Override
+    public void onColumnWidthChanged() {
+
+    }
+
+    @Override
+    public void onNumOfImageInfosChanged() {
+    }
+
+    @Override
+    public void onNumOfDateLabelInfosChanged() {
     }
 
     public void onAnimationStarted() {
@@ -231,6 +245,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer {
         mGalleryScaleGestureDetector.setGridInfo(gridInfo);
 
         mObjectManager.setGridInfo(gridInfo);
+
+        mGridInfo.addListener(this);
     }
 
     public int getSelectedImageIndex(float x, float y) {

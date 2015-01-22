@@ -7,7 +7,6 @@ public class ImageInfo implements Serializable, GalleryInfo {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private final int mPosition;
     private final int mOrientation;
     private final long mImageID;
     private String mImagePath = null;
@@ -18,14 +17,9 @@ public class ImageInfo implements Serializable, GalleryInfo {
 
     private DateLabelInfo mDateLabelInfo = null;
 
-    public ImageInfo(int position, long id, int orientation) {
-        mPosition = position;
+    public ImageInfo(long id, int orientation) {
         mImageID = id;
         mOrientation = orientation;
-    }
-
-    public int getPosition() {
-        return mPosition;
     }
 
     public int getOrientation() {
@@ -86,6 +80,6 @@ public class ImageInfo implements Serializable, GalleryInfo {
 
     @Override
     public String toString() {
-        return "position=" + mPosition + "\n" + "id=" + mImageID + "\n" + "imagePath=" + mImagePath + "\n";
+        return "id=" + mImageID + "\n" + "imagePath=" + mImagePath + "\n";
     }
 }

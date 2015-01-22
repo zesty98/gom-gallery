@@ -10,6 +10,7 @@ public class ImageListActivity extends Activity {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private GallerySurfaceView mSurfaceView = null;
+    private ImageManager mImageManager = null;
     private GridInfo mGridInfo = null;
 
     @Override
@@ -26,10 +27,10 @@ public class ImageListActivity extends Activity {
             GalleryUtils.setDefaultInfo(this);
         }
 
-        ImageManager imageManager = ImageManager.getInstance();
+        mImageManager = ImageManager.getInstance();
 
         int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_POSITION, 0);
-        BucketInfo bucketInfo = imageManager.getBucketInfo(bucketPosition);
+        BucketInfo bucketInfo = mImageManager.getBucketInfo(bucketPosition);
         getActionBar().setTitle(bucketInfo.getName());
 
         SharedPreferences pref = getSharedPreferences(GalleryConfig.PREF_NAME, 0);
@@ -57,7 +58,7 @@ public class ImageListActivity extends Activity {
 
             SharedPreferences.Editor editor = pref.edit();
             editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
-            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, bucketInfo.getPosition());
+            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, this.mImageManager.getIndex(bucketInfo));
             editor.commit();
 
         } else {

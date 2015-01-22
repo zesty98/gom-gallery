@@ -18,6 +18,7 @@ import com.gomdev.gles.GLESVector3;
 import com.gomdev.gles.GLESVertexInfo;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -38,7 +39,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     private GallerySurfaceView mSurfaceView = null;
     private ImageLoader mImageLoader = null;
 
-    private GalleryObject[] mObjects;
+    private List<GalleryObject> mObjects = new LinkedList<>();
 
     private GLESShader mTextureShader = null;
     private GLESGLState mGLState = null;
@@ -62,7 +63,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
     private float mVisibilityPadding = 0f;
 
-    private ArrayList<TextureMappingInfo> mTextureMappingInfos = new ArrayList<>();
+    private List<TextureMappingInfo> mTextureMappingInfos = new LinkedList<>();
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
 
     private List<GLESAnimator> mAnimators = new ArrayList<GLESAnimator>();
@@ -123,7 +124,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         float viewportBottom = viewportTop - mHeight;
 
         for (int i = 0; i < mNumOfImages; i++) {
-            GalleryObject object = mObjects[i];
+            GalleryObject object = mObjects.get(i);
 
             float top = object.getTop();
             if ((top - mColumnWidth) < (viewportTop + mVisibilityPadding) &&
@@ -185,20 +186,21 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(i);
             int numOfImages = dateLabelInfo.getNumOfImages();
             for (int j = 0; j < numOfImages; j++) {
-                mObjects[imageIndex].setCamera(camera);
+                GalleryObject object = mObjects.get(imageIndex);
+                object.setCamera(camera);
 
                 float left = mSpacing + (j % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
                 float top = yOffset - ((j / mNumOfColumns) * (mColumnWidth + mSpacing));
 
-                mObjects[imageIndex].setTranslate(left - (-mColumnWidth * 0.5f), top - (mColumnWidth * 0.5f));
-                mObjects[imageIndex].setScale(mScale);
+                object.setTranslate(left - (-mColumnWidth * 0.5f), top - (mColumnWidth * 0.5f));
+                object.setScale(mScale);
 
                 float[] vertex = GLESUtils.makePositionCoord(-mDefaultColumnWidth * 0.5f, mDefaultColumnWidth * 0.5f, mDefaultColumnWidth, mDefaultColumnWidth);
 
-                GLESVertexInfo vertexInfo = mObjects[imageIndex].getVertexInfo();
+                GLESVertexInfo vertexInfo = object.getVertexInfo();
                 vertexInfo.setBuffer(mTextureShader.getPositionAttribIndex(), vertex, 3);
 
-                mObjects[imageIndex].setLeftTop(left, top);
+                object.setLeftTop(left, top);
 
                 imageIndex++;
             }
@@ -208,7 +210,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     }
 
     @Override
-    public void onGridInfoChanged() {
+    public void onColumnWidthChanged() {
         mPrevColumnWidth = mColumnWidth;
 
         mColumnWidth = mGridInfo.getColumnWidth();
@@ -247,14 +249,15 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
                 float top = yOffset - ((j / mNumOfColumns) * (mColumnWidth + mSpacing));
                 float scale = (float) mColumnWidth / mDefaultColumnWidth;
 
-                float prevLeft = mObjects[index].getLeft();
-                float prevTop = mObjects[index].getTop();
+                GalleryObject object = mObjects.get(index);
+                float prevLeft = object.getLeft();
+                float prevTop = object.getTop();
                 float prevScale = (float) mPrevColumnWidth / mDefaultColumnWidth;
 
                 GLESVector3 from = new GLESVector3(prevLeft, prevTop, prevScale);
                 GLESVector3 to = new GLESVector3(left, top, scale);
 
-                GLESAnimator animator = new GLESAnimator(new GalleryAnimatorCallback(mObjects[index]));
+                GLESAnimator animator = new GLESAnimator(new GalleryAnimatorCallback(object));
                 animator.setValues(from, to);
                 animator.setDuration(GalleryConfig.IMAGE_ANIMATION_START_OFFSET, GalleryConfig.IMAGE_ANIMATION_END_OFFSET);
 
@@ -267,33 +270,43 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         }
     }
 
+    @Override
+    public void onNumOfImageInfosChanged() {
+        mNumOfImages = mGridInfo.getNumOfImages();
+    }
+
+    @Override
+    public void onNumOfDateLabelInfosChanged() {
+        mNumOfDateInfos = mGridInfo.getNumOfDateInfos();
+    }
+
     // onSurfaceCreated
 
     public void createObjects(GLESNode parentNode) {
         cancelLoading();
 
+        mObjects.clear();
         mWaitingTextures.clear();
         mTextureMappingInfos.clear();
         mAnimators.clear();
 
-        mObjects = new GalleryObject[mNumOfImages];
-
         for (int i = 0; i < mNumOfImages; i++) {
-            mObjects[i] = new GalleryObject("image" + i);
-            parentNode.addChild(mObjects[i]);
-            mObjects[i].setGLState(mGLState);
-            mObjects[i].setShader(mTextureShader);
-            mObjects[i].setTexture(mDummyTexture);
-            mObjects[i].setListener(mObjectListener);
-            mObjects[i].setPosition(i);
+            GalleryObject object = new GalleryObject("image" + i);
+            mObjects.add(object);
+            parentNode.addChild(object);
+            object.setGLState(mGLState);
+            object.setShader(mTextureShader);
+            object.setTexture(mDummyTexture);
+            object.setListener(mObjectListener);
+            object.setPosition(i);
 
             GLESVertexInfo vertexInfo = new GLESVertexInfo();
             vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
             vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
-            mObjects[i].setVertexInfo(vertexInfo, false, false);
+            object.setVertexInfo(vertexInfo, false, false);
 
             ImageInfo imageInfo = mBucketInfo.getImageInfo(i);
-            TextureMappingInfo textureMappingInfo = new TextureMappingInfo(mObjects[i], imageInfo);
+            TextureMappingInfo textureMappingInfo = new TextureMappingInfo(object, imageInfo);
             mTextureMappingInfos.add(textureMappingInfo);
         }
     }
@@ -348,7 +361,18 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     }
 
     public GalleryObject getObject(int index) {
-        return mObjects[index];
+        return mObjects.get(index);
+    }
+
+    public void delete(int index) {
+        TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
+
+        GalleryTexture texture = textureMappingInfo.getTexture();
+        texture = null;
+
+        mTextureMappingInfos.remove(index);
+
+        mObjects.remove(index);
     }
 
     @Override

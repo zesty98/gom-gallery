@@ -104,7 +104,7 @@ public class Scrollbar implements GridInfoChangeListener {
     }
 
     @Override
-    public void onGridInfoChanged() {
+    public void onColumnWidthChanged() {
         int scrollableHeight = mGridInfo.getScrollableHeight();
         if (scrollableHeight < mHeight) {
             mIsVisible = false;
@@ -147,6 +147,16 @@ public class Scrollbar implements GridInfoChangeListener {
         position.put(9, right);
 
         mScrollableDistance = bottom + (mHeight * 0.5f - mSpacing);
+    }
+
+    @Override
+    public void onNumOfImageInfosChanged() {
+        mScrollbarHeight = mGridInfo.getScrollableHeight();
+    }
+
+    @Override
+    public void onNumOfDateLabelInfosChanged() {
+        mScrollbarHeight = mGridInfo.getScrollableHeight();
     }
 
     public void setColor(float r, float g, float b, float a) {

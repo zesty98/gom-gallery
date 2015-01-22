@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">GomGallery</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_delete">Delete</string>
     <string name="imageview_description">Image Thumbnail</string>
 
 </resources>

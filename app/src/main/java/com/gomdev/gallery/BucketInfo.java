@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class BucketInfo implements Serializable {
@@ -9,21 +10,15 @@ public class BucketInfo implements Serializable {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private final int mPosition;
     private final int mID;
     private String mName;
-    private List<ImageInfo> mImageInfos = new ArrayList<>();
+    private List<ImageInfo> mImageInfos = new LinkedList<>();
     private List<DateLabelInfo> mDateInfos = new ArrayList<>();
 
-    public BucketInfo(int position, int id) {
-        mPosition = position;
+    public BucketInfo(int id) {
         mID = id;
         mImageInfos.clear();
         mDateInfos.clear();
-    }
-
-    public int getPosition() {
-        return mPosition;
     }
 
     public int getID() {
@@ -60,5 +55,21 @@ public class BucketInfo implements Serializable {
 
     public int getNumOfDateInfos() {
         return mDateInfos.size();
+    }
+
+    public int getIndex(DateLabelInfo dateLabelInfo) {
+        return mDateInfos.indexOf(dateLabelInfo);
+    }
+
+    public int getIndex(ImageInfo imageInfo) {
+        return mImageInfos.indexOf(imageInfo);
+    }
+
+    public void deleteImageInfo(int index) {
+        mImageInfos.remove(index);
+    }
+
+    public void deleteDateLabel(DateLabelInfo dateLabelInfo) {
+        mDateInfos.remove(dateLabelInfo);
     }
 }

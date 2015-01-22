@@ -61,8 +61,6 @@ public class ImageListFragment extends Fragment {
         int bucketPosition = getActivity().getIntent().getIntExtra(GalleryConfig.BUCKET_POSITION, 0);
         mBucketInfo = mImageManager.getBucketInfo(bucketPosition);
 
-        Log.d(TAG, "onCreateView() bucket=" + mBucketInfo.getName());
-
         ImageGridAdapter adapter = new ImageGridAdapter(activity);
 
         GridView gridview = (GridView) rootView.findViewById(R.id.gridview);
@@ -80,8 +78,7 @@ public class ImageListFragment extends Fragment {
                                     int position, long id) {
                 Intent intent = new Intent(getActivity(), com.gomdev.gallery.ImageViewActivity.class);
 
-                Log.d(TAG, "onItemClick() bucket position=" + mBucketInfo.getPosition() + " image position=" + (position - mNumOfColumns));
-                intent.putExtra(GalleryConfig.BUCKET_POSITION, mBucketInfo.getPosition());
+                intent.putExtra(GalleryConfig.BUCKET_POSITION, mImageManager.getIndex(mBucketInfo));
                 intent.putExtra(GalleryConfig.IMAGE_POSITION, position - mNumOfColumns);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {

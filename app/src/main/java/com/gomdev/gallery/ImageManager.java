@@ -1,6 +1,7 @@
 package com.gomdev.gallery;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by gomdev on 15. 1. 22..
@@ -22,13 +23,17 @@ public class ImageManager {
     }
 
     private int mNumOfImages = 0;
-    private int mNumOfBucketInfos = 0;
-    private ArrayList<BucketInfo> mBucketInfos = null;
+    private List<BucketInfo> mBucketInfos = null;
+    private BucketInfo mCurrentBucketInfo = null;
+    private ObjectManager mObjectManager = null;
 
     private ImageManager() {
-        mBucketInfos = new ArrayList<>();
+        mBucketInfos = new LinkedList<>();
         mNumOfImages = 0;
-        mNumOfBucketInfos = 0;
+    }
+
+    public void setObjectManager(ObjectManager objectManager) {
+        mObjectManager = objectManager;
     }
 
     public void addBucketInfo(BucketInfo bucketInfo) {
@@ -39,9 +44,16 @@ public class ImageManager {
         return mBucketInfos.get(index);
     }
 
+    public void setCurrentBucketInfo(int index) {
+        mCurrentBucketInfo = mBucketInfos.get(index);
+    }
+
+    public BucketInfo getCurrentBucketInfo() {
+        return mCurrentBucketInfo;
+    }
+
     public int getNumOfBucketInfos() {
-        mNumOfBucketInfos = mBucketInfos.size();
-        return mNumOfBucketInfos;
+        return mBucketInfos.size();
     }
 
     public void setNumOfImages(int numOfImages) {
@@ -50,5 +62,32 @@ public class ImageManager {
 
     public int getNumOfImages() {
         return mNumOfImages;
+    }
+
+    public int getIndex(BucketInfo bucketInfo) {
+        return mBucketInfos.indexOf(bucketInfo);
+    }
+
+    public void deleteImage(int index) {
+        ImageInfo imageInfo = mCurrentBucketInfo.getImageInfo(index);
+        DateLabelInfo dateLabelInfo = imageInfo.getDateLabelInfo();
+
+        dateLabelInfo.deleteImageInfo(imageInfo);
+        mCurrentBucketInfo.deleteImageInfo(index);
+
+        mObjectManager.deleteImage(index);
+
+        if (dateLabelInfo.getNumOfImages() == 0) {
+            int dateLabelIndex = mCurrentBucketInfo.getIndex(dateLabelInfo);
+            mCurrentBucketInfo.deleteDateLabel(dateLabelInfo);
+            mObjectManager.deleteDateLabel(dateLabelIndex);
+
+            if (mCurrentBucketInfo.getNumOfImages() == 0) {
+                mBucketInfos.remove(mCurrentBucketInfo);
+                mCurrentBucketInfo = mBucketInfos.get(0);
+            }
+        }
+
+        mNumOfImages--;
     }
 }

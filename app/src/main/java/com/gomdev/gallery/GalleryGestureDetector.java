@@ -30,6 +30,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
     private GallerySurfaceView mSurfaceView = null;
 
+    private ImageManager mImageManager = null;
     private GridInfo mGridInfo = null;
 
     private GestureDetectorCompat mGestureDetector;
@@ -74,6 +75,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     public GalleryGestureDetector(Context context, ImageListRenderer renderer) {
         mContext = context;
         mRenderer = renderer;
+
+        mImageManager = ImageManager.getInstance();
 
         mGestureDetector = new GestureDetectorCompat(context, mGestureListener);
 
@@ -138,9 +141,29 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     }
 
     @Override
-    public void onGridInfoChanged() {
+    public void onColumnWidthChanged() {
         mColumnWidth = mGridInfo.getColumnWidth();
         mNumOfColumns = mGridInfo.getNumOfColumns();
+    }
+
+    @Override
+    public void onNumOfImageInfosChanged() {
+        mScrollableHeight = mGridInfo.getScrollableHeight();
+
+        mSurfaceSizeBuffer.y = mScrollableHeight;
+
+        mSurfaceBufferTop = mHeight * 0.5f;
+        mSurfaceBufferBottom = mSurfaceBufferTop - mScrollableHeight;
+    }
+
+    @Override
+    public void onNumOfDateLabelInfosChanged() {
+        mScrollableHeight = mGridInfo.getScrollableHeight();
+
+        mSurfaceSizeBuffer.y = mScrollableHeight;
+
+        mSurfaceBufferTop = mHeight * 0.5f;
+        mSurfaceBufferBottom = mSurfaceBufferTop - mScrollableHeight;
     }
 
     private void adjustViewport() {
@@ -168,8 +191,13 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         int numOfDateLabels = mGridInfo.getNumOfDateInfos();
         for (int i = 0; i < numOfDateLabels; i++) {
             DateLabelInfo dateLabelInfo = bucketInfo.getDateInfo(i);
-            int firstImagePosition = dateLabelInfo.getFirstImagePosition();
-            int lastImagePosition = dateLabelInfo.getLastImagePosition();
+
+            ImageInfo firstImageInfo = dateLabelInfo.get(0);
+            int firstImagePosition = bucketInfo.getIndex(firstImageInfo);
+
+            int numOfImages = dateLabelInfo.getNumOfImages();
+            ImageInfo lastImageInfo = dateLabelInfo.get(numOfImages - 1);
+            int lastImagePosition = bucketInfo.getIndex(lastImageInfo);
             if (firstImagePosition <= index && index <= lastImagePosition) {
                 dist += mDateLabelHeight;
 
@@ -272,7 +300,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
             Intent intent = new Intent(mContext, com.gomdev.gallery.ImageViewActivity.class);
 
-            int bucketIndex = mGridInfo.getBucketInfo().getPosition();
+            BucketInfo bucketInfo = mGridInfo.getBucketInfo();
+            int bucketIndex = mImageManager.getIndex(bucketInfo);
             intent.putExtra(GalleryConfig.BUCKET_POSITION, bucketIndex);
             intent.putExtra(GalleryConfig.IMAGE_POSITION, imageIndex);
             intent.putExtra(GalleryConfig.DATE_LABEL_POSITION, dateLabelIndex);
