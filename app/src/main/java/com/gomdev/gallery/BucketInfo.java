@@ -42,7 +42,7 @@ public class BucketInfo implements Serializable {
         mImageInfos.add(imageInfo);
     }
 
-    public ImageInfo get(int position) {
+    public ImageInfo getImageInfo(int position) {
         return mImageInfos.get(position);
     }
 
@@ -52,7 +52,6 @@ public class BucketInfo implements Serializable {
 
     public void add(DateLabelInfo dateLabelInfo) {
         mDateInfos.add(dateLabelInfo);
-        dateLabelInfo.setBucketInfo(this);
     }
 
     public DateLabelInfo getDateInfo(int position) {

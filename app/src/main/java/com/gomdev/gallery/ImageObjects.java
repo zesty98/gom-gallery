@@ -292,7 +292,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
             mObjects[i].setVertexInfo(vertexInfo, false, false);
 
-            ImageInfo imageInfo = mBucketInfo.get(i);
+            ImageInfo imageInfo = mBucketInfo.getImageInfo(i);
             TextureMappingInfo textureMappingInfo = new TextureMappingInfo(mObjects[i], imageInfo);
             mTextureMappingInfos.add(textureMappingInfo);
         }

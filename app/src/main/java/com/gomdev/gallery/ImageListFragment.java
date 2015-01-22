@@ -150,7 +150,7 @@ public class ImageListFragment extends Fragment {
         @Override
         public Object getItem(int position) {
             return position < mNumOfColumns ?
-                    null : mBucketInfo.get(position - mNumOfColumns);
+                    null : mBucketInfo.getImageInfo(position - mNumOfColumns);
         }
 
         @Override
@@ -206,7 +206,7 @@ public class ImageListFragment extends Fragment {
             RecyclingImageView imageView = (RecyclingImageView) layout
                     .findViewById(R.id.image);
             imageView.setLayoutParams(mImageViewLayoutParams);
-            ImageInfo imageInfo = mBucketInfo.get(position - mNumOfColumns);
+            ImageInfo imageInfo = mBucketInfo.getImageInfo(position - mNumOfColumns);
             mImageLoader.loadThumbnail(imageInfo, imageView);
 
             return layout;

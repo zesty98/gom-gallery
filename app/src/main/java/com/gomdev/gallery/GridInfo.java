@@ -188,7 +188,7 @@ public class GridInfo {
     private float mTranslateY = 0f;
     private float mTranslateZ = 0f;
     private float mRotateX = 0f;
-    
+
     public void setTranslateY(float y) {
         mTranslateY = y;
     }

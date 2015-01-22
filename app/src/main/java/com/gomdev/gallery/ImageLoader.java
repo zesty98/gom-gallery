@@ -12,7 +12,6 @@ import android.text.format.DateUtils;
 import android.util.Log;
 
 import java.io.FileDescriptor;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 

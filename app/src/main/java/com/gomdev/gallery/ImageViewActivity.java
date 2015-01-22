@@ -111,7 +111,7 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
 
         @Override
         public Fragment getItem(int position) {
-            return ImageViewFragment.newInstance(mBucketInfo.get(position));
+            return ImageViewFragment.newInstance(mBucketInfo.getImageInfo(position));
         }
     }
 
@@ -123,7 +123,7 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
 
         @Override
         public void onPageSelected(int i) {
-            ImageInfo imageInfo = mBucketInfo.get(i);
+            ImageInfo imageInfo = mBucketInfo.getImageInfo(i);
             DateLabelInfo dateLabelInfo = imageInfo.getDateLabelInfo();
             getActionBar().setTitle(dateLabelInfo.getDate());
 

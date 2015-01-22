@@ -32,7 +32,6 @@ public class GalleryContext {
     }
 
 
-
     public void setScreenSize(int width, int height) {
         mWidth = width;
         mHeight = height;

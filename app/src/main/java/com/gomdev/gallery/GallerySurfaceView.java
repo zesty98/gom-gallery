@@ -1,16 +1,10 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
-
-import com.gomdev.gles.GLESNode;
-import com.gomdev.gles.GLESTransform;
 
 /**
  * Created by gomdev on 14. 12. 18..

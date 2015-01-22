@@ -24,14 +24,6 @@ public class ImageInfo implements Serializable, GalleryInfo {
         mOrientation = orientation;
     }
 
-    public void setDateLabelInfo(DateLabelInfo dateLabelInfo) {
-        mDateLabelInfo = dateLabelInfo;
-    }
-
-    public DateLabelInfo getDateLabelInfo() {
-        return mDateLabelInfo;
-    }
-
     public int getPosition() {
         return mPosition;
     }
@@ -42,6 +34,14 @@ public class ImageInfo implements Serializable, GalleryInfo {
 
     public long getImageID() {
         return mImageID;
+    }
+
+    public void setDateLabelInfo(DateLabelInfo dateLabelInfo) {
+        mDateLabelInfo = dateLabelInfo;
+    }
+
+    public DateLabelInfo getDateLabelInfo() {
+        return mDateLabelInfo;
     }
 
     public String getImagePath() {

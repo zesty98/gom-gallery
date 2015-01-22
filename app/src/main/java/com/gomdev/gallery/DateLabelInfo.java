@@ -26,20 +26,10 @@ public class DateLabelInfo implements Serializable, GalleryInfo {
 
     private List<ImageInfo> mImageInfos = new ArrayList<>();
 
-    private BucketInfo mBucketInfo = null;
-
     public DateLabelInfo(int position, String date) {
         mPosition = position;
         mDate = date;
         mImageInfos.clear();
-    }
-
-    public void setBucketInfo(BucketInfo bucketInfo) {
-        mBucketInfo = bucketInfo;
-    }
-
-    public BucketInfo getBucketInfo() {
-        return mBucketInfo;
     }
 
     public int getPosition() {
