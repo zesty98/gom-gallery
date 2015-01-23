@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import android.annotation.TargetApi;
 import android.app.ActionBar;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
@@ -114,8 +115,14 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_delete) {
-            ImageManager.getInstance().deleteImage(mCurrentImageIndex);
-            finish();
+            boolean isBucketDeleted = ImageManager.getInstance().deleteImage(mCurrentImageIndex);
+            if (isBucketDeleted == false) {
+                finish();
+            } else {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+            }
             return true;
         }
         return super.onOptionsItemSelected(item);

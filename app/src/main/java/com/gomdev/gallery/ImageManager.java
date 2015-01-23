@@ -1,5 +1,10 @@
 package com.gomdev.gallery;
 
+import android.content.Context;
+import android.provider.MediaStore;
+import android.util.Log;
+import android.widget.Toast;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -13,8 +18,8 @@ public class ImageManager {
 
     private static ImageManager sImageManager;
 
-    public static ImageManager newInstance() {
-        sImageManager = new ImageManager();
+    public static ImageManager newInstance(Context context) {
+        sImageManager = new ImageManager(context);
         return sImageManager;
     }
 
@@ -22,12 +27,16 @@ public class ImageManager {
         return sImageManager;
     }
 
+    private final Context mContext;
+
     private int mNumOfImages = 0;
     private List<BucketInfo> mBucketInfos = null;
     private BucketInfo mCurrentBucketInfo = null;
     private ObjectManager mObjectManager = null;
 
-    private ImageManager() {
+    private ImageManager(Context context) {
+        mContext = context;
+
         mBucketInfos = new LinkedList<>();
         mNumOfImages = 0;
     }
@@ -68,8 +77,22 @@ public class ImageManager {
         return mBucketInfos.indexOf(bucketInfo);
     }
 
-    public void deleteImage(int index) {
+    public boolean deleteImage(int index) {
+        boolean isBucketDeleted = false;
         ImageInfo imageInfo = mCurrentBucketInfo.getImageInfo(index);
+
+        int num = mContext.getContentResolver().delete(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                MediaStore.Images.Media._ID + " = ? ",
+                new String[]{String.valueOf(imageInfo.getImageID())
+                });
+        if (num == 0) {
+            Toast.makeText(mContext, "Delete Failed : Image",
+                    Toast.LENGTH_SHORT)
+                    .show();
+            return false;
+        }
+
         DateLabelInfo dateLabelInfo = imageInfo.getDateLabelInfo();
 
         dateLabelInfo.deleteImageInfo(imageInfo);
@@ -83,11 +106,27 @@ public class ImageManager {
             mObjectManager.deleteDateLabel(dateLabelIndex);
 
             if (mCurrentBucketInfo.getNumOfImages() == 0) {
+//                num = mContext.getContentResolver().delete(
+//                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+//                        MediaStore.Images.Media.BUCKET_ID + " = ? ",
+//                        new String[]{String.valueOf(mCurrentBucketInfo.getID())
+//                        });
+//                if (num == 0) {
+//                    Toast.makeText(mContext, "Delete Failed : Bucket",
+//                            Toast.LENGTH_SHORT)
+//                            .show();
+//                    return false;
+//                }
+
                 mBucketInfos.remove(mCurrentBucketInfo);
                 mCurrentBucketInfo = mBucketInfos.get(0);
+
+                isBucketDeleted = true;
             }
         }
 
         mNumOfImages--;
+
+        return isBucketDeleted;
     }
 }

@@ -18,7 +18,7 @@ public class GalleryContext {
 
     public static GalleryContext newInstance(Context context) {
         sGalleryContext = new GalleryContext();
-        ImageManager.newInstance();
+        ImageManager.newInstance(context);
         ImageLoader.newInstance(context);
         return sGalleryContext;
     }
