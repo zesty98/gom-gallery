@@ -78,7 +78,7 @@ public class ImageListFragment extends Fragment {
                                     int position, long id) {
                 Intent intent = new Intent(getActivity(), com.gomdev.gallery.ImageViewActivity.class);
 
-                intent.putExtra(GalleryConfig.BUCKET_POSITION, mImageManager.getIndex(mBucketInfo));
+                intent.putExtra(GalleryConfig.BUCKET_POSITION, mBucketInfo.getIndex());
                 intent.putExtra(GalleryConfig.IMAGE_POSITION, position - mNumOfColumns);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {

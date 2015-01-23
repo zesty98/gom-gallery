@@ -276,10 +276,8 @@ public class ObjectManager implements GridInfoChangeListener {
         int selectedDateLabelIndex = getDateLabelIndexFromYPos(yPos);
         int index = getImageIndexFromYPos(x, yPos, selectedDateLabelIndex);
 
-        DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(selectedDateLabelIndex);
-        int numOfImages = dateLabelInfo.getNumOfImages();
-        ImageInfo lastImageInfo = dateLabelInfo.get(numOfImages - 1);
-        int lastImageIndex = mBucketInfo.getIndex(lastImageInfo);
+        DateLabelInfo dateLabelInfo = mBucketInfo.getDateLabelInfo(selectedDateLabelIndex);
+        int lastImageIndex = dateLabelInfo.getLastImageInfoIndex();
 
         if (index > lastImageIndex) {
             return -1;
@@ -296,10 +294,8 @@ public class ObjectManager implements GridInfoChangeListener {
         int selectedDateLabelIndex = getDateLabelIndexFromYPos(yPos);
         int index = getImageIndexFromYPos(x, yPos, selectedDateLabelIndex);
 
-        DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(selectedDateLabelIndex);
-        int numOfImages = dateLabelInfo.getNumOfImages();
-        ImageInfo lastImageInfo = dateLabelInfo.get(numOfImages - 1);
-        int lastImageIndex = mBucketInfo.getIndex(lastImageInfo);
+        DateLabelInfo dateLabelInfo = mBucketInfo.getDateLabelInfo(selectedDateLabelIndex);
+        int lastImageIndex = dateLabelInfo.getLastImageInfoIndex();
 
         if (index > lastImageIndex) {
             return lastImageIndex;
@@ -323,13 +319,12 @@ public class ObjectManager implements GridInfoChangeListener {
         float imageStartOffset = dateLabelObject.getTop() - mDateLabelHeight - mSpacing;
         float yDistFromDateLabel = imageStartOffset - yPos;
 
-        DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(selectedDateLabelIndex);
+        DateLabelInfo dateLabelInfo = mBucketInfo.getDateLabelInfo(selectedDateLabelIndex);
 
         int row = (int) (yDistFromDateLabel / (mColumnWidth + mSpacing));
         int column = (int) (x / (mColumnWidth + mSpacing));
 
-        ImageInfo firstImageInfo = dateLabelInfo.get(0);
-        int firstImageIndex = mBucketInfo.getIndex(firstImageInfo);
+        int firstImageIndex = dateLabelInfo.getFirstImageInfoIndex();
 
         return mNumOfColumns * row + column + firstImageIndex;
     }

@@ -203,7 +203,7 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
 
             yOffset -= (mDateLabelHeight + mSpacing);
 
-            DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(i);
+            DateLabelInfo dateLabelInfo = mBucketInfo.getDateLabelInfo(i);
             yOffset -= (dateLabelInfo.getNumOfRows() * (mColumnWidth + mSpacing));
         }
     }
@@ -248,7 +248,7 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
 
             yOffset -= (mDateLabelHeight + mSpacing);
 
-            DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(i);
+            DateLabelInfo dateLabelInfo = mBucketInfo.getDateLabelInfo(i);
             yOffset -= (dateLabelInfo.getNumOfRows() * (mColumnWidth + mSpacing));
         }
     }
@@ -297,7 +297,7 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
             vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
             object.setVertexInfo(vertexInfo, false, false);
 
-            DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(i);
+            DateLabelInfo dateLabelInfo = mBucketInfo.getDateLabelInfo(i);
             TextureMappingInfo textureMappingInfo = new TextureMappingInfo(object, dateLabelInfo);
             addTextureMapingInfo(textureMappingInfo);
         }
@@ -355,7 +355,7 @@ public class DateLabelObjects implements ImageLoadingListener, GridInfoChangeLis
             final AsyncDrawable asyncDrawable =
                     new AsyncDrawable(mContext.getResources(),
                             mLoadingBitmap, task);
-            GalleryObject object = mTextureMappingInfos.get(mBucketInfo.getIndex(dateLableInfo)).getObject();
+            GalleryObject object = mTextureMappingInfos.get(dateLableInfo.getIndex()).getObject();
             object.setTexture(mDummyTexture);
             texture.setBitmapDrawable(asyncDrawable);
             task.execute(dateLableInfo);

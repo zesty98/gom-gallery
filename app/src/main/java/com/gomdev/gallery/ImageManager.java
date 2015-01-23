@@ -2,7 +2,6 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.widget.Toast;
 
 import java.util.LinkedList;
@@ -73,10 +72,6 @@ public class ImageManager {
         return mNumOfImages;
     }
 
-    public int getIndex(BucketInfo bucketInfo) {
-        return mBucketInfos.indexOf(bucketInfo);
-    }
-
     public boolean deleteImage(int index) {
         boolean isBucketDeleted = false;
         ImageInfo imageInfo = mCurrentBucketInfo.getImageInfo(index);
@@ -95,14 +90,15 @@ public class ImageManager {
 
         DateLabelInfo dateLabelInfo = imageInfo.getDateLabelInfo();
 
-        dateLabelInfo.deleteImageInfo(imageInfo);
+        int indexInDateLabelInfo = imageInfo.getIndexInDateLabelInfo();
+        dateLabelInfo.deleteImageInfo(indexInDateLabelInfo);
         mCurrentBucketInfo.deleteImageInfo(index);
 
         mObjectManager.deleteImage(index);
 
         if (dateLabelInfo.getNumOfImages() == 0) {
-            int dateLabelIndex = mCurrentBucketInfo.getIndex(dateLabelInfo);
-            mCurrentBucketInfo.deleteDateLabel(dateLabelInfo);
+            int dateLabelIndex = dateLabelInfo.getIndex();
+            mCurrentBucketInfo.deleteDateLabel(dateLabelIndex);
             mObjectManager.deleteDateLabel(dateLabelIndex);
 
             if (mCurrentBucketInfo.getNumOfImages() == 0) {
@@ -118,7 +114,8 @@ public class ImageManager {
 //                    return false;
 //                }
 
-                mBucketInfos.remove(mCurrentBucketInfo);
+                int bucketIndex = mCurrentBucketInfo.getIndex();
+                delete(bucketIndex);
                 mCurrentBucketInfo = mBucketInfos.get(0);
 
                 isBucketDeleted = true;
@@ -128,5 +125,14 @@ public class ImageManager {
         mNumOfImages--;
 
         return isBucketDeleted;
+    }
+
+    private void delete(int index) {
+        mBucketInfos.remove(index);
+
+        int size = mBucketInfos.size();
+        for (int i = index; i < size; i++) {
+            mBucketInfos.get(i).setIndex(i);
+        }
     }
 }

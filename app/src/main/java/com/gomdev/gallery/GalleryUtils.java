@@ -155,10 +155,7 @@ public class GalleryUtils {
         return vertexInfo;
     }
 
-    static float[] calcTexCoord(ImageInfo imageInfo) {
-        int width = imageInfo.getThumbnailWidth();
-        int height = imageInfo.getThumbnailHeight();
-
+    static float[] calcTexCoord(int width, int height) {
         float minS = 0f;
         float minT = 0f;
         float maxS = 0f;

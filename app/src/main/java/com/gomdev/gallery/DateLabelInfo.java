@@ -14,19 +14,25 @@ public class DateLabelInfo implements Serializable, GalleryInfo {
 
     private final String mDate;
 
+    private int mIndex = 0;
+
     private int mWidth = 0;
     private int mHeight = 0;
 
     private int mNumOfRows = 0;
     private int mNumOfColumns = 0;
 
-    private int mFirstImagePosition = 0;
-    private int mLastImagePosition = 0;
+    private int mFirstImageInfoIndex = 0;
+    private int mLastImageInfoIndex = 0;
+
+    private int mImageInfoIndex = 0;
 
     private List<ImageInfo> mImageInfos = new LinkedList<>();
 
-    public DateLabelInfo(String date) {
+    public DateLabelInfo(int index, String date) {
+        mIndex = index;
         mDate = date;
+
         mImageInfos.clear();
     }
 
@@ -34,9 +40,19 @@ public class DateLabelInfo implements Serializable, GalleryInfo {
         return mDate;
     }
 
+    public void setIndex(int index) {
+        mIndex = index;
+    }
+
+    public int getIndex() {
+        return mIndex;
+    }
+
     public void add(ImageInfo imageInfo) {
         mImageInfos.add(imageInfo);
         imageInfo.setDateLabelInfo(this);
+        imageInfo.setIndexInDateLabelInfo(mImageInfoIndex);
+        mImageInfoIndex++;
     }
 
     public ImageInfo get(int position) {
@@ -56,27 +72,28 @@ public class DateLabelInfo implements Serializable, GalleryInfo {
         return mNumOfRows;
     }
 
-    public void setFirstImagePosition(int position) {
-        mFirstImagePosition = position;
+    public void setFirstImageInfoIndex(int position) {
+        mFirstImageInfoIndex = position;
     }
 
-    public int getFirstImagePosition() {
-        return mFirstImagePosition;
+    public int getFirstImageInfoIndex() {
+        return mFirstImageInfoIndex;
     }
 
-    public void setLastImagePosition(int position) {
-        mLastImagePosition = position;
+    public void setLastImageInfoIndex(int position) {
+        mLastImageInfoIndex = position;
     }
 
-    public int getLastImagePosition() {
-        return mLastImagePosition;
+    public int getLastImageInfoIndex() {
+        return mLastImageInfoIndex;
     }
 
-    public int getIndex(ImageInfo imageInfo) {
-        return mImageInfos.indexOf(imageInfo);
-    }
+    public void deleteImageInfo(int index) {
+        mImageInfos.remove(index);
 
-    public void deleteImageInfo(ImageInfo imageInfo) {
-        mImageInfos.remove(imageInfo);
+        int size = mImageInfos.size();
+        for (int i = index; i < size; i++) {
+            mImageInfos.get(i).setIndexInDateLabelInfo(i);
+        }
     }
 }

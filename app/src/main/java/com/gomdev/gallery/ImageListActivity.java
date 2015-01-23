@@ -58,7 +58,7 @@ public class ImageListActivity extends Activity {
 
             SharedPreferences.Editor editor = pref.edit();
             editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
-            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, this.mImageManager.getIndex(bucketInfo));
+            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, bucketInfo.getIndex());
             editor.commit();
 
         } else {

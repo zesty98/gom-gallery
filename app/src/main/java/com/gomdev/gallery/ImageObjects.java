@@ -66,7 +66,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     private List<TextureMappingInfo> mTextureMappingInfos = new LinkedList<>();
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
 
-    private List<GLESAnimator> mAnimators = new ArrayList<GLESAnimator>();
+    private List<GLESAnimator> mAnimators = new ArrayList<>();
     private int mAnimationFinishCount = 0;
     private int mAnimationCancelCount = 0;
     private float mScale = 1f;
@@ -183,7 +183,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         for (int i = 0; i < mNumOfDateInfos; i++) {
             yOffset -= (mDateLabelHeight + mSpacing);
 
-            DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(i);
+            DateLabelInfo dateLabelInfo = mBucketInfo.getDateLabelInfo(i);
             int numOfImages = dateLabelInfo.getNumOfImages();
             for (int j = 0; j < numOfImages; j++) {
                 GalleryObject object = mObjects.get(imageIndex);
@@ -242,7 +242,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         float yOffset = mHeight * 0.5f - mActionBarHeight;
         for (int i = 0; i < mNumOfDateInfos; i++) {
             yOffset -= (mDateLabelHeight + mSpacing);
-            DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(i);
+            DateLabelInfo dateLabelInfo = mBucketInfo.getDateLabelInfo(i);
             int numOfImages = dateLabelInfo.getNumOfImages();
             for (int j = 0; j < numOfImages; j++) {
                 float left = mSpacing + (j % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
@@ -379,13 +379,10 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     public void onImageLoaded(int position, GalleryTexture texture) {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
         final GalleryObject object = textureMappingInfo.getObject();
-        final ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
 
         final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
-        imageInfo.setThumbnailWidth(bitmap.getWidth());
-        imageInfo.setThumbnailHeight(bitmap.getHeight());
 
-        float[] texCoord = GalleryUtils.calcTexCoord(imageInfo);
+        float[] texCoord = GalleryUtils.calcTexCoord(bitmap.getWidth(), bitmap.getHeight());
 
         GLESVertexInfo vertexInfo = object.getVertexInfo();
         GLESShader shader = object.getShader();

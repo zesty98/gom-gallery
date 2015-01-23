@@ -1,7 +1,6 @@
 package com.gomdev.gallery;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -11,14 +10,26 @@ public class BucketInfo implements Serializable {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final int mID;
-    private String mName;
-    private List<ImageInfo> mImageInfos = new LinkedList<>();
-    private List<DateLabelInfo> mDateInfos = new ArrayList<>();
 
-    public BucketInfo(int id) {
+    private int mIndex = 0;
+    private String mName;
+
+    private List<ImageInfo> mImageInfos = new LinkedList<>();
+    private List<DateLabelInfo> mDateLabelInfos = new LinkedList<>();
+
+    public BucketInfo(int index, int id) {
+        mIndex = index;
         mID = id;
         mImageInfos.clear();
-        mDateInfos.clear();
+        mDateLabelInfos.clear();
+    }
+
+    public void setIndex(int index) {
+        mIndex = index;
+    }
+
+    public int getIndex() {
+        return mIndex;
     }
 
     public int getID() {
@@ -46,30 +57,53 @@ public class BucketInfo implements Serializable {
     }
 
     public void add(DateLabelInfo dateLabelInfo) {
-        mDateInfos.add(dateLabelInfo);
+        mDateLabelInfos.add(dateLabelInfo);
     }
 
-    public DateLabelInfo getDateInfo(int position) {
-        return mDateInfos.get(position);
+    public DateLabelInfo getDateLabelInfo(int position) {
+        return mDateLabelInfos.get(position);
     }
 
     public int getNumOfDateInfos() {
-        return mDateInfos.size();
-    }
-
-    public int getIndex(DateLabelInfo dateLabelInfo) {
-        return mDateInfos.indexOf(dateLabelInfo);
-    }
-
-    public int getIndex(ImageInfo imageInfo) {
-        return mImageInfos.indexOf(imageInfo);
+        return mDateLabelInfos.size();
     }
 
     public void deleteImageInfo(int index) {
+        DateLabelInfo parentDateLabelInfo = mImageInfos.get(index).getDateLabelInfo();
+
         mImageInfos.remove(index);
+
+        int size = mImageInfos.size();
+        for (int i = index; i < size; i++) {
+            mImageInfos.get(i).setIndex(i);
+        }
+
+        int firstImageInfoIndex = parentDateLabelInfo.getFirstImageInfoIndex();
+        int lastImageInfoIndex = parentDateLabelInfo.getLastImageInfoIndex();
+
+        if (index == firstImageInfoIndex) {
+            parentDateLabelInfo.setFirstImageInfoIndex(firstImageInfoIndex + 1);
+        }
+
+        if (index == lastImageInfoIndex) {
+            parentDateLabelInfo.setLastImageInfoIndex(lastImageInfoIndex - 1);
+        }
+
+        int parentDateLabelInfoIndex = parentDateLabelInfo.getIndex();
+        int dateLabelInfoSize = mDateLabelInfos.size();
+        for (int i = parentDateLabelInfoIndex + 1; i < dateLabelInfoSize; i++) {
+            DateLabelInfo dateLabelInfo = mDateLabelInfos.get(i);
+            dateLabelInfo.setFirstImageInfoIndex(dateLabelInfo.getFirstImageInfoIndex() - 1);
+            dateLabelInfo.setLastImageInfoIndex(dateLabelInfo.getLastImageInfoIndex() - 1);
+        }
     }
 
-    public void deleteDateLabel(DateLabelInfo dateLabelInfo) {
-        mDateInfos.remove(dateLabelInfo);
+    public void deleteDateLabel(int index) {
+        mDateLabelInfos.remove(index);
+
+        int size = mDateLabelInfos.size();
+        for (int i = index; i < size; i++) {
+            mDateLabelInfos.get(i).setIndex(i);
+        }
     }
 }

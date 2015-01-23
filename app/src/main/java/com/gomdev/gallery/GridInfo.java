@@ -69,7 +69,7 @@ public class GridInfo {
 
     private void setNumOfColumnsToDateInfo(int numOfColumns) {
         for (int i = 0; i < mNumOfDateInfos; i++) {
-            mBucketInfo.getDateInfo(i).setNumOfColumns(numOfColumns);
+            mBucketInfo.getDateLabelInfo(i).setNumOfColumns(numOfColumns);
         }
     }
 
@@ -120,7 +120,7 @@ public class GridInfo {
         int numOfRows = 0;
 
         for (int i = 0; i < mNumOfDateInfos; i++) {
-            DateLabelInfo dateLabelInfo = mBucketInfo.getDateInfo(i);
+            DateLabelInfo dateLabelInfo = mBucketInfo.getDateLabelInfo(i);
             numOfRows = dateLabelInfo.getNumOfRows();
             totalNumOfRows += numOfRows;
         }

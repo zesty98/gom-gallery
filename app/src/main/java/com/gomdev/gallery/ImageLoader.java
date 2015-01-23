@@ -110,7 +110,7 @@ public class ImageLoader {
                 String bucketName = cursor.getString(columnIndex);
 
                 if (buckets.add(bucketID) == true) {
-                    BucketInfo bucketInfo = new BucketInfo(bucketID);
+                    BucketInfo bucketInfo = new BucketInfo(index, bucketID);
                     bucketInfo.setName(bucketName);
                     mImageManager.addBucketInfo(bucketInfo);
                     index++;
@@ -169,7 +169,7 @@ public class ImageLoader {
                 columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
                 long dateTakenInMs = cursor.getLong(columnIndex);
 
-                ImageInfo imageInfo = new ImageInfo(imageID, orientation);
+                ImageInfo imageInfo = new ImageInfo(index, imageID, orientation);
                 imageInfo.setImagePath(imagePath);
                 imageInfo.setWidth(width);
                 imageInfo.setHeight(height);
@@ -185,9 +185,9 @@ public class ImageLoader {
                 dateTakenInMs /= MS_TO_DAY_CONVERT_UNIT;
 
                 if (prevDateTaken != dateTakenInMs) {
-                    dateLabelInfo = new DateLabelInfo(date);
+                    dateLabelInfo = new DateLabelInfo(dateIndex, date);
                     dateLabelInfo.add(imageInfo);
-                    dateLabelInfo.setFirstImagePosition(index);
+                    dateLabelInfo.setFirstImageInfoIndex(index);
                     bucketInfo.add(dateLabelInfo);
 
                     dateIndex++;
@@ -197,7 +197,7 @@ public class ImageLoader {
 
                 bucketInfo.add(imageInfo);
 
-                dateLabelInfo.setLastImagePosition(index);
+                dateLabelInfo.setLastImageInfoIndex(index);
 
                 prevDateTaken = dateTakenInMs;
 

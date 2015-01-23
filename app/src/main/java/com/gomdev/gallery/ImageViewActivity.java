@@ -12,6 +12,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -51,7 +52,8 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
         mBucketInfo = mImageManager.getBucketInfo(bucketPosition);
 
         int dateLabelIndex = getIntent().getIntExtra(GalleryConfig.DATE_LABEL_POSITION, 0);
-        mDateLabelInfo = mBucketInfo.getDateInfo(dateLabelIndex);
+        Log.d(TAG, "onCreate() dateLabelIndex=" + dateLabelIndex + " numOfDateLableInfos=" + mBucketInfo.getNumOfDateInfos());
+        mDateLabelInfo = mBucketInfo.getDateLabelInfo(dateLabelIndex);
 
         mAdapter = new ImagePagerAdapter(getSupportFragmentManager(), mBucketInfo.getNumOfImages());
         mPager = (ViewPager) findViewById(R.id.pager);
@@ -164,7 +166,7 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
             SharedPreferences pref = ImageViewActivity.this.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
             SharedPreferences.Editor editor = pref.edit();
             editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, i);
-            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, mImageManager.getIndex(mBucketInfo));
+            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, mBucketInfo.getIndex());
             editor.commit();
         }
 
