@@ -31,8 +31,7 @@ public class ObjectManager implements GridInfoChangeListener {
     private GLESNode mRoot;
     private GLESNode mImageNode;
 
-    private DateLabelObjects mDateLabelObjects = null;
-    private ImageObjects mImageObjects = null;
+    private GalleryObjects mGalleryObjects = null;
     private Scrollbar mScrollbar = null;
 
     private GridInfo mGridInfo = null;
@@ -59,15 +58,14 @@ public class ObjectManager implements GridInfoChangeListener {
     private void init() {
         mGLESRenderer = GLESRenderer.createRenderer();
 
-        mDateLabelObjects = new DateLabelObjects(mContext, mRenderer);
-        mImageObjects = new ImageObjects(mContext, mRenderer);
+        mGalleryObjects = new GalleryObjects(mContext, mRenderer);
 
         GLESGLState glState = new GLESGLState();
         glState.setCullFaceState(true);
         glState.setCullFace(GLES20.GL_BACK);
         glState.setDepthState(false);
 
-        mImageObjects.setGLState(glState);
+        mGalleryObjects.setImageGLState(glState);
 
         glState = new GLESGLState();
         glState.setCullFaceState(true);
@@ -75,7 +73,7 @@ public class ObjectManager implements GridInfoChangeListener {
         glState.setBlendState(true);
         glState.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
-        mDateLabelObjects.setGLState(glState);
+        mGalleryObjects.setDateLabelGLState(glState);
 
 
         mScrollbar = new Scrollbar(mContext);
@@ -86,7 +84,7 @@ public class ObjectManager implements GridInfoChangeListener {
 
     // rendering
 
-    public void update() {
+    public void update(boolean needToMapTexture) {
 
         mGLESRenderer.updateScene(mSM);
 
@@ -94,22 +92,21 @@ public class ObjectManager implements GridInfoChangeListener {
 
         mScrollbar.setTranslateY(translateY);
 
-        updateTexture();
+        if (needToMapTexture == true) {
+            updateTexture();
+        }
 
-        checkVisibility(translateY);
+        checkVisibility(needToMapTexture, translateY);
 
-        mImageObjects.update();
-        mDateLabelObjects.update();
+        mGalleryObjects.update();
     }
 
     private void updateTexture() {
-        mDateLabelObjects.updateTexture();
-        mImageObjects.updateTexture();
+        mGalleryObjects.updateTexture();
     }
 
-    private void checkVisibility(float translateY) {
-        mDateLabelObjects.checkVisibility(translateY);
-        mImageObjects.checkVisibility(translateY);
+    private void checkVisibility(boolean needToMapTexture, float translateY) {
+        mGalleryObjects.checkVisibility(needToMapTexture, translateY);
     }
 
     public void drawFrame() {
@@ -126,16 +123,14 @@ public class ObjectManager implements GridInfoChangeListener {
 
         mGLESRenderer.reset();
 
-        mDateLabelObjects.onSurfaceChanged(width, height);
-        mImageObjects.onSurfaceChanged(width, height);
+        mGalleryObjects.onSurfaceChanged(width, height);
         mScrollbar.onSurfaceChanged(width, height);
 
         mIsSurfaceChanged = true;
     }
 
     public void setupObjects(GLESCamera camera) {
-        mImageObjects.setupImageObjects(camera);
-        mDateLabelObjects.setupDateLabelObjects(camera);
+        mGalleryObjects.setupObjects(camera);
         mScrollbar.setupObject(camera);
     }
 
@@ -153,13 +148,13 @@ public class ObjectManager implements GridInfoChangeListener {
             return false;
         }
 
-        mImageObjects.setShader(textureShader);
+        mGalleryObjects.setImageShader(textureShader);
 
         GLESShader textureAlphaShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_alpha_20_fs);
         if (textureAlphaShader == null) {
             return false;
         }
-        mDateLabelObjects.setShader(textureAlphaShader);
+        mGalleryObjects.setDateLabelShader(textureAlphaShader);
 
         GLESShader colorShader = createColorShader(R.raw.color_20_vs, R.raw.color_20_fs);
         if (colorShader == null) {
@@ -179,8 +174,7 @@ public class ObjectManager implements GridInfoChangeListener {
         mImageNode.setListener(mImageNodeListener);
         mRoot.addChild(mImageNode);
 
-        mDateLabelObjects.createObjects(mImageNode);
-        mImageObjects.createObjects(mImageNode);
+        mGalleryObjects.createObjects(mImageNode);
 
         mScrollbar.createObject(mRoot);
     }
@@ -229,8 +223,7 @@ public class ObjectManager implements GridInfoChangeListener {
     // initialization
 
     public void setSurfaceView(GallerySurfaceView surfaceView) {
-        mDateLabelObjects.setSurfaceView(surfaceView);
-        mImageObjects.setSurfaceView(surfaceView);
+        mGalleryObjects.setSurfaceView(surfaceView);
     }
 
     public void setGridInfo(GridInfo gridInfo) {
@@ -243,19 +236,18 @@ public class ObjectManager implements GridInfoChangeListener {
         mColumnWidth = mGridInfo.getColumnWidth();
         mNumOfColumns = mGridInfo.getNumOfColumns();
 
-        mDateLabelObjects.setGridInfo(mGridInfo);
-        mImageObjects.setGridInfo(mGridInfo);
+        mGalleryObjects.setGridInfo(mGridInfo);
         mScrollbar.setGridInfo(gridInfo);
 
         gridInfo.addListener(this);
     }
 
     public void setDummyImageTexture(GLESTexture dummyTexture) {
-        mImageObjects.setDummyTexture(dummyTexture);
+        mGalleryObjects.setDummyImageTexture(dummyTexture);
     }
 
     public void setDummyDateLabelTexture(GLESTexture dummyTexture) {
-        mDateLabelObjects.setDummyTexture(dummyTexture);
+        mGalleryObjects.setDummyDateLabelTexture(dummyTexture);
     }
 
     public int getDateLabelIndex(float y) {
@@ -268,71 +260,79 @@ public class ObjectManager implements GridInfoChangeListener {
         return selectedDateLabelIndex;
     }
 
-    public int getSelectedImageIndex(float x, float y) {
-        float translateY = mGridInfo.getTranslateY();
+    public ImageIndexingInfo getSelectedImageIndex(float x, float y) {
+        BucketInfo bucketInfo = mGridInfo.getBucketInfo();
+        int bucketIndex = bucketInfo.getIndex();
 
+        float translateY = mGridInfo.getTranslateY();
         float yPos = mHeight * 0.5f - (y + translateY);
 
-        int selectedDateLabelIndex = getDateLabelIndexFromYPos(yPos);
-        int index = getImageIndexFromYPos(x, yPos, selectedDateLabelIndex);
+        int dateLabelIndex = getDateLabelIndexFromYPos(yPos);
+        int index = getImageIndexFromYPos(x, yPos, dateLabelIndex);
 
-        DateLabelInfo dateLabelInfo = mBucketInfo.getDateLabelInfo(selectedDateLabelIndex);
-        int lastImageIndex = dateLabelInfo.getLastImageInfoIndex();
+        DateLabelInfo dateLabelInfo = mBucketInfo.get(dateLabelIndex);
+        ImageInfo lastImageInfo = dateLabelInfo.getLast();
+        int lastImageIndex = lastImageInfo.getIndex();
 
         if (index > lastImageIndex) {
-            return -1;
+            index = -1;
         }
 
-        return index;
+        ImageIndexingInfo imageIndexingInfo = new ImageIndexingInfo(bucketIndex, dateLabelIndex, index);
+
+        return imageIndexingInfo;
     }
 
-    public int getNearestImageIndex(float x, float y) {
-        float translateY = mGridInfo.getTranslateY();
+    public ImageIndexingInfo getNearestImageIndex(float x, float y) {
+        BucketInfo bucketInfo = mGridInfo.getBucketInfo();
+        int bucketIndex = bucketInfo.getIndex();
 
+        float translateY = mGridInfo.getTranslateY();
         float yPos = mHeight * 0.5f - (y + translateY);
 
-        int selectedDateLabelIndex = getDateLabelIndexFromYPos(yPos);
-        int index = getImageIndexFromYPos(x, yPos, selectedDateLabelIndex);
+        int dateLabelIndex = getDateLabelIndexFromYPos(yPos);
+        int index = getImageIndexFromYPos(x, yPos, dateLabelIndex);
 
-        DateLabelInfo dateLabelInfo = mBucketInfo.getDateLabelInfo(selectedDateLabelIndex);
-        int lastImageIndex = dateLabelInfo.getLastImageInfoIndex();
+        DateLabelInfo dateLabelInfo = mBucketInfo.get(dateLabelIndex);
+        ImageInfo lastImageInfo = dateLabelInfo.getLast();
+        int lastImageIndex = lastImageInfo.getIndex();
 
         if (index > lastImageIndex) {
-            return lastImageIndex;
+            index = lastImageIndex;
         }
 
-        return index;
-    }
+        ImageIndexingInfo imageIndexingInfo = new ImageIndexingInfo(bucketIndex, dateLabelIndex, index);
 
-    public void deleteImage(int index) {
-        mImageObjects.delete(index);
-        mGridInfo.deleteImageInfo();
+        return imageIndexingInfo;
     }
 
     public void deleteDateLabel(int index) {
-        mDateLabelObjects.delete(index);
+        mGalleryObjects.deleteDateLabel(index);
         mGridInfo.deleteDateLabelInfo();
     }
 
+    public void deleteImage(ImageIndexingInfo indexingInfo) {
+        mGalleryObjects.deleteImage(indexingInfo);
+        mGridInfo.deleteImageInfo();
+    }
+
     private int getImageIndexFromYPos(float x, float yPos, int selectedDateLabelIndex) {
-        GalleryObject dateLabelObject = mDateLabelObjects.getObject(selectedDateLabelIndex);
+        GalleryObject dateLabelObject = mGalleryObjects.getObject(selectedDateLabelIndex);
         float imageStartOffset = dateLabelObject.getTop() - mDateLabelHeight - mSpacing;
         float yDistFromDateLabel = imageStartOffset - yPos;
 
-        DateLabelInfo dateLabelInfo = mBucketInfo.getDateLabelInfo(selectedDateLabelIndex);
+        DateLabelInfo dateLabelInfo = mBucketInfo.get(selectedDateLabelIndex);
 
         int row = (int) (yDistFromDateLabel / (mColumnWidth + mSpacing));
         int column = (int) (x / (mColumnWidth + mSpacing));
 
-        int firstImageIndex = dateLabelInfo.getFirstImageInfoIndex();
-
-        return mNumOfColumns * row + column + firstImageIndex;
+        return mNumOfColumns * row + column;
     }
 
     private int getDateLabelIndexFromYPos(float yPos) {
         int selectedDateLabelIndex = 0;
         for (int i = 0; i < mNumOfDateInfos; i++) {
-            GalleryObject dateLabelObject = mDateLabelObjects.getObject(i);
+            GalleryObject dateLabelObject = mGalleryObjects.getObject(i);
             if (yPos > dateLabelObject.getTop()) {
                 selectedDateLabelIndex = i - 1;
                 break;
@@ -343,8 +343,8 @@ public class ObjectManager implements GridInfoChangeListener {
         return selectedDateLabelIndex;
     }
 
-    public GalleryObject getImageObject(int index) {
-        return mImageObjects.getObject(index);
+    public GalleryObject getImageObject(ImageIndexingInfo imageIndexingInfo) {
+        return mGalleryObjects.getImageObject(imageIndexingInfo);
     }
 
     @Override
@@ -356,7 +356,7 @@ public class ObjectManager implements GridInfoChangeListener {
             return;
         }
 
-        mDateLabelObjects.hide();
+        mGalleryObjects.hide();
     }
 
     @Override

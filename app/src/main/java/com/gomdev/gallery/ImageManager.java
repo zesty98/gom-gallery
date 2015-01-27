@@ -4,6 +4,7 @@ import android.content.Context;
 import android.provider.MediaStore;
 import android.widget.Toast;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -33,6 +34,8 @@ public class ImageManager {
     private BucketInfo mCurrentBucketInfo = null;
     private ObjectManager mObjectManager = null;
 
+    private int mBucketIndex = 0;
+
     private ImageManager(Context context) {
         mContext = context;
 
@@ -46,6 +49,7 @@ public class ImageManager {
 
     public void addBucketInfo(BucketInfo bucketInfo) {
         mBucketInfos.add(bucketInfo);
+        bucketInfo.setIndex(mBucketIndex++);
     }
 
     public BucketInfo getBucketInfo(int index) {
@@ -72,9 +76,57 @@ public class ImageManager {
         return mNumOfImages;
     }
 
-    public boolean deleteImage(int index) {
+    public int getImageIndex(ImageIndexingInfo imageIndexingInfo) {
+        int index = 0;
+
+        BucketInfo bucketInfo = mBucketInfos.get(imageIndexingInfo.mBucketIndex);
+
+        int dateLabelIndex = imageIndexingInfo.mDateLabelIndex;
+        int imageInfoIndex = imageIndexingInfo.mImageIndex;
+
+        for (int i = 0; i < dateLabelIndex; i++) {
+            index += bucketInfo.get(i).getNumOfImages();
+        }
+
+        index += imageInfoIndex;
+
+        return index;
+    }
+
+    public ImageIndexingInfo getImageIndexingInfo(int index) {
+        int bucketIndex = mCurrentBucketInfo.getIndex();
+        int dateLabelIndex = 0;
+        int imageIndex = 0;
+
+        Iterator<DateLabelInfo> iter = mCurrentBucketInfo.getIterator();
+        while (iter.hasNext()) {
+            DateLabelInfo dateLabelInfo = iter.next();
+            int maxIndexInDateLabel = dateLabelInfo.getNumOfImages() - 1;
+            if (maxIndexInDateLabel < index) {
+                index -= (maxIndexInDateLabel + 1);
+                dateLabelIndex++;
+            } else {
+                break;
+            }
+        }
+
+        imageIndex = index;
+
+        return new ImageIndexingInfo(bucketIndex, dateLabelIndex, imageIndex);
+    }
+
+    public ImageInfo getImageInfo(ImageIndexingInfo indexingInfo) {
+        DateLabelInfo dateLabelInfo = mCurrentBucketInfo.get(indexingInfo.mDateLabelIndex);
+        ImageInfo imageInfo = dateLabelInfo.get(indexingInfo.mImageIndex);
+
+        return imageInfo;
+    }
+
+    public boolean deleteImage(ImageIndexingInfo imageIndexingInfo) {
         boolean isBucketDeleted = false;
-        ImageInfo imageInfo = mCurrentBucketInfo.getImageInfo(index);
+
+        DateLabelInfo dateLabelInfo = mCurrentBucketInfo.get(imageIndexingInfo.mDateLabelIndex);
+        ImageInfo imageInfo = dateLabelInfo.get(imageIndexingInfo.mImageIndex);
 
         int num = mContext.getContentResolver().delete(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -88,41 +140,21 @@ public class ImageManager {
             return false;
         }
 
-        DateLabelInfo dateLabelInfo = imageInfo.getDateLabelInfo();
+        dateLabelInfo.deleteImageInfo(imageIndexingInfo.mImageIndex);
 
-        int indexInDateLabelInfo = imageInfo.getIndexInDateLabelInfo();
-        dateLabelInfo.deleteImageInfo(indexInDateLabelInfo);
-        mCurrentBucketInfo.deleteImageInfo(index);
-
-        mObjectManager.deleteImage(index);
+        mObjectManager.deleteImage(imageIndexingInfo);
 
         if (dateLabelInfo.getNumOfImages() == 0) {
-            int dateLabelIndex = dateLabelInfo.getIndex();
-            mCurrentBucketInfo.deleteDateLabel(dateLabelIndex);
-            mObjectManager.deleteDateLabel(dateLabelIndex);
+            mCurrentBucketInfo.deleteDateLabel(imageIndexingInfo.mDateLabelIndex);
+            mObjectManager.deleteDateLabel(imageIndexingInfo.mDateLabelIndex);
 
-            if (mCurrentBucketInfo.getNumOfImages() == 0) {
-//                num = mContext.getContentResolver().delete(
-//                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-//                        MediaStore.Images.Media.BUCKET_ID + " = ? ",
-//                        new String[]{String.valueOf(mCurrentBucketInfo.getID())
-//                        });
-//                if (num == 0) {
-//                    Toast.makeText(mContext, "Delete Failed : Bucket",
-//                            Toast.LENGTH_SHORT)
-//                            .show();
-//                    return false;
-//                }
-
-                int bucketIndex = mCurrentBucketInfo.getIndex();
-                delete(bucketIndex);
+            if (mCurrentBucketInfo.getNumOfDateInfos() == 0) {
+                delete(imageIndexingInfo.mBucketIndex);
                 mCurrentBucketInfo = mBucketInfos.get(0);
 
                 isBucketDeleted = true;
             }
         }
-
-        mNumOfImages--;
 
         return isBucketDeleted;
     }

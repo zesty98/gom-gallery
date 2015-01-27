@@ -12,7 +12,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,7 +30,7 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
     private BucketInfo mBucketInfo = null;
     private DateLabelInfo mDateLabelInfo = null;
 
-    private int mCurrentImageIndex = 0;
+    private ImageIndexingInfo mCurrentImageIndexingInfo = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +40,12 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
         final DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
-        int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_POSITION, 0);
+        int bucketIndex = getIntent().getIntExtra(GalleryConfig.BUCKET_INDEX, 0);
+        int dateLabelIndex = getIntent().getIntExtra(GalleryConfig.DATE_LABEL_INDEX, 0);
+        int imageIndex = getIntent().getIntExtra(GalleryConfig.IMAGE_INDEX, 0);
+
+        mCurrentImageIndexingInfo = new ImageIndexingInfo(bucketIndex, dateLabelIndex, imageIndex);
+
 
         GalleryContext galleryContext = GalleryContext.getInstance();
         if (galleryContext == null) {
@@ -49,11 +53,9 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
         }
 
         mImageManager = ImageManager.getInstance();
-        mBucketInfo = mImageManager.getBucketInfo(bucketPosition);
+        mBucketInfo = mImageManager.getBucketInfo(bucketIndex);
 
-        int dateLabelIndex = getIntent().getIntExtra(GalleryConfig.DATE_LABEL_POSITION, 0);
-        Log.d(TAG, "onCreate() dateLabelIndex=" + dateLabelIndex + " numOfDateLableInfos=" + mBucketInfo.getNumOfDateInfos());
-        mDateLabelInfo = mBucketInfo.getDateLabelInfo(dateLabelIndex);
+        mDateLabelInfo = mBucketInfo.get(dateLabelIndex);
 
         mAdapter = new ImagePagerAdapter(getSupportFragmentManager(), mBucketInfo.getNumOfImages());
         mPager = (ViewPager) findViewById(R.id.pager);
@@ -88,11 +90,9 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
             mPager.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
             actionBar.hide();
 
-            int imagePosition = getIntent().getIntExtra(GalleryConfig.IMAGE_POSITION, -1);
-            if (imagePosition != -1) {
-                mPager.setCurrentItem(imagePosition);
-            }
+            int indexInBucket = mImageManager.getImageIndex(mCurrentImageIndexingInfo);
 
+            mPager.setCurrentItem(indexInBucket);
         }
     }
 
@@ -117,7 +117,7 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_delete) {
-            boolean isBucketDeleted = ImageManager.getInstance().deleteImage(mCurrentImageIndex);
+            boolean isBucketDeleted = ImageManager.getInstance().deleteImage(mCurrentImageIndexingInfo);
             if (isBucketDeleted == false) {
                 finish();
             } else {
@@ -145,7 +145,9 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
 
         @Override
         public Fragment getItem(int position) {
-            return ImageViewFragment.newInstance(mBucketInfo.getImageInfo(position));
+            ImageIndexingInfo indexingInfo = mImageManager.getImageIndexingInfo(position);
+            ImageInfo imageInfo = mImageManager.getImageInfo(indexingInfo);
+            return ImageViewFragment.newInstance(imageInfo);
         }
     }
 
@@ -157,16 +159,16 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
 
         @Override
         public void onPageSelected(int i) {
-            mCurrentImageIndex = i;
+            mCurrentImageIndexingInfo = mImageManager.getImageIndexingInfo(i);
 
-            ImageInfo imageInfo = mBucketInfo.getImageInfo(i);
-            DateLabelInfo dateLabelInfo = imageInfo.getDateLabelInfo();
+            DateLabelInfo dateLabelInfo = mBucketInfo.get(mCurrentImageIndexingInfo.mDateLabelIndex);
             getActionBar().setTitle(dateLabelInfo.getDate());
 
             SharedPreferences pref = ImageViewActivity.this.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
             SharedPreferences.Editor editor = pref.edit();
-            editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, i);
-            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, mBucketInfo.getIndex());
+            editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, mCurrentImageIndexingInfo.mImageIndex);
+            editor.putInt(GalleryConfig.PREF_DATE_LABEL_INDEX, mCurrentImageIndexingInfo.mDateLabelIndex);
+            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, mCurrentImageIndexingInfo.mBucketIndex);
             editor.commit();
         }
 

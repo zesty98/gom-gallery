@@ -8,9 +8,9 @@ public class GalleryConfig {
 
     }
 
-    static final String BUCKET_POSITION = "bucket_position";
-    static final String DATE_LABEL_POSITION = "date_label_position";
-    static final String IMAGE_POSITION = "image_position";
+    static final String BUCKET_INDEX = "bucket_index";
+    static final String DATE_LABEL_INDEX = "date_label_index";
+    static final String IMAGE_INDEX = "image_index";
     static final String IMAGE_VIEW_DATA = "image_view_data";
 
     static final String PREF_NAME = "gom_gallery_pref_name";
@@ -18,6 +18,7 @@ public class GalleryConfig {
     static final String PREF_MIN_NUM_OF_COLUMNS = "min_num_of_columns";
     static final String PREF_MAX_NUM_OF_COLUMNS = "max_num_of_columns";
     static final String PREF_COLUMNS_WIDTH = "columns_width";
+
     static final String PREF_BUCKET_INDEX = "bucket_index";
     static final String PREF_DATE_LABEL_INDEX = "date_label_index";
     static final String PREF_IMAGE_INDEX = "image_index";
@@ -28,6 +29,4 @@ public class GalleryConfig {
     static final long IMAGE_ANIMATION_END_OFFSET = 300L;
     static final long DATE_LABEL_ANIMATION_START_OFFSET = IMAGE_ANIMATION_END_OFFSET;
     static final long DATE_LABEL_ANIMATION_END_OFFSET = IMAGE_ANIMATION_END_OFFSET + 200L;
-
-    static boolean sUseGLES = true;
 }

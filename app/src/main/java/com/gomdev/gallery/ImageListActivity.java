@@ -29,7 +29,7 @@ public class ImageListActivity extends Activity {
 
         mImageManager = ImageManager.getInstance();
 
-        int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_POSITION, 0);
+        int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_INDEX, 0);
         BucketInfo bucketInfo = mImageManager.getBucketInfo(bucketPosition);
         getActionBar().setTitle(bucketInfo.getName());
 
@@ -48,27 +48,18 @@ public class ImageListActivity extends Activity {
             editor.commit();
         }
 
-        if (GalleryConfig.sUseGLES == true) {
-            setContentView(R.layout.activity_gles_main);
+        setContentView(R.layout.activity_gles_main);
 
-            mGridInfo = new GridInfo(this, bucketInfo);
+        mGridInfo = new GridInfo(this, bucketInfo);
 
-            mSurfaceView = (GallerySurfaceView) findViewById(R.id.surfaceview);
-            mSurfaceView.setGridInfo(mGridInfo);
+        mSurfaceView = (GallerySurfaceView) findViewById(R.id.surfaceview);
+        mSurfaceView.setGridInfo(mGridInfo);
 
-            SharedPreferences.Editor editor = pref.edit();
-            editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
-            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, bucketInfo.getIndex());
-            editor.commit();
-
-        } else {
-            setContentView(R.layout.activity_main);
-            if (savedInstanceState == null) {
-                getFragmentManager().beginTransaction()
-                        .add(R.id.container, new ImageListFragment())
-                        .commit();
-            }
-        }
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, bucketInfo.getIndex());
+        editor.putInt(GalleryConfig.PREF_DATE_LABEL_INDEX, 0);
+        editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
+        editor.commit();
     }
 
     @Override

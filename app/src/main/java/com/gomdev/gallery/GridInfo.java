@@ -17,20 +17,23 @@ public class GridInfo {
     private final Context mContext;
     private final BucketInfo mBucketInfo;
 
+    private ImageIndexingInfo mImageIndexingInfo = null;
+
     private final int mActionBarHeight;
     private final int mDateLabelHeight;
     private final int mSpacing;
 
-    private int mNumOfDateInfos;
-    private int mNumOfImages;
-    private int mColumnWidth;
-    private int mDefaultColumnWidth;
-    private int mNumOfRows;
-    private int mScrollableHeight;
+    private int mNumOfDateInfos = 0;
+    private int mNumOfImages = 0;
+    private int mColumnWidth = 0;
+    private int mDefaultColumnWidth = 0;
+    private int mNumOfRows = 0;
+    private int mScrollableHeight = 0;
+    private int mDateLabelWidth = 0;
 
-    private int mNumOfColumns;
-    private int mMinNumOfColumns;
-    private int mMaxNumOfColumns;
+    private int mNumOfColumns = 0;
+    private int mMinNumOfColumns = 0;
+    private int mMaxNumOfColumns = 0;
 
     private int mWidth = 0;
     private int mHeight = 0;
@@ -69,7 +72,7 @@ public class GridInfo {
 
     private void setNumOfColumnsToDateInfo(int numOfColumns) {
         for (int i = 0; i < mNumOfDateInfos; i++) {
-            mBucketInfo.getDateLabelInfo(i).setNumOfColumns(numOfColumns);
+            mBucketInfo.get(i).setNumOfColumns(numOfColumns);
         }
     }
 
@@ -80,6 +83,8 @@ public class GridInfo {
     public void setScreenSize(int width, int height) {
         mWidth = width;
         mHeight = height;
+
+        mDateLabelWidth = mWidth - mSpacing * 2;
     }
 
     public void resize(int numOfColumns) {
@@ -120,7 +125,7 @@ public class GridInfo {
         int numOfRows = 0;
 
         for (int i = 0; i < mNumOfDateInfos; i++) {
-            DateLabelInfo dateLabelInfo = mBucketInfo.getDateLabelInfo(i);
+            DateLabelInfo dateLabelInfo = mBucketInfo.get(i);
             numOfRows = dateLabelInfo.getNumOfRows();
             totalNumOfRows += numOfRows;
         }
@@ -168,12 +173,24 @@ public class GridInfo {
         return mNumOfDateInfos;
     }
 
+    public int getDateLabelWidth() {
+        return mDateLabelWidth;
+    }
+
     public int getDateLabelHeight() {
         return mDateLabelHeight;
     }
 
     public int getScrollableHeight() {
         return mScrollableHeight;
+    }
+
+    public void setImageIndexingInfo(ImageIndexingInfo indexingInfo) {
+        mImageIndexingInfo = indexingInfo;
+    }
+
+    public ImageIndexingInfo getImageIndexingInfo() {
+        return mImageIndexingInfo;
     }
 
     public void setScale(float scale) {

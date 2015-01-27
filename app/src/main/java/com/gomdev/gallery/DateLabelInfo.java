@@ -2,7 +2,6 @@ package com.gomdev.gallery;
 
 import java.io.Serializable;
 import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Created by gomdev on 15. 1. 9..
@@ -16,21 +15,13 @@ public class DateLabelInfo implements Serializable, GalleryInfo {
 
     private int mIndex = 0;
 
-    private int mWidth = 0;
-    private int mHeight = 0;
-
     private int mNumOfRows = 0;
-    private int mNumOfColumns = 0;
 
-    private int mFirstImageInfoIndex = 0;
-    private int mLastImageInfoIndex = 0;
+    private int mImageIndex = 0;
 
-    private int mImageInfoIndex = 0;
+    private LinkedList<ImageInfo> mImageInfos = new LinkedList<>();
 
-    private List<ImageInfo> mImageInfos = new LinkedList<>();
-
-    public DateLabelInfo(int index, String date) {
-        mIndex = index;
+    public DateLabelInfo(String date) {
         mDate = date;
 
         mImageInfos.clear();
@@ -50,13 +41,19 @@ public class DateLabelInfo implements Serializable, GalleryInfo {
 
     public void add(ImageInfo imageInfo) {
         mImageInfos.add(imageInfo);
-        imageInfo.setDateLabelInfo(this);
-        imageInfo.setIndexInDateLabelInfo(mImageInfoIndex);
-        mImageInfoIndex++;
+        imageInfo.setIndex(mImageIndex++);
     }
 
     public ImageInfo get(int position) {
         return mImageInfos.get(position);
+    }
+
+    public ImageInfo getFirst() {
+        return mImageInfos.getFirst();
+    }
+
+    public ImageInfo getLast() {
+        return mImageInfos.getLast();
     }
 
     public int getNumOfImages() {
@@ -65,27 +62,10 @@ public class DateLabelInfo implements Serializable, GalleryInfo {
 
     public void setNumOfColumns(int numOfColumns) {
         mNumOfRows = (int) Math.ceil((double) mImageInfos.size() / numOfColumns);
-        mNumOfColumns = numOfColumns;
     }
 
     public int getNumOfRows() {
         return mNumOfRows;
-    }
-
-    public void setFirstImageInfoIndex(int position) {
-        mFirstImageInfoIndex = position;
-    }
-
-    public int getFirstImageInfoIndex() {
-        return mFirstImageInfoIndex;
-    }
-
-    public void setLastImageInfoIndex(int position) {
-        mLastImageInfoIndex = position;
-    }
-
-    public int getLastImageInfoIndex() {
-        return mLastImageInfoIndex;
     }
 
     public void deleteImageInfo(int index) {
@@ -93,7 +73,7 @@ public class DateLabelInfo implements Serializable, GalleryInfo {
 
         int size = mImageInfos.size();
         for (int i = index; i < size; i++) {
-            mImageInfos.get(i).setIndexInDateLabelInfo(i);
+            mImageInfos.get(i).setIndex(i);
         }
     }
 }

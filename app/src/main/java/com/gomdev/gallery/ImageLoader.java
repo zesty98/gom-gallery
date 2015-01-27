@@ -97,8 +97,6 @@ public class ImageLoader {
 
         Set<Integer> buckets = new HashSet<>();
 
-        int index = 0;
-
         if (cursor.moveToFirst() == true) {
             do {
                 int columnIndex = cursor
@@ -110,10 +108,9 @@ public class ImageLoader {
                 String bucketName = cursor.getString(columnIndex);
 
                 if (buckets.add(bucketID) == true) {
-                    BucketInfo bucketInfo = new BucketInfo(index, bucketID);
+                    BucketInfo bucketInfo = new BucketInfo(bucketID);
                     bucketInfo.setName(bucketName);
                     mImageManager.addBucketInfo(bucketInfo);
-                    index++;
                 }
             } while (cursor.moveToNext());
         }
@@ -142,8 +139,6 @@ public class ImageLoader {
 
         long prevDateTaken = 0l;
         DateLabelInfo dateLabelInfo = null;
-        int index = 0;
-        int dateIndex = 0;
         if (cursor.moveToFirst() == true) {
             do {
                 int columnIndex = cursor
@@ -169,15 +164,10 @@ public class ImageLoader {
                 columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
                 long dateTakenInMs = cursor.getLong(columnIndex);
 
-                ImageInfo imageInfo = new ImageInfo(index, imageID, orientation);
+                ImageInfo imageInfo = new ImageInfo(imageID, orientation);
                 imageInfo.setImagePath(imagePath);
                 imageInfo.setWidth(width);
                 imageInfo.setHeight(height);
-
-                if (DEBUG) {
-                    Log.d(TAG, index + " : imageID=" + imageID + " imagePath="
-                            + imagePath + " orientation=" + orientation);
-                }
 
                 int flags = DateUtils.FORMAT_SHOW_YEAR;
                 String date = DateUtils.formatDateTime(mContext, dateTakenInMs, flags);
@@ -185,23 +175,14 @@ public class ImageLoader {
                 dateTakenInMs /= MS_TO_DAY_CONVERT_UNIT;
 
                 if (prevDateTaken != dateTakenInMs) {
-                    dateLabelInfo = new DateLabelInfo(dateIndex, date);
+                    dateLabelInfo = new DateLabelInfo(date);
                     dateLabelInfo.add(imageInfo);
-                    dateLabelInfo.setFirstImageInfoIndex(index);
                     bucketInfo.add(dateLabelInfo);
-
-                    dateIndex++;
                 } else {
                     dateLabelInfo.add(imageInfo);
                 }
 
-                bucketInfo.add(imageInfo);
-
-                dateLabelInfo.setLastImageInfoIndex(index);
-
                 prevDateTaken = dateTakenInMs;
-
-                index++;
             } while (cursor.moveToNext());
         }
 

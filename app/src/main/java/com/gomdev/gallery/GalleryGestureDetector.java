@@ -8,7 +8,6 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.widget.EdgeEffectCompat;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.OverScroller;
@@ -37,6 +36,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     private GestureDetectorCompat mGestureDetector;
 
     private OverScroller mScroller;
+    private boolean mIsOnScrolling = false;
 
     private RectF mCurrentViewport = null;   // OpenGL ES coordinate
     private RectF mScrollerStartViewport = new RectF();
@@ -63,7 +63,6 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     private boolean mEdgeEffectBottomActive;
 
     private float mTranslateY = 0f;
-    private int mCenterImageIndex = 0;
 
     private float mMaxDistance = 0f;
     private float mRotationAngle = 0f;
@@ -168,7 +167,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     }
 
     private void adjustViewport() {
-        float distFromTop = getDistanceOfSelectedImage(mCenterImageIndex) - mHeight * 0.5f;
+        ImageIndexingInfo indexingInfo = mGridInfo.getImageIndexingInfo();
+        float distFromTop = getDistanceOfSelectedImage(indexingInfo) - mHeight * 0.5f;
 
         float left = mSurfaceBufferLeft;
         float top = mSurfaceBufferTop - distFromTop;
@@ -186,34 +186,30 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         setViewportBottomLeft(left, top, true);
     }
 
-    private float getDistanceOfSelectedImage(int index) {
+    private float getDistanceOfSelectedImage(ImageIndexingInfo imageIndexingInfo) {
         float dist = mActionBarHeight;
         BucketInfo bucketInfo = mGridInfo.getBucketInfo();
         int numOfDateLabels = mGridInfo.getNumOfDateInfos();
-        for (int i = 0; i < numOfDateLabels; i++) {
-            DateLabelInfo dateLabelInfo = bucketInfo.getDateLabelInfo(i);
+        for (int i = 0; i < imageIndexingInfo.mDateLabelIndex; i++) {
+            DateLabelInfo dateLabelInfo = bucketInfo.get(i);
 
-            int firstImagePosition = dateLabelInfo.getFirstImageInfoIndex();
-            int lastImagePosition = dateLabelInfo.getLastImageInfoIndex();
-            if (firstImagePosition <= index && index <= lastImagePosition) {
-                dist += mDateLabelHeight;
+            dist += mDateLabelHeight;
 
-                int row = (index - firstImagePosition) / mNumOfColumns;
-                dist += ((mColumnWidth + mSpacing) * row);
-
-                return dist;
-            } else {
-                dist += mDateLabelHeight;
-
-                int numOfRowsInDateLabel = dateLabelInfo.getNumOfRows();
-                dist += ((mColumnWidth + mSpacing) * numOfRowsInDateLabel);
-            }
+            int numOfRowsInDateLabel = dateLabelInfo.getNumOfRows();
+            dist += ((mColumnWidth + mSpacing) * numOfRowsInDateLabel);
         }
 
-        return 0;
+        dist += mDateLabelHeight;
+
+        int row = imageIndexingInfo.mImageIndex / mNumOfColumns;
+        dist += ((mColumnWidth + mSpacing) * row);
+
+        return dist;
     }
 
     public boolean onTouchEvent(MotionEvent event) {
+        mIsOnScrolling = false;
+        mSurfaceView.requestRender();
         return mGestureDetector.onTouchEvent(event);
     }
 
@@ -236,6 +232,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             return;
         }
 
+        mIsOnScrolling = true;
+
         float startY = mScroller.getStartY();
         float finalY = mScroller.getFinalY();
 
@@ -245,6 +243,9 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         if (scrollDistance < mMaxDistance) {
             mRotationAngle = 0f;
             mTranslateZ = 0f;
+
+            mIsOnScrolling = false;
+
             return;
         }
 
@@ -262,18 +263,26 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             mRotationAngle = -mRotationAngle;
         }
 
+        mIsOnScrolling = true;
+
         if (mTranslateY == finalY) {
             mRotationAngle = 0f;
             mTranslateZ = 0f;
+
+            mIsOnScrolling = false;
         }
     }
 
-    public void setCenterImageIndex(int index) {
-        mCenterImageIndex = index;
+    public boolean isOnScrolling() {
+        boolean isOnScrolling = mIsOnScrolling;
+        mIsOnScrolling = false;
+        return isOnScrolling;
     }
 
     private final GestureDetector.SimpleOnGestureListener mGestureListener
             = new GestureDetector.SimpleOnGestureListener() {
+
+        private boolean mToScaleDown = true;
 
         @Override
         public boolean onDown(MotionEvent e) {
@@ -284,43 +293,39 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             return true;
         }
 
+
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
             float x = e.getX();
             float y = e.getY();
 
-            int dateLabelIndex = mRenderer.getDateLabelIndex(y);
-            Log.d(TAG, "onSingleTapUp() dateLabelIndex=" + dateLabelIndex);
-            int imageIndex = mRenderer.getSelectedImageIndex(x, y);
-            if (imageIndex == -1) {
+            ImageIndexingInfo imageIndexingInfo = mRenderer.getSelectedImageIndex(x, y);
+            if (imageIndexingInfo.mImageIndex == -1) {
                 return false;
             }
 
             Intent intent = new Intent(mContext, com.gomdev.gallery.ImageViewActivity.class);
 
-            BucketInfo bucketInfo = mGridInfo.getBucketInfo();
-            int bucketIndex = bucketInfo.getIndex();
-            intent.putExtra(GalleryConfig.BUCKET_POSITION, bucketIndex);
-            intent.putExtra(GalleryConfig.IMAGE_POSITION, imageIndex);
-            intent.putExtra(GalleryConfig.DATE_LABEL_POSITION, dateLabelIndex);
+            intent.putExtra(GalleryConfig.BUCKET_INDEX, imageIndexingInfo.mBucketIndex);
+            intent.putExtra(GalleryConfig.DATE_LABEL_INDEX, imageIndexingInfo.mDateLabelIndex);
+            intent.putExtra(GalleryConfig.IMAGE_INDEX, imageIndexingInfo.mImageIndex);
 
             SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
             SharedPreferences.Editor editor = pref.edit();
 
-            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, bucketIndex);
-            editor.putInt(GalleryConfig.PREF_DATE_LABEL_INDEX, dateLabelIndex);
-            editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, imageIndex);
+            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, imageIndexingInfo.mBucketIndex);
+            editor.putInt(GalleryConfig.PREF_DATE_LABEL_INDEX, imageIndexingInfo.mDateLabelIndex);
+            editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, imageIndexingInfo.mImageIndex);
 
             editor.commit();
 
-            mCenterImageIndex = imageIndex;
+            mGridInfo.setImageIndexingInfo(imageIndexingInfo);
 
             mContext.startActivity(intent);
 
             return true;
         }
 
-        private boolean mToScaleDown = true;
 
         @Override
         public boolean onDoubleTap(MotionEvent e) {
@@ -375,6 +380,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
                         / (float) mContentRect.height());
                 mEdgeEffectBottomActive = true;
             }
+
+            mIsOnScrolling = true;
 
             return true;
         }

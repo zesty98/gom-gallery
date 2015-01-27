@@ -1,8 +1,9 @@
 package com.gomdev.gallery;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
+import java.util.ListIterator;
 
 public class BucketInfo implements Serializable {
     static final String CLASS = "BucketInfo";
@@ -13,14 +14,14 @@ public class BucketInfo implements Serializable {
 
     private int mIndex = 0;
     private String mName;
+    private int mDateLableIndex = 0;
 
-    private List<ImageInfo> mImageInfos = new LinkedList<>();
-    private List<DateLabelInfo> mDateLabelInfos = new LinkedList<>();
+    private int mNumOfImages = 0;
 
-    public BucketInfo(int index, int id) {
-        mIndex = index;
+    private LinkedList<DateLabelInfo> mDateLabelInfos = new LinkedList<>();
+
+    public BucketInfo(int id) {
         mID = id;
-        mImageInfos.clear();
         mDateLabelInfos.clear();
     }
 
@@ -44,66 +45,52 @@ public class BucketInfo implements Serializable {
         mName = name;
     }
 
-    public void add(ImageInfo imageInfo) {
-        mImageInfos.add(imageInfo);
-    }
-
-    public ImageInfo getImageInfo(int position) {
-        return mImageInfos.get(position);
-    }
-
-    public int getNumOfImages() {
-        return mImageInfos.size();
-    }
-
     public void add(DateLabelInfo dateLabelInfo) {
         mDateLabelInfos.add(dateLabelInfo);
+        dateLabelInfo.setIndex(mDateLableIndex++);
     }
 
-    public DateLabelInfo getDateLabelInfo(int position) {
+    public DateLabelInfo get(int position) {
         return mDateLabelInfos.get(position);
+    }
+
+    public DateLabelInfo getFirst() {
+        return mDateLabelInfos.getFirst();
+    }
+
+    public DateLabelInfo getLast() {
+        return mDateLabelInfos.getLast();
+    }
+
+    public Iterator<DateLabelInfo> getIterator() {
+        return mDateLabelInfos.iterator();
     }
 
     public int getNumOfDateInfos() {
         return mDateLabelInfos.size();
     }
 
-    public void deleteImageInfo(int index) {
-        DateLabelInfo parentDateLabelInfo = mImageInfos.get(index).getDateLabelInfo();
+    public int getNumOfImages() {
+        int numOfImages = 0;
 
-        mImageInfos.remove(index);
-
-        int size = mImageInfos.size();
-        for (int i = index; i < size; i++) {
-            mImageInfos.get(i).setIndex(i);
+        Iterator<DateLabelInfo> iterator = mDateLabelInfos.iterator();
+        DateLabelInfo dateLabelInfo = null;
+        while (iterator.hasNext()) {
+            dateLabelInfo = iterator.next();
+            numOfImages += dateLabelInfo.getNumOfImages();
         }
 
-        int firstImageInfoIndex = parentDateLabelInfo.getFirstImageInfoIndex();
-        int lastImageInfoIndex = parentDateLabelInfo.getLastImageInfoIndex();
-
-        if (index == firstImageInfoIndex) {
-            parentDateLabelInfo.setFirstImageInfoIndex(firstImageInfoIndex + 1);
-        }
-
-        if (index == lastImageInfoIndex) {
-            parentDateLabelInfo.setLastImageInfoIndex(lastImageInfoIndex - 1);
-        }
-
-        int parentDateLabelInfoIndex = parentDateLabelInfo.getIndex();
-        int dateLabelInfoSize = mDateLabelInfos.size();
-        for (int i = parentDateLabelInfoIndex + 1; i < dateLabelInfoSize; i++) {
-            DateLabelInfo dateLabelInfo = mDateLabelInfos.get(i);
-            dateLabelInfo.setFirstImageInfoIndex(dateLabelInfo.getFirstImageInfoIndex() - 1);
-            dateLabelInfo.setLastImageInfoIndex(dateLabelInfo.getLastImageInfoIndex() - 1);
-        }
+        return numOfImages;
     }
 
     public void deleteDateLabel(int index) {
         mDateLabelInfos.remove(index);
 
-        int size = mDateLabelInfos.size();
-        for (int i = index; i < size; i++) {
-            mDateLabelInfos.get(i).setIndex(i);
+        ListIterator<DateLabelInfo> iterator = mDateLabelInfos.listIterator(index);
+        DateLabelInfo dateLabelInfo = null;
+        while (iterator.hasNext()) {
+            dateLabelInfo = iterator.next();
+            dateLabelInfo.setIndex(index++);
         }
     }
 }

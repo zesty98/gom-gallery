@@ -73,8 +73,11 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
 
         udpateGestureDetector();
 
+        boolean isOnScrolling = mGalleryGestureDetector.isOnScrolling();
+        boolean needToMapTexture = (isOnScrolling == false);
+
         synchronized (GalleryContext.sLockObject) {
-            mObjectManager.update();
+            mObjectManager.update(needToMapTexture);
             mObjectManager.drawFrame();
         }
     }
@@ -174,11 +177,17 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
 
     public void resize(float focusX, float focusY) {
         mFocusY = focusY;
-        int imageIndex = mObjectManager.getNearestImageIndex(focusX, focusY);
-        mCenterObject = mObjectManager.getImageObject(imageIndex);
-        int lastIndex = mGridInfo.getBucketInfo().getNumOfImages() - 1;
-        mLastObject = mObjectManager.getImageObject(lastIndex);
-        mGalleryGestureDetector.setCenterImageIndex(imageIndex);
+        ImageIndexingInfo imageIndexingInfo = mObjectManager.getNearestImageIndex(focusX, focusY);
+        mCenterObject = mObjectManager.getImageObject(imageIndexingInfo);
+
+        mGridInfo.setImageIndexingInfo(imageIndexingInfo);
+
+        BucketInfo bucketInfo = mGridInfo.getBucketInfo();
+        DateLabelInfo lastDateLabelInfo = bucketInfo.getLast();
+        int lastDateLabelIndex = lastDateLabelInfo.getIndex();
+        int lastImageIndex = lastDateLabelInfo.getLast().getIndex();
+        imageIndexingInfo = new ImageIndexingInfo(bucketInfo.getIndex(), lastDateLabelIndex, lastImageIndex);
+        mLastObject = mObjectManager.getImageObject(imageIndexingInfo);
     }
 
     @Override
@@ -218,8 +227,14 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
 
     public void onResume() {
         SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
+
+        int bucketIndex = pref.getInt(GalleryConfig.PREF_BUCKET_INDEX, 0);
+        int dateLabelIndex = pref.getInt(GalleryConfig.PREF_DATE_LABEL_INDEX, 0);
         int currentImageIndex = pref.getInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
-        mGalleryGestureDetector.setCenterImageIndex(currentImageIndex);
+
+        ImageIndexingInfo imageIndexingInfo = new ImageIndexingInfo(bucketIndex, dateLabelIndex, currentImageIndex);
+
+        mGridInfo.setImageIndexingInfo(imageIndexingInfo);
     }
 
     // pause
@@ -249,11 +264,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
         mGridInfo.addListener(this);
     }
 
-    public int getSelectedImageIndex(float x, float y) {
+    public ImageIndexingInfo getSelectedImageIndex(float x, float y) {
         return mObjectManager.getSelectedImageIndex(x, y);
-    }
-
-    public int getDateLabelIndex(float y) {
-        return mObjectManager.getDateLabelIndex(y);
     }
 }

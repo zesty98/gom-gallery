@@ -11,16 +11,11 @@ public class ImageInfo implements Serializable, GalleryInfo {
     private final long mImageID;
 
     private int mIndex = 0;
-    private int mIndexInDateLabelInfo = 0;
     private String mImagePath = null;
     private int mWidth;
     private int mHeight;
 
-    private DateLabelInfo mDateLabelInfo = null;
-
-    public ImageInfo(int index, long id, int orientation) {
-        mIndex = index;
-
+    public ImageInfo(long id, int orientation) {
         mImageID = id;
         mOrientation = orientation;
     }
@@ -39,22 +34,6 @@ public class ImageInfo implements Serializable, GalleryInfo {
 
     public int getIndex() {
         return mIndex;
-    }
-
-    public void setIndexInDateLabelInfo(int index) {
-        mIndexInDateLabelInfo = index;
-    }
-
-    public int getIndexInDateLabelInfo() {
-        return mIndexInDateLabelInfo;
-    }
-
-    public void setDateLabelInfo(DateLabelInfo dateLabelInfo) {
-        mDateLabelInfo = dateLabelInfo;
-    }
-
-    public DateLabelInfo getDateLabelInfo() {
-        return mDateLabelInfo;
     }
 
     public String getImagePath() {

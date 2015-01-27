@@ -173,7 +173,7 @@ public class BucketListFragment extends Fragment {
             RecyclingImageView imageView = (RecyclingImageView) layout
                     .findViewById(R.id.image);
             BucketInfo bucketInfo = mImageManager.getBucketInfo(position - mNumOfColumns);
-            DateLabelInfo dateLabelInfo = bucketInfo.getDateLabelInfo(0);
+            DateLabelInfo dateLabelInfo = bucketInfo.get(0);
             ImageInfo imageInfo = dateLabelInfo.get(0);
 
             imageView.setLayoutParams(mImageViewLayoutParams);
@@ -206,7 +206,7 @@ public class BucketListFragment extends Fragment {
                                 int position, long id) {
             Intent intent = new Intent(getActivity(),
                     com.gomdev.gallery.ImageListActivity.class);
-            intent.putExtra(GalleryConfig.BUCKET_POSITION, position - mNumOfColumns);
+            intent.putExtra(GalleryConfig.BUCKET_INDEX, position - mNumOfColumns);
             mImageManager.setCurrentBucketInfo(position - mNumOfColumns);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 // makeThumbnailScaleUpAnimation() looks kind of ugly here as the loading spinner may

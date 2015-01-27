@@ -15,6 +15,9 @@ public class GalleryObject extends GLESObject {
     private float mLeft = 0;
     private float mTop = 0;
 
+    private float mTranslateX = 0f;
+    private float mTranslateY = 0f;
+
     public GalleryObject(String name) {
         super(name);
         init();
@@ -43,7 +46,6 @@ public class GalleryObject extends GLESObject {
         mTop = y;
     }
 
-
     public float getLeft() {
         return mLeft;
     }
@@ -52,17 +54,9 @@ public class GalleryObject extends GLESObject {
         return mTop;
     }
 
-    private float mTranslateX = 0f;
-    private float mTranslateY = 0f;
-    private float mScale = 1f;
-
     public void setTranslate(float x, float y) {
         mTranslateX = x;
         mTranslateY = y;
-    }
-
-    public void setScale(float scale) {
-        mScale = scale;
     }
 
     public float getTranslateX() {
@@ -71,9 +65,5 @@ public class GalleryObject extends GLESObject {
 
     public float getTranslateY() {
         return mTranslateY;
-    }
-
-    public float getScale() {
-        return mScale;
     }
 }
