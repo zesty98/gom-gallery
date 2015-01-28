@@ -17,7 +17,7 @@ public class GridInfo {
     private final Context mContext;
     private final BucketInfo mBucketInfo;
 
-    private ImageIndexingInfo mImageIndexingInfo = null;
+    private ImageIndexingInfo mImageIndexingInfo = new ImageIndexingInfo(0, 0, 0);
 
     private final int mActionBarHeight;
     private final int mDateLabelHeight;
@@ -88,19 +88,17 @@ public class GridInfo {
     }
 
     public void resize(int numOfColumns) {
-        synchronized (GalleryContext.sLockObject) {
-            mNumOfColumns = numOfColumns;
+        mNumOfColumns = numOfColumns;
 
-            setNumOfColumnsToDateInfo(mNumOfColumns);
+        setNumOfColumnsToDateInfo(mNumOfColumns);
 
-            mColumnWidth = calcColumnWidth();
-            mNumOfRows = calcNumOfRows();
-            mScrollableHeight = calcScrollableHeight();
+        mColumnWidth = calcColumnWidth();
+        mNumOfRows = calcNumOfRows();
+        mScrollableHeight = calcScrollableHeight();
 
-            int size = mListeners.size();
-            for (int i = 0; i < size; i++) {
-                mListeners.get(i).onColumnWidthChanged();
-            }
+        int size = mListeners.size();
+        for (int i = 0; i < size; i++) {
+            mListeners.get(i).onColumnWidthChanged();
         }
 
         SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
@@ -234,6 +232,7 @@ public class GridInfo {
     }
 
     private float mTranslateY = 0f;
+    private float mNextTranslateY = 0f;
     private float mTranslateZ = 0f;
     private float mRotateX = 0f;
 
@@ -243,6 +242,14 @@ public class GridInfo {
 
     public float getTranslateY() {
         return mTranslateY;
+    }
+
+    public void setNextTranslateY(float y) {
+        mNextTranslateY = y;
+    }
+
+    public float getNextTranslateY() {
+        return mNextTranslateY;
     }
 
     public void setTranslateZ(float z) {

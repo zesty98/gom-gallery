@@ -9,6 +9,8 @@ class ImageObject extends GalleryObject {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private float mScale = 1f;
+    private float mStartOffsetY = 0f;
+    private float mNextStartOffsetY = 0f;
 
     ImageObject(String name) {
         super(name);
@@ -20,5 +22,21 @@ class ImageObject extends GalleryObject {
 
     public float getScale() {
         return mScale;
+    }
+
+    public void setStartOffsetY(float startOffsetY) {
+        mStartOffsetY = startOffsetY;
+    }
+
+    public float getStartOffsetY() {
+        return mStartOffsetY;
+    }
+
+    public void setNextStartOffsetY(float nextStartOffsetY) {
+        mNextStartOffsetY = nextStartOffsetY;
+    }
+
+    public float getNextStartOffsetY() {
+        return mNextStartOffsetY;
     }
 }

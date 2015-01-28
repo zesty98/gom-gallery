@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.util.Log;
 
 import com.gomdev.gles.GLESAnimator;
 import com.gomdev.gles.GLESAnimatorCallback;
@@ -62,6 +63,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     private int mDefaultColumnWidth = 0;
 
     private float mStartOffsetY = 0f;
+    private float mNextStartOffsetY = 0f;
     private float mEndOffsetY = 0f;
 
     private float mVisibilityPadding = 0f;
@@ -73,6 +75,8 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     private int mAnimationFinishCount = 0;
     private int mAnimationCancelCount = 0;
     private float mScale = 1f;
+
+    private boolean mNeedToSetTranslate = false;
 
     public ImageObjects(Context context, ImageListRenderer renderer) {
         mContext = context;
@@ -104,6 +108,26 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         if (requestRenderCount > 0) {
             mSurfaceView.requestRender();
         }
+
+        if (mNeedToSetTranslate == true) {
+            setTranslate();
+        }
+    }
+
+    private void setTranslate() {
+        mNeedToSetTranslate = false;
+
+        Iterator<ImageObject> iter = mObjects.iterator();
+        while (iter.hasNext()) {
+            ImageObject object = iter.next();
+            setTranslate(object);
+        }
+    }
+
+    private void setTranslate(ImageObject object) {
+        float translateX = object.getLeft() - (-mDefaultColumnWidth * mScale * 0.5f);
+        float translateY = mStartOffsetY + object.getTop() - (mDefaultColumnWidth * mScale * 0.5f);
+        object.setTranslate(translateX, translateY);
     }
 
     public void updateTexture() {
@@ -136,7 +160,8 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
                 object.hide();
                 unmapTexture(index, object);
             } else {
-                float top = object.getTop();
+                float top = object.getTop() + mStartOffsetY;
+
                 if ((top - mColumnWidth) < (viewportTop + mVisibilityPadding) &&
                         (top > (viewportBottom - mVisibilityPadding))) {
 
@@ -203,9 +228,9 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             object.setCamera(camera);
 
             float left = mSpacing + (index % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
-            float top = mStartOffsetY - ((index / mNumOfColumns) * (mColumnWidth + mSpacing));
+            float top = -((index / mNumOfColumns) * (mColumnWidth + mSpacing));
 
-            object.setTranslate(left - (-mColumnWidth * 0.5f), top - (mColumnWidth * 0.5f));
+            object.setTranslate(left - (-mColumnWidth * 0.5f), mStartOffsetY + top - (mColumnWidth * 0.5f));
             object.setScale(mScale);
 
             float[] vertex = GLESUtils.makePositionCoord(-mDefaultColumnWidth * 0.5f, mDefaultColumnWidth * 0.5f, mDefaultColumnWidth, mDefaultColumnWidth);
@@ -245,8 +270,6 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         for (int i = 0; i < size; i++) {
             mAnimators.get(i).start();
         }
-
-        mRenderer.onAnimationStarted();
     }
 
     private void setupAnimations() {
@@ -259,7 +282,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             ImageObject object = iter.next();
 
             float left = mSpacing + (index % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
-            float top = mStartOffsetY - ((index / mNumOfColumns) * (mColumnWidth + mSpacing));
+            float top = -((index / mNumOfColumns) * (mColumnWidth + mSpacing));
             float bottom = top - mColumnWidth;
             float scale = (float) mColumnWidth / mDefaultColumnWidth;
 
@@ -268,23 +291,23 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             float prevBottom = prevTop - mPrevColumnWidth;
             float prevScale = (float) mPrevColumnWidth / mDefaultColumnWidth;
 
-            if ((top >= viewportBottom && bottom <= viewportTop) ||
-                    (prevTop >= viewportBottom && prevBottom <= viewportTop)) {
-                GLESVector3 from = new GLESVector3(prevLeft, prevTop, prevScale);
-                GLESVector3 to = new GLESVector3(left, top, scale);
+//            if ((top >= viewportBottom && bottom <= viewportTop) ||
+//                    (prevTop >= viewportBottom && prevBottom <= viewportTop)) {
+            GLESVector3 from = new GLESVector3(prevLeft, prevTop, prevScale);
+            GLESVector3 to = new GLESVector3(left, top, scale);
 
-                mEndOffsetY = top - mDefaultColumnWidth * scale;
+            mEndOffsetY = top - mDefaultColumnWidth * scale;
 
-                GLESAnimator animator = new GLESAnimator(new GalleryAnimatorCallback(object));
-                animator.setValues(from, to);
-                animator.setDuration(GalleryConfig.IMAGE_ANIMATION_START_OFFSET, GalleryConfig.IMAGE_ANIMATION_END_OFFSET);
+            GLESAnimator animator = new GLESAnimator(new GalleryAnimatorCallback(object));
+            animator.setValues(from, to);
+            animator.setDuration(GalleryConfig.IMAGE_ANIMATION_START_OFFSET, GalleryConfig.IMAGE_ANIMATION_END_OFFSET);
 
-                mAnimators.add(animator);
-            } else {
-                object.setLeftTop(left, top);
-                object.setTranslate(left + mColumnWidth * 0.5f, top - mColumnWidth * 0.5f);
-                object.setScale(scale);
-            }
+            mAnimators.add(animator);
+//            } else {
+//                object.setLeftTop(left, top);
+//                object.setTranslate(left + mColumnWidth * 0.5f, top - mColumnWidth * 0.5f);
+//                object.setScale(scale);
+//            }
 
             index++;
         }
@@ -317,7 +340,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             object.setShader(mTextureShader);
             object.setTexture(mDummyTexture);
             object.setListener(mObjectListener);
-            object.setPosition(i);
+            object.setIndex(i);
 
             GLESVertexInfo vertexInfo = new GLESVertexInfo();
             vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
@@ -370,10 +393,40 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
     public void setStartOffsetY(float startOffsetY) {
         mStartOffsetY = startOffsetY;
+
+        mNeedToSetTranslate = true;
+
+        Iterator<ImageObject> iter = mObjects.iterator();
+        while (iter.hasNext()) {
+            ImageObject object = iter.next();
+            object.setStartOffsetY(startOffsetY);
+        }
+    }
+
+    public float getStartOffsetY() {
+        return mStartOffsetY;
+    }
+
+    public void setNextStartOffsetY(float nextStartOffsetY) {
+        mNextStartOffsetY = nextStartOffsetY;
+
+        Iterator<ImageObject> iter = mObjects.iterator();
+        while (iter.hasNext()) {
+            ImageObject object = iter.next();
+            object.setNextStartOffsetY(nextStartOffsetY);
+        }
+    }
+
+    public float getNextStartOffsetY() {
+        return mNextStartOffsetY;
     }
 
     public float getBottom() {
-        return mEndOffsetY;
+        return mEndOffsetY + mStartOffsetY;
+    }
+
+    public int getNumOfImages() {
+        return mNumOfImages;
     }
 
     public void setShader(GLESShader shader) {
@@ -420,12 +473,13 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         mSurfaceView.requestRender();
     }
 
+
     private void onAnimationFinished() {
         mAnimationFinishCount++;
 
         int size = mAnimators.size();
         if (mAnimationFinishCount >= size) {
-            mRenderer.onAnimationFinished();
+//            mRenderer.onAnimationFinished();
             mAnimationFinishCount = 0;
         }
     }
@@ -435,7 +489,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
         int size = mAnimators.size();
         if (mAnimationCancelCount >= size) {
-            mRenderer.onAnimationCanceled();
+//            mRenderer.onAnimationCanceled();
             mAnimationCancelCount = 0;
         }
     }
@@ -443,15 +497,15 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     private GLESObjectListener mObjectListener = new GLESObjectListener() {
         @Override
         public void update(GLESObject object) {
-            ImageObject galleryObject = (ImageObject) object;
+            ImageObject imageObject = (ImageObject) object;
             GLESTransform transform = object.getTransform();
             transform.setIdentity();
             transform.setTranslate(
-                    galleryObject.getTranslateX(),
-                    galleryObject.getTranslateY(),
+                    imageObject.getTranslateX(),
+                    imageObject.getTranslateY(),
                     0f);
 
-            transform.scale(galleryObject.getScale());
+            transform.scale(imageObject.getScale());
         }
 
         @Override
@@ -469,6 +523,8 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
         @Override
         public void onAnimation(GLESVector3 current) {
+            mNeedToSetTranslate = false;
+
             mObject.setLeftTop(current.mX, current.mY);
 
             mScale = current.mZ;
@@ -476,7 +532,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             mGridInfo.setScale(mScale);
 
             float translateX = current.mX - (-mDefaultColumnWidth * mScale * 0.5f);
-            float translateY = current.mY - (mDefaultColumnWidth * mScale * 0.5f);
+            float translateY = mStartOffsetY + current.mY - (mDefaultColumnWidth * mScale * 0.5f);
             mObject.setTranslate(translateX, translateY);
             mObject.setScale(current.mZ);
         }

@@ -11,9 +11,13 @@ public class GalleryObject extends GLESObject {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private int mPosition = -1;
+    private int mIndex = -1;
+
     private float mLeft = 0;
     private float mTop = 0;
+
+    private float mNextLeft = 0;
+    private float mNextTop = 0;
 
     private float mTranslateX = 0f;
     private float mTranslateY = 0f;
@@ -33,12 +37,12 @@ public class GalleryObject extends GLESObject {
         this.setTexture(texture.getTexture());
     }
 
-    public void setPosition(int position) {
-        mPosition = position;
+    public void setIndex(int position) {
+        mIndex = position;
     }
 
-    public int getPosition() {
-        return mPosition;
+    public int getIndex() {
+        return mIndex;
     }
 
     public void setLeftTop(float x, float y) {
@@ -52,6 +56,19 @@ public class GalleryObject extends GLESObject {
 
     public float getTop() {
         return mTop;
+    }
+
+    public void setNextLeftTop(float x, float y) {
+        mNextLeft = x;
+        mNextTop = y;
+    }
+
+    public float getNextLeft() {
+        return mNextLeft;
+    }
+
+    public float getNextTop() {
+        return mNextTop;
     }
 
     public void setTranslate(float x, float y) {

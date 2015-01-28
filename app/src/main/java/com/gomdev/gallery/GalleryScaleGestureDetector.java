@@ -98,8 +98,10 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
                 numOfColumns = Math.min(numOfColumns, mMaxNumOfColumns);
 
                 if (numOfColumns != mNumOfColumns) {
-                    mRenderer.resize(focusX, focusY);
-                    mGridInfo.resize(numOfColumns);
+                    synchronized (GalleryContext.sLockObject) {
+                        mRenderer.resize(focusX, focusY);
+                        mGridInfo.resize(numOfColumns);
+                    }
                 }
             }
 

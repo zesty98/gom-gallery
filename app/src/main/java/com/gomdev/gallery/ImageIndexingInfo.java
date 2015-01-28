@@ -20,6 +20,6 @@ class ImageIndexingInfo {
 
     @Override
     public String toString() {
-        return "BucketIndex=" + mBucketIndex + "\tDateLabelIndex=" + mDateLabelIndex + "\tImageIndex=" + mImageIndex;
+        return "BucketIndex=" + mBucketIndex + " DateLabelIndex=" + mDateLabelIndex + " ImageIndex=" + mImageIndex;
     }
 }

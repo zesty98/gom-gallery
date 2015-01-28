@@ -7,7 +7,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.v4.view.GestureDetectorCompat;
-import android.support.v4.widget.EdgeEffectCompat;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.OverScroller;
@@ -56,12 +56,6 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     private float mSurfaceBufferBottom = 0f;
     private float mSurfaceBufferLeft = 0f;
 
-    private EdgeEffectCompat mEdgeEffectTop;
-    private EdgeEffectCompat mEdgeEffectBottom;
-
-    private boolean mEdgeEffectTopActive;
-    private boolean mEdgeEffectBottomActive;
-
     private float mTranslateY = 0f;
 
     private float mMaxDistance = 0f;
@@ -81,9 +75,6 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         mGestureDetector = new GestureDetectorCompat(context, mGestureListener);
 
         mScroller = new OverScroller(context);
-
-        mEdgeEffectTop = new EdgeEffectCompat(context);
-        mEdgeEffectBottom = new EdgeEffectCompat(context);
 
         mMaxTranslateZ = GLESUtils.getPixelFromDpi(mContext, MAX_TRANSLATE_Z_DP);
     }
@@ -135,9 +126,9 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
             // OpenGL ES coordiante.
             mCurrentViewport = new RectF(left, bottom, right, top);
-        }
 
-        adjustViewport();
+            adjustViewport();
+        }
     }
 
     @Override
@@ -184,6 +175,22 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         mSurfaceSizeBuffer.y = mScrollableHeight;
 
         setViewportBottomLeft(left, top, true);
+    }
+
+    public float getTranslateY(float top, float bottom) {
+        int nextScrollableHeight = (int) (mHeight * 0.5f - bottom);
+
+        float curHeight = mCurrentViewport.height();
+
+        if (nextScrollableHeight < curHeight) {
+            top = mSurfaceBufferTop;
+        } else {
+            top = Math.max(bottom + curHeight, Math.min(top, mSurfaceBufferTop));
+        }
+
+        float translateY = (mSurfaceBufferTop - top);
+
+        return translateY;
     }
 
     private float getDistanceOfSelectedImage(ImageIndexingInfo imageIndexingInfo) {
@@ -286,7 +293,6 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
         @Override
         public boolean onDown(MotionEvent e) {
-            releaseEdgeEffects();
             mScrollerStartViewport.set(mCurrentViewport);
             mScroller.forceFinished(true);
             invalidateViewport();
@@ -350,8 +356,10 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             }
 
             if (numOfColumns != mNumOfColumns) {
-                mRenderer.resize(x, y);
-                mGridInfo.resize(numOfColumns);
+                synchronized (GalleryContext.sLockObject) {
+                    mRenderer.resize(x, y);
+                    mGridInfo.resize(numOfColumns);
+                }
             }
 
             mSurfaceView.requestRender();
@@ -365,21 +373,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
             int scrolledY = (int) (mSurfaceBufferTop - mCurrentViewport.bottom - viewportOffsetY);
 
-            boolean canScrollY = mCurrentViewport.top > mSurfaceBufferBottom
-                    || mCurrentViewport.bottom < mSurfaceBufferTop;
             setViewportBottomLeft(mCurrentViewport.left,
                     (mCurrentViewport.bottom + viewportOffsetY), true);
-
-            if (canScrollY && scrolledY < 0) {
-                mEdgeEffectTop.onPull(scrolledY / (float) mContentRect.height());
-                mEdgeEffectTopActive = true;
-            }
-
-            if (canScrollY && scrolledY > mSurfaceSizeBuffer.y - mContentRect.height()) {
-                mEdgeEffectBottom.onPull((scrolledY - mSurfaceSizeBuffer.y + mContentRect.height())
-                        / (float) mContentRect.height());
-                mEdgeEffectBottomActive = true;
-            }
 
             mIsOnScrolling = true;
 
@@ -394,16 +389,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         }
     };
 
-    private void releaseEdgeEffects() {
-        mEdgeEffectTopActive
-                = mEdgeEffectBottomActive
-                = false;
-        mEdgeEffectTop.onRelease();
-        mEdgeEffectBottom.onRelease();
-    }
-
     private void fling(int velocityX, int velocityY) {
-        releaseEdgeEffects();
         // Flings use math in pixels (as opposed to math based on the viewport).
         mScrollerStartViewport.set(mCurrentViewport);
         int startX = 0;
@@ -425,31 +411,17 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         if (mScroller.computeScrollOffset()) {
             int currY = mScroller.getCurrY();
 
-            boolean canScrollY = (mCurrentViewport.top > mSurfaceBufferBottom
-                    || mCurrentViewport.bottom < (mSurfaceBufferTop));
-
-            if (canScrollY
-                    && currY < 0
-                    && mEdgeEffectTop.isFinished()
-                    && !mEdgeEffectTopActive) {
-                mEdgeEffectTop.onAbsorb((int) mScroller.getCurrVelocity());
-                mEdgeEffectTopActive = true;
-            } else if (canScrollY
-                    && currY > (mSurfaceSizeBuffer.y - mContentRect.height())
-                    && mEdgeEffectBottom.isFinished()
-                    && !mEdgeEffectBottomActive) {
-                mEdgeEffectBottom.onAbsorb((int) mScroller.getCurrVelocity());
-                mEdgeEffectBottomActive = true;
-            }
-
             float currYRange = (mSurfaceBufferTop) - currY;
             setViewportBottomLeft(mSurfaceBufferLeft, currYRange, true);
         }
     }
 
     private void setViewportBottomLeft(float leftX, float topY, boolean checkBound) {
+
         float curWidth = mCurrentViewport.width();
         float curHeight = mCurrentViewport.height();
+
+        float prevTopY = topY;
 
         if (checkBound == true) {
             if (mSurfaceSizeBuffer.y < curHeight) {
@@ -462,6 +434,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         mCurrentViewport.set(leftX, topY - curHeight, leftX + curWidth, topY);
 
         mTranslateY = (mSurfaceBufferTop - mCurrentViewport.bottom);
+
         mGridInfo.setTranslateY(mTranslateY);
 
         mSurfaceView.requestRender();

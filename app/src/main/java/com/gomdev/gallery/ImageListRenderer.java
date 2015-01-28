@@ -2,7 +2,6 @@ package com.gomdev.gallery;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.opengl.GLES20;
@@ -38,9 +37,11 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
     private GridInfo mGridInfo = null;
     private int mSpacing = 0;
     private int mDefaultColumnWidth = 0;
+    private int mPrevColumnWidth = 0;
+    private int mColumnWidth = 0;
 
-    private GalleryObject mCenterObject = null;
-    private GalleryObject mLastObject = null;
+    private ImageObject mCenterObject = null;
+    private ImageObject mLastObject = null;
     private float mFocusY = 0f;
     private boolean mIsOnAnimation = false;
     private boolean mIsOnScale = false;
@@ -71,12 +72,12 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
-        udpateGestureDetector();
-
-        boolean isOnScrolling = mGalleryGestureDetector.isOnScrolling();
-        boolean needToMapTexture = (isOnScrolling == false);
-
         synchronized (GalleryContext.sLockObject) {
+            udpateGestureDetector();
+
+            boolean isOnScrolling = mGalleryGestureDetector.isOnScrolling();
+            boolean needToMapTexture = (isOnScrolling == false);
+
             mObjectManager.update(needToMapTexture);
             mObjectManager.drawFrame();
         }
@@ -84,10 +85,10 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
 
     private void udpateGestureDetector() {
         if (mCenterObject != null && mIsOnAnimation == true) {
-            float columnWidth = mDefaultColumnWidth * mGridInfo.getScale();
-            float bottom = mLastObject.getTop() - columnWidth + mSpacing;
-            float pos = mCenterObject.getTop() + mFocusY - columnWidth * 0.5f;
-            mGalleryGestureDetector.adjustViewport(pos, bottom);
+            float columnWidth = mDefaultColumnWidth * mCenterObject.getScale();
+            float bottom = mLastObject.getTop() - (columnWidth + mSpacing) + mLastObject.getStartOffsetY();
+            float top = mCenterObject.getTop() + mFocusY - columnWidth * 0.5f + mCenterObject.getStartOffsetY();
+            mGalleryGestureDetector.adjustViewport(top, bottom);
         }
 
         mGalleryGestureDetector.update();
@@ -147,7 +148,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
         GLESTexture dummyTexture = createDummyTexture(Color.LTGRAY);
         mObjectManager.setDummyImageTexture(dummyTexture);
 
-        dummyTexture = createDummyTexture(Color.WHITE);
+        dummyTexture = createDummyTexture(Color.BLUE);
         mObjectManager.setDummyDateLabelTexture(dummyTexture);
 
         mObjectManager.createScene();
@@ -179,6 +180,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
         mFocusY = focusY;
         ImageIndexingInfo imageIndexingInfo = mObjectManager.getNearestImageIndex(focusX, focusY);
         mCenterObject = mObjectManager.getImageObject(imageIndexingInfo);
+        Log.d(TAG, "resize() mCenterObject indexing info " + imageIndexingInfo);
 
         mGridInfo.setImageIndexingInfo(imageIndexingInfo);
 
@@ -188,11 +190,14 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
         int lastImageIndex = lastDateLabelInfo.getLast().getIndex();
         imageIndexingInfo = new ImageIndexingInfo(bucketInfo.getIndex(), lastDateLabelIndex, lastImageIndex);
         mLastObject = mObjectManager.getImageObject(imageIndexingInfo);
+
+        onAnimationStarted();
     }
 
     @Override
     public void onColumnWidthChanged() {
-
+        mPrevColumnWidth = mColumnWidth;
+        mColumnWidth = mGridInfo.getColumnWidth();
     }
 
     @Override
@@ -226,21 +231,23 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
     // resume
 
     public void onResume() {
-        SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
-
-        int bucketIndex = pref.getInt(GalleryConfig.PREF_BUCKET_INDEX, 0);
-        int dateLabelIndex = pref.getInt(GalleryConfig.PREF_DATE_LABEL_INDEX, 0);
-        int currentImageIndex = pref.getInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
-
-        ImageIndexingInfo imageIndexingInfo = new ImageIndexingInfo(bucketIndex, dateLabelIndex, currentImageIndex);
-
-        mGridInfo.setImageIndexingInfo(imageIndexingInfo);
+//        SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
+//
+//        ImageIndexingInfo imageIndexingInfo = mGridInfo.getImageIndexingInfo();
+//        if (imageIndexingInfo == null) {
+//            int bucketIndex = pref.getInt(GalleryConfig.PREF_BUCKET_INDEX, 0);
+//            int dateLabelIndex = pref.getInt(GalleryConfig.PREF_DATE_LABEL_INDEX, 0);
+//            int currentImageIndex = pref.getInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
+//
+//            imageIndexingInfo = new ImageIndexingInfo(bucketIndex, dateLabelIndex, currentImageIndex);
+//        }
+//
+//        mGridInfo.setImageIndexingInfo(imageIndexingInfo);
     }
 
     // pause
 
     public void onPause() {
-
     }
 
     // set / get
@@ -255,6 +262,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
 
         mSpacing = gridInfo.getSpacing();
         mDefaultColumnWidth = gridInfo.getDefaultColumnWidth();
+        mColumnWidth = mGridInfo.getColumnWidth();
 
         mGalleryGestureDetector.setGridInfo(gridInfo);
         mGalleryScaleGestureDetector.setGridInfo(gridInfo);
@@ -266,5 +274,12 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
 
     public ImageIndexingInfo getSelectedImageIndex(float x, float y) {
         return mObjectManager.getSelectedImageIndex(x, y);
+    }
+
+    public float getNextTranslateY() {
+        float bottom = mLastObject.getNextTop() - (mColumnWidth + mSpacing) + mLastObject.getNextStartOffsetY();
+        float top = mCenterObject.getNextTop() + mFocusY - mColumnWidth * 0.5f + mCenterObject.getNextStartOffsetY();
+        float translateY = mGalleryGestureDetector.getTranslateY(top, bottom);
+        return translateY;
     }
 }

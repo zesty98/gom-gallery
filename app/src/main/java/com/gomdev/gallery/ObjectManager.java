@@ -174,6 +174,8 @@ public class ObjectManager implements GridInfoChangeListener {
         mImageNode.setListener(mImageNodeListener);
         mRoot.addChild(mImageNode);
 
+        mGalleryObjects.setSceneManager(mSM);
+
         mGalleryObjects.createObjects(mImageNode);
 
         mScrollbar.createObject(mRoot);
@@ -343,7 +345,7 @@ public class ObjectManager implements GridInfoChangeListener {
         return selectedDateLabelIndex;
     }
 
-    public GalleryObject getImageObject(ImageIndexingInfo imageIndexingInfo) {
+    public ImageObject getImageObject(ImageIndexingInfo imageIndexingInfo) {
         return mGalleryObjects.getImageObject(imageIndexingInfo);
     }
 
