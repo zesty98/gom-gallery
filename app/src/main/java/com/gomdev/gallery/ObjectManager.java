@@ -85,28 +85,15 @@ public class ObjectManager implements GridInfoChangeListener {
     // rendering
 
     public void update(boolean needToMapTexture) {
-
         mGLESRenderer.updateScene(mSM);
 
-        float translateY = mGridInfo.getTranslateY();
-
-        mScrollbar.setTranslateY(translateY);
-
         if (needToMapTexture == true) {
-            updateTexture();
+            mGalleryObjects.updateTexture();
         }
 
-        checkVisibility(needToMapTexture, translateY);
+        mGalleryObjects.checkVisibility(needToMapTexture);
 
         mGalleryObjects.update();
-    }
-
-    private void updateTexture() {
-        mGalleryObjects.updateTexture();
-    }
-
-    private void checkVisibility(boolean needToMapTexture, float translateY) {
-        mGalleryObjects.checkVisibility(needToMapTexture, translateY);
     }
 
     public void drawFrame() {

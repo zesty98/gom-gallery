@@ -148,7 +148,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
         GLESTexture dummyTexture = createDummyTexture(Color.LTGRAY);
         mObjectManager.setDummyImageTexture(dummyTexture);
 
-        dummyTexture = createDummyTexture(Color.WHITE);
+        dummyTexture = createDummyTexture(Color.BLUE);
         mObjectManager.setDummyDateLabelTexture(dummyTexture);
 
         mObjectManager.createScene();

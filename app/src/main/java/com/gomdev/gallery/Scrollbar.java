@@ -52,8 +52,6 @@ public class Scrollbar implements GridInfoChangeListener {
 
     private boolean mIsVisible = true;
 
-    private float mTranslateY = 0f;
-
     public Scrollbar(Context context) {
         mContext = context;
 
@@ -229,9 +227,10 @@ public class Scrollbar implements GridInfoChangeListener {
             transform.setIdentity();
 
             int scrollableHeight = mGridInfo.getScrollableHeight();
+            float translateY = mGridInfo.getTranslateY();
 
             if (scrollableHeight > mHeight) {
-                float scrollDistance = (mTranslateY / (scrollableHeight - mHeight)) * mScrollableDistance;
+                float scrollDistance = (translateY / (scrollableHeight - mHeight)) * mScrollableDistance;
                 transform.setTranslate(0f, -scrollDistance, 0f);
             }
         }
@@ -241,8 +240,4 @@ public class Scrollbar implements GridInfoChangeListener {
 
         }
     };
-
-    public void setTranslateY(float translateY) {
-        mTranslateY = translateY;
-    }
 }

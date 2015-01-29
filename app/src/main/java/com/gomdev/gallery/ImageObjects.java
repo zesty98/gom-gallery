@@ -158,7 +158,16 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         }
     }
 
-    public void checkVisibility(boolean parentVisibility, boolean needToMapTexture, float translateY) {
+    public void checkVisibility(boolean parentVisibility, boolean needToMapTexture) {
+        if (parentVisibility == true) {
+            handleVisibleObjects(needToMapTexture);
+        } else {
+            handleInvisibleObjects();
+        }
+    }
+
+    private void handleVisibleObjects(boolean needToMapTexture) {
+        float translateY = mGridInfo.getTranslateY();
         float viewportTop = mHeight * 0.5f - translateY;
         float viewportBottom = viewportTop - mHeight;
 
@@ -168,32 +177,39 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             ImageObject object = iter.next();
 
             if (mInvisibleObjects.get(index) != null) {
+                unmapTexture(index, object);
                 index++;
                 continue;
             }
 
-            if (parentVisibility == false) {
-                object.hide();
-                unmapTexture(index, object);
+            float top = object.getTop() + mStartOffsetY;
+
+            if ((top - mColumnWidth) < (viewportTop + mVisibilityPadding) &&
+                    (top > (viewportBottom - mVisibilityPadding))) {
+
+                object.show();
+
+                if (needToMapTexture == true) {
+                    mapTexture(index);
+                }
             } else {
-                float top = object.getTop() + mStartOffsetY;
+                object.hide();
 
-                if ((top - mColumnWidth) < (viewportTop + mVisibilityPadding) &&
-                        (top > (viewportBottom - mVisibilityPadding))) {
-
-                    object.show();
-
-                    if (needToMapTexture == true) {
-                        mapTexture(index);
-                    }
-                } else {
-                    object.hide();
-
-                    if (needToMapTexture == true) {
-                        unmapTexture(index, object);
-                    }
+                if (needToMapTexture == true) {
+                    unmapTexture(index, object);
                 }
             }
+
+            index++;
+        }
+    }
+
+    private void handleInvisibleObjects() {
+        int index = 0;
+        Iterator<ImageObject> iter = mObjects.iterator();
+        while (iter.hasNext()) {
+            ImageObject object = iter.next();
+            unmapTexture(index, object);
 
             index++;
         }
@@ -422,7 +438,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         mColumnWidth = gridInfo.getColumnWidth();
         mPrevColumnWidth = mColumnWidth;
         mDefaultColumnWidth = gridInfo.getDefaultColumnWidth();
-        mAnimationVisibilityPadding = gridInfo.getActionBarHeight();
+//        mAnimationVisibilityPadding = gridInfo.getActionBarHeight();
 
         mScale = (float) mColumnWidth / mDefaultColumnWidth;
 

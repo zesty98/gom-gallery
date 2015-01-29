@@ -152,35 +152,40 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
         }
     }
 
-    public void checkVisibility(boolean needToMapTexture, float translateY) {
+    public void checkVisibility(boolean needToMapTexture) {
+        float translateY = mGridInfo.getTranslateY();
         float viewportTop = mHeight * 0.5f - translateY;
         float viewportBottom = viewportTop - mHeight;
 
         int index = 0;
         Iterator<DateLabelObject> iter = mDateLabelObjects.iterator();
         while (iter.hasNext()) {
-            DateLabelObject dateLabelObject = iter.next();
+            DateLabelObject object = iter.next();
+            GLESNode parentNode = object.getParentNode();
 
             if (mInvisibleObjects.get(index) != null) {
+                unmapTexture(index, object);
                 index++;
                 continue;
             }
 
-            ImageObjects imageObjects = mObjectsMap.get(dateLabelObject);
+            ImageObjects imageObjects = mObjectsMap.get(object);
 
-            float top = dateLabelObject.getTop();
+            float top = object.getTop();
             float bottom = imageObjects.getBottom();
 
             if (bottom < viewportTop && top > viewportBottom) {
-                dateLabelObject.show();
+                parentNode.show();
+
                 mapTexture(index);
 
-                imageObjects.checkVisibility(true, needToMapTexture, translateY);
+                imageObjects.checkVisibility(true, needToMapTexture);
             } else {
-                dateLabelObject.hide();
-                unmapTexture(index, dateLabelObject);
+                parentNode.hide();
 
-                imageObjects.checkVisibility(false, needToMapTexture, translateY);
+                unmapTexture(index, object);
+
+                imageObjects.checkVisibility(false, needToMapTexture);
             }
 
             index++;
@@ -378,7 +383,9 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
 
                 mAnimators.add(alphaAnimator);
             } else {
-                object.hide();
+                GLESNode node = object.getParentNode();
+                node.hide();
+
                 imageObjects.setStartOffsetY(imageObjects.getNextStartOffsetY());
 
                 mInvisibleObjects.put(index, object);
@@ -501,7 +508,7 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
         mColumnWidth = gridInfo.getColumnWidth();
         mNumOfColumns = gridInfo.getNumOfColumns();
         mActionBarHeight = gridInfo.getActionBarHeight();
-        mAnimationVisibilityPadding = mActionBarHeight;
+//        mAnimationVisibilityPadding = mActionBarHeight;
 
         mGridInfo.addListener(this);
     }
@@ -626,10 +633,10 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
                 bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             }
 
-            bitmap = GLESUtils.drawTextToBitmap(x, y,
-                    mDateLabelInfo.getDate(), textPaint, bitmap);
 //            bitmap = GLESUtils.drawTextToBitmap(x, y,
-//                    "" + mDateLabelInfo.getIndex(), textPaint, bitmap);
+//                    mDateLabelInfo.getDate(), textPaint, bitmap);
+            bitmap = GLESUtils.drawTextToBitmap(x, y,
+                    "" + mDateLabelInfo.getIndex(), textPaint, bitmap);
 
             BitmapDrawable drawable = new BitmapDrawable(mContext.getResources(), bitmap);
 
@@ -649,10 +656,9 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
     }
 
     private void invalidateObjects() {
-        int objectSize = mInvisibleObjects.size();
-        for (int i = 0; i < objectSize; i++) {
+        int size = mInvisibleObjects.size();
+        for (int i = 0; i < size; i++) {
             DateLabelObject object = mInvisibleObjects.valueAt(i);
-            ImageObjects imageObjects = mObjectsMap.get(object);
             invalidateObject(object);
         }
 
