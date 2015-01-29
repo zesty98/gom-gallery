@@ -2,7 +2,7 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.util.Log;
+import android.util.SparseArray;
 
 import com.gomdev.gles.GLESAnimator;
 import com.gomdev.gles.GLESAnimatorCallback;
@@ -70,11 +70,13 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
     private List<TextureMappingInfo> mTextureMappingInfos = new LinkedList<>();
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
+    private SparseArray<ImageObject> mInvisibleObjects = new SparseArray<>();
 
     private List<GLESAnimator> mAnimators = new ArrayList<>();
     private int mAnimationFinishCount = 0;
     private int mAnimationCancelCount = 0;
     private float mScale = 1f;
+    private float mAnimationVisibilityPadding = 0f;
 
     private boolean mNeedToSetTranslate = false;
 
@@ -90,8 +92,17 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         mImageLoader = ImageLoader.getInstance();
 
         mVisibilityPadding = GLESUtils.getPixelFromDpi(mContext, VISIBILITY_PADDING_DP);
+
+        clear();
     }
 
+    private void clear() {
+        mObjects.clear();
+        mInvisibleObjects.clear();
+        mWaitingTextures.clear();
+        mTextureMappingInfos.clear();
+        mAnimators.clear();
+    }
 
     // rendering
 
@@ -155,6 +166,11 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         Iterator<ImageObject> iter = mObjects.iterator();
         while (iter.hasNext()) {
             ImageObject object = iter.next();
+
+            if (mInvisibleObjects.get(index) != null) {
+                index++;
+                continue;
+            }
 
             if (parentVisibility == false) {
                 object.hide();
@@ -249,11 +265,13 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     @Override
     public void onColumnWidthChanged() {
         mPrevColumnWidth = mColumnWidth;
-
         mColumnWidth = mGridInfo.getColumnWidth();
+
         mNumOfColumns = mGridInfo.getNumOfColumns();
 
         mScale = (float) mColumnWidth / mDefaultColumnWidth;
+
+        changeImageObjectPosition();
 
         int size = mAnimators.size();
         for (int i = 0; i < size; i++) {
@@ -272,42 +290,70 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         }
     }
 
+    private void changeImageObjectPosition() {
+        int index = 0;
+        Iterator<ImageObject> iter = mObjects.iterator();
+        while (iter.hasNext()) {
+            ImageObject object = iter.next();
+
+            float left = object.getLeft();
+            float top = object.getTop();
+            object.setLeftTop(left, top);
+
+            float scale = (float) mPrevColumnWidth / mDefaultColumnWidth;
+            object.setScale(scale);
+
+            float nextLeft = mSpacing + (index % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
+            float nextTop = -((index / mNumOfColumns) * (mColumnWidth + mSpacing));
+            object.setNextLeftTop(nextLeft, nextTop);
+
+            float nextScale = (float) mColumnWidth / mDefaultColumnWidth;
+            object.setNextScale(nextScale);
+
+            mEndOffsetY = nextTop - mDefaultColumnWidth * nextScale;
+
+            index++;
+        }
+    }
+
     private void setupAnimations() {
-        float viewportTop = mHeight * 0.5f - mGridInfo.getTranslateY();
-        float viewportBottom = viewportTop - mHeight;
+        float viewportTop = mHeight * 0.5f - mGridInfo.getTranslateY() - mAnimationVisibilityPadding;
+        float viewportBottom = viewportTop - mHeight + mAnimationVisibilityPadding;
+
+        float nextTranslateY = mRenderer.getNextTranslateY();
+        float nextViewportTop = mHeight * 0.5f - nextTranslateY - mAnimationVisibilityPadding;
+        float nextViewportBottom = nextViewportTop - mHeight + mAnimationVisibilityPadding;
 
         int index = 0;
         Iterator<ImageObject> iter = mObjects.iterator();
         while (iter.hasNext()) {
             ImageObject object = iter.next();
 
-            float left = mSpacing + (index % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
-            float top = -((index / mNumOfColumns) * (mColumnWidth + mSpacing));
-            float bottom = top - mColumnWidth;
-            float scale = (float) mColumnWidth / mDefaultColumnWidth;
+            float left = object.getLeft();
+            float top = object.getTop();
+            float bottom = top - mPrevColumnWidth;
+            float scale = object.getScale();
 
-            float prevLeft = object.getLeft();
-            float prevTop = object.getTop();
-            float prevBottom = prevTop - mPrevColumnWidth;
-            float prevScale = (float) mPrevColumnWidth / mDefaultColumnWidth;
+            float nextLeft = object.getNextLeft();
+            float nextTop = object.getNextTop();
+            float nextBottom = nextTop - mColumnWidth;
+            float nextScale = object.getNextScale();
 
-//            if ((top >= viewportBottom && bottom <= viewportTop) ||
-//                    (prevTop >= viewportBottom && prevBottom <= viewportTop)) {
-            GLESVector3 from = new GLESVector3(prevLeft, prevTop, prevScale);
-            GLESVector3 to = new GLESVector3(left, top, scale);
+            if ((top + mStartOffsetY >= viewportBottom && bottom + mStartOffsetY <= viewportTop) ||
+                    (nextTop + mNextStartOffsetY >= nextViewportBottom && nextBottom + mNextStartOffsetY <= nextViewportTop)) {
+                GLESVector3 from = new GLESVector3(left, top, scale);
+                GLESVector3 to = new GLESVector3(nextLeft, nextTop, nextScale);
 
-            mEndOffsetY = top - mDefaultColumnWidth * scale;
 
-            GLESAnimator animator = new GLESAnimator(new GalleryAnimatorCallback(object));
-            animator.setValues(from, to);
-            animator.setDuration(GalleryConfig.IMAGE_ANIMATION_START_OFFSET, GalleryConfig.IMAGE_ANIMATION_END_OFFSET);
+                GLESAnimator animator = new GLESAnimator(new GalleryAnimatorCallback(object));
+                animator.setValues(from, to);
+                animator.setDuration(GalleryConfig.IMAGE_ANIMATION_START_OFFSET, GalleryConfig.IMAGE_ANIMATION_END_OFFSET);
 
-            mAnimators.add(animator);
-//            } else {
-//                object.setLeftTop(left, top);
-//                object.setTranslate(left + mColumnWidth * 0.5f, top - mColumnWidth * 0.5f);
-//                object.setScale(scale);
-//            }
+                mAnimators.add(animator);
+            } else {
+                object.hide();
+                mInvisibleObjects.put(index, object);
+            }
 
             index++;
         }
@@ -327,10 +373,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     public void createObjects(GLESNode parentNode) {
         cancelLoading();
 
-        mObjects.clear();
-        mWaitingTextures.clear();
-        mTextureMappingInfos.clear();
-        mAnimators.clear();
+        clear();
 
         for (int i = 0; i < mNumOfImages; i++) {
             ImageObject object = new ImageObject("image" + i);
@@ -379,6 +422,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         mColumnWidth = gridInfo.getColumnWidth();
         mPrevColumnWidth = mColumnWidth;
         mDefaultColumnWidth = gridInfo.getDefaultColumnWidth();
+        mAnimationVisibilityPadding = gridInfo.getActionBarHeight();
 
         mScale = (float) mColumnWidth / mDefaultColumnWidth;
 
@@ -479,9 +523,30 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
         int size = mAnimators.size();
         if (mAnimationFinishCount >= size) {
-//            mRenderer.onAnimationFinished();
             mAnimationFinishCount = 0;
         }
+    }
+
+    public void invalidateObjects() {
+        int size = mInvisibleObjects.size();
+        for (int i = 0; i < size; i++) {
+            ImageObject object = mInvisibleObjects.valueAt(i);
+            invalidateObject(object);
+        }
+
+        mInvisibleObjects.clear();
+    }
+
+    private void invalidateObject(ImageObject object) {
+        object.setLeftTop(object.getNextLeft(), object.getNextTop());
+        object.setScale(object.getNextScale());
+
+        float translateX = object.getLeft() + mDefaultColumnWidth * object.getScale() * 0.5f;
+        float translateY = mStartOffsetY + object.getTop() - mDefaultColumnWidth * object.getScale() * 0.5f;
+
+        object.setTranslate(translateX, translateY);
+
+
     }
 
     private void onAnimationCanceled() {
@@ -489,7 +554,6 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
         int size = mAnimators.size();
         if (mAnimationCancelCount >= size) {
-//            mRenderer.onAnimationCanceled();
             mAnimationCancelCount = 0;
         }
     }
