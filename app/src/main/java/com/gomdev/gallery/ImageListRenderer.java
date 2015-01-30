@@ -148,7 +148,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
         GLESTexture dummyTexture = createDummyTexture(Color.LTGRAY);
         mObjectManager.setDummyImageTexture(dummyTexture);
 
-        dummyTexture = createDummyTexture(Color.BLUE);
+        dummyTexture = createDummyTexture(Color.WHITE);
         mObjectManager.setDummyDateLabelTexture(dummyTexture);
 
         mObjectManager.createScene();
@@ -278,7 +278,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
 
     public float getNextTranslateY() {
         float bottom = mLastObject.getNextTop() - (mColumnWidth + mSpacing) + mLastObject.getNextStartOffsetY();
-        float top = mCenterObject.getNextTop() + mFocusY + mCenterObject.getNextStartOffsetY();
+        float top = mCenterObject.getNextTop() - (mColumnWidth * 0.5f) + mFocusY + mCenterObject.getNextStartOffsetY();
         float translateY = mGalleryGestureDetector.getTranslateY(top, bottom);
         return translateY;
     }

@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.opengl.GLES20;
+import android.util.Log;
 import android.util.SparseArray;
 
 import com.gomdev.gles.GLESAnimator;
@@ -77,6 +78,7 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
     private List<TextureMappingInfo> mTextureMappingInfos = new LinkedList<>();
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
     private SparseArray<DateLabelObject> mInvisibleObjects = new SparseArray<>();
+    private ArrayList<DateLabelObject> mAnimationObjects = new ArrayList<>();
 
     private List<GLESAnimator> mAnimators = new ArrayList<>();
     private int mAnimationFinishCount = 0;
@@ -96,31 +98,19 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
         mObjectsMap.clear();
         mTextureMappingInfos.clear();
         mWaitingTextures.clear();
+        mAnimationObjects.clear();
     }
 
     // Rendering
 
-    public void update() {
-        int requestRenderCount = 0;
-
-        int size = mAnimators.size();
-        for (int i = 0; i < size; i++) {
-            if (mAnimators.get(i).doAnimation() == true) {
-                requestRenderCount++;
-            }
+    public void update(boolean needToMapTexture) {
+        if (needToMapTexture == true) {
+            updateTexture();
         }
 
-        if (requestRenderCount > 0) {
-            mSurfaceView.requestRender();
-        }
+        checkVisibility(needToMapTexture);
 
-        Iterator<DateLabelObject> iter = mDateLabelObjects.iterator();
-        while (iter.hasNext()) {
-            DateLabelObject dateLabelObject = iter.next();
-
-            ImageObjects imageObjects = mObjectsMap.get(dateLabelObject);
-            imageObjects.update();
-        }
+        update();
     }
 
     // this function should be called on GLThread
@@ -129,7 +119,7 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
 
         if (texture != null) {
             TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(texture.getPosition());
-            final GalleryObject object = (GalleryObject) textureMappingInfo.getObject();
+            final GalleryObject object = textureMappingInfo.getObject();
 
             final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
             texture.load(bitmap);
@@ -177,7 +167,9 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
             if (bottom < viewportTop && top > viewportBottom) {
                 parentNode.show();
 
-                mapTexture(index);
+                if (needToMapTexture == true) {
+                    mapTexture(index);
+                }
 
                 imageObjects.checkVisibility(true, needToMapTexture);
             } else {
@@ -189,6 +181,28 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
             }
 
             index++;
+        }
+    }
+
+    private void update() {
+        int requestRenderCount = 0;
+        int size = mAnimators.size();
+        for (int i = 0; i < size; i++) {
+            GLESAnimator animator = mAnimators.get(i);
+            if (animator.doAnimation() == true) {
+                requestRenderCount++;
+            }
+        }
+
+        if (requestRenderCount > 0) {
+            mSurfaceView.requestRender();
+        }
+
+        size = mAnimationObjects.size();
+        for(int i = 0; i < size; i++) {
+            DateLabelObject object = mAnimationObjects.get(i);
+            ImageObjects imageObjects = mObjectsMap.get(object);
+            imageObjects.update();
         }
     }
 
@@ -254,8 +268,7 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
             float height = mDateLabelHeight;
 
             object.setLeftTop(left, top);
-
-            object.setTranslate(left - (-width * 0.5f), top - (height * 0.5f));
+            object.setTranslate(left + width * 0.5f, top - height * 0.5f);
 
             float[] vertex = GLESUtils.makePositionCoord(-width * 0.5f, height * 0.5f, width, height);
 
@@ -313,8 +326,9 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
             DateLabelObject object = iter.next();
             ImageObjects imageObjects = mObjectsMap.get(object);
 
-            float top = object.getTop();
-            imageObjects.setStartOffsetY(top - mDateLabelHeight - mSpacing);
+            float prevTop = object.getTop();
+            object.setPrevLeftTop(object.getLeft(), prevTop);
+            imageObjects.setPrevStartOffsetY(prevTop - mDateLabelHeight - mSpacing);
 
             float nextLeft = mSpacing - mWidth * 0.5f;
             float nextTop = yOffset;
@@ -333,6 +347,25 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
 
     private void setupAnimations() {
         mInvisibleObjects.clear();
+        mAnimationObjects.clear();
+
+        float from = 0f;
+        float to = 1f;
+
+        GLESAnimator translateAnimator = new GLESAnimator(new TranslateAnimatorCallback());
+        translateAnimator.setValues(from, to);
+        translateAnimator.setDuration(0L, GalleryConfig.IMAGE_ANIMATION_END_OFFSET);
+
+        mAnimators.add(translateAnimator);
+
+        float fromAlpha = 0f;
+        float toAlpha = 1f;
+
+        GLESAnimator alphaAnimator = new GLESAnimator(new AlphaAnimatorCallback());
+        alphaAnimator.setValues(fromAlpha, toAlpha);
+        alphaAnimator.setDuration(GalleryConfig.DATE_LABEL_ANIMATION_START_OFFSET, GalleryConfig.DATE_LABEL_ANIMATION_END_OFFSET);
+
+        mAnimators.add(alphaAnimator);
 
         float viewportTop = mHeight * 0.5f - mGridInfo.getTranslateY() + mAnimationVisibilityPadding;
         float viewportBottom = viewportTop - mHeight - mAnimationVisibilityPadding;
@@ -348,43 +381,24 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
             DateLabelObject object = iter.next();
             ImageObjects imageObjects = mObjectsMap.get(object);
             DateLabelInfo dateLabelInfo = mBucketInfo.get(index);
+            GLESNode parentNode = object.getParentNode();
 
-            float left = object.getLeft();
-            float top = object.getTop();
+            float prevTop = object.getPrevTop();
             int numOfRows = (int) Math.ceil((double) imageObjects.getNumOfImages() / mPrevNumOfColumns);
-            float bottom = top - numOfRows * (mPrevColumnWidth + mSpacing);
-            float startOffsetY = imageObjects.getStartOffsetY();
+            float bottom = prevTop - (mDateLabelHeight + mSpacing) - numOfRows * (mPrevColumnWidth + mSpacing);
 
-            float nextLeft = object.getNextLeft();
             float nextTop = object.getNextTop();
             int nextNumOfRows = dateLabelInfo.getNumOfRows();
-            float nextBottom = nextTop - nextNumOfRows * (mColumnWidth + mSpacing);
-            float nextStartOffsetY = imageObjects.getNextStartOffsetY();
+            float nextBottom = nextTop - (mDateLabelHeight + mSpacing) - nextNumOfRows * (mColumnWidth + mSpacing);
 
             if ((nextTop >= nextViewportBottom && nextBottom <= nextViewportTop) ||
-                    (top >= viewportBottom && bottom <= viewportTop) ||
+                    (prevTop >= viewportBottom && bottom <= viewportTop) ||
                     index == (size - 1)) {
+                parentNode.show();
 
-                GLESVector3 from = new GLESVector3(left, top, startOffsetY);
-                GLESVector3 to = new GLESVector3(nextLeft, nextTop, nextStartOffsetY);
-
-                GLESAnimator translateAnimator = new GLESAnimator(new TranslateAnimatorCallback(object));
-                translateAnimator.setValues(from, to);
-                translateAnimator.setDuration(0L, GalleryConfig.IMAGE_ANIMATION_END_OFFSET);
-
-                mAnimators.add(translateAnimator);
-
-                float fromAlpha = 0f;
-                float toAlpha = 1f;
-
-                GLESAnimator alphaAnimator = new GLESAnimator(new AlphaAnimatorCallback(object));
-                alphaAnimator.setValues(fromAlpha, toAlpha);
-                alphaAnimator.setDuration(GalleryConfig.DATE_LABEL_ANIMATION_START_OFFSET, GalleryConfig.DATE_LABEL_ANIMATION_END_OFFSET);
-
-                mAnimators.add(alphaAnimator);
+                mAnimationObjects.add(object);
             } else {
-                GLESNode node = object.getParentNode();
-                node.hide();
+                parentNode.hide();
 
                 imageObjects.setStartOffsetY(imageObjects.getNextStartOffsetY());
 
@@ -633,10 +647,10 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
                 bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             }
 
-//            bitmap = GLESUtils.drawTextToBitmap(x, y,
-//                    mDateLabelInfo.getDate(), textPaint, bitmap);
             bitmap = GLESUtils.drawTextToBitmap(x, y,
-                    "" + mDateLabelInfo.getIndex(), textPaint, bitmap);
+                    mDateLabelInfo.getDate(), textPaint, bitmap);
+//            bitmap = GLESUtils.drawTextToBitmap(x, y,
+//                    "" + mDateLabelInfo.getIndex(), textPaint, bitmap);
 
             BitmapDrawable drawable = new BitmapDrawable(mContext.getResources(), bitmap);
 
@@ -652,6 +666,8 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
             mRenderer.onAnimationFinished();
             mAnimationFinishCount = 0;
             invalidateObjects();
+
+            mAnimators.clear();
         }
     }
 
@@ -699,10 +715,7 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
 
 
     class AlphaAnimatorCallback implements GLESAnimatorCallback {
-        private final DateLabelObject mObject;
-
-        AlphaAnimatorCallback(DateLabelObject object) {
-            mObject = object;
+        AlphaAnimatorCallback() {
         }
 
         @Override
@@ -722,24 +735,42 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
         }
     }
 
-    class TranslateAnimatorCallback implements GLESAnimatorCallback {
-        private final DateLabelObject mObject;
-        private final ImageObjects mImageObjects;
+    private float mTop = 0f;
+    private float mTop99 = 0f;
+    private float mTop100 = 0f;
 
-        TranslateAnimatorCallback(DateLabelObject object) {
-            mObject = object;
-            mImageObjects = mObjectsMap.get(mObject);
+    private long mTick99 = 0L;
+    private long mTick100 = 0L;
+
+    class TranslateAnimatorCallback implements GLESAnimatorCallback {
+        TranslateAnimatorCallback() {
         }
 
         @Override
         public void onAnimation(GLESVector3 current) {
-            mObject.setLeftTop(current.mX, current.mY);
-            mImageObjects.setStartOffsetY(current.mZ);
+            int size = mAnimationObjects.size();
+            for (int i = 0; i < size; i++) {
+                DateLabelObject object = mAnimationObjects.get(i);
 
-            float translateX = current.mX + mGridInfo.getDateLabelWidth() * 0.5f;
-            float translateY = current.mY - mGridInfo.getDateLabelHeight() * 0.5f;
+                float prevLeft = object.getPrevLeft();
+                float prevTop = object.getPrevTop();
 
-            mObject.setTranslate(translateX, translateY);
+                float nextLeft = object.getNextLeft();
+                float nextTop = object.getNextTop();
+
+                float currentLeft = prevLeft + (nextLeft - prevLeft) * current.mX;
+                float currentTop = prevTop + (nextTop - prevTop) * current.mX;
+
+                object.setLeftTop(currentLeft, currentTop);
+
+                ImageObjects imageObjects = mObjectsMap.get(object);
+                imageObjects.setStartOffsetY(currentTop - mDateLabelHeight - mSpacing);
+
+                float translateX = currentLeft + mGridInfo.getDateLabelWidth() * 0.5f;
+                float translateY = currentTop - mDateLabelHeight * 0.5f;
+
+                object.setTranslate(translateX, translateY);
+            }
         }
 
         @Override

@@ -35,7 +35,6 @@ public class GalleryUtils {
         Resources res = context.getResources();
 
         int width = res.getDisplayMetrics().widthPixels;
-        int height = res.getDisplayMetrics().heightPixels;
 
         GalleryContext galleryContext = GalleryContext.getInstance();
 

@@ -334,7 +334,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
 
 
         @Override
-        public boolean onDoubleTap(MotionEvent e) {
+        public void onLongPress(MotionEvent e) {
             float x = e.getX();
             float y = e.getY();
 
@@ -363,15 +363,11 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
             }
 
             mSurfaceView.requestRender();
-
-            return true;
         }
 
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             float viewportOffsetY = -distanceY;
-
-            int scrolledY = (int) (mSurfaceBufferTop - mCurrentViewport.bottom - viewportOffsetY);
 
             setViewportBottomLeft(mCurrentViewport.left,
                     (mCurrentViewport.bottom + viewportOffsetY), true);
@@ -417,11 +413,8 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     }
 
     private void setViewportBottomLeft(float leftX, float topY, boolean checkBound) {
-
         float curWidth = mCurrentViewport.width();
         float curHeight = mCurrentViewport.height();
-
-        float prevTopY = topY;
 
         if (checkBound == true) {
             if (mSurfaceSizeBuffer.y < curHeight) {

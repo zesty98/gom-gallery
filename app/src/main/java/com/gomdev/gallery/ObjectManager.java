@@ -75,7 +75,6 @@ public class ObjectManager implements GridInfoChangeListener {
 
         mGalleryObjects.setDateLabelGLState(glState);
 
-
         mScrollbar = new Scrollbar(mContext);
         mScrollbar.setColor(0.3f, 0.3f, 0.3f, 0.7f);
 
@@ -93,7 +92,7 @@ public class ObjectManager implements GridInfoChangeListener {
 
         mGalleryObjects.checkVisibility(needToMapTexture);
 
-        mGalleryObjects.update();
+        mGalleryObjects.update(needToMapTexture);
     }
 
     public void drawFrame() {
@@ -309,8 +308,6 @@ public class ObjectManager implements GridInfoChangeListener {
         GalleryObject dateLabelObject = mGalleryObjects.getObject(selectedDateLabelIndex);
         float imageStartOffset = dateLabelObject.getTop() - mDateLabelHeight - mSpacing;
         float yDistFromDateLabel = imageStartOffset - yPos;
-
-        DateLabelInfo dateLabelInfo = mBucketInfo.get(selectedDateLabelIndex);
 
         int row = (int) (yDistFromDateLabel / (mColumnWidth + mSpacing));
         int column = (int) (x / (mColumnWidth + mSpacing));

@@ -16,6 +16,9 @@ public class GalleryObject extends GLESObject {
     private float mLeft = 0;
     private float mTop = 0;
 
+    private float mPrevLeft = 0;
+    private float mPrevTop = 0;
+
     private float mNextLeft = 0;
     private float mNextTop = 0;
 
@@ -69,6 +72,19 @@ public class GalleryObject extends GLESObject {
 
     public float getNextTop() {
         return mNextTop;
+    }
+
+    public void setPrevLeftTop(float x, float y) {
+        mPrevLeft = x;
+        mPrevTop = y;
+    }
+
+    public float getPrevLeft() {
+        return mPrevLeft;
+    }
+
+    public float getPrevTop() {
+        return mPrevTop;
     }
 
     public void setTranslate(float x, float y) {

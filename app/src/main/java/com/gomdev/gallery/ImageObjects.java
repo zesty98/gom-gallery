@@ -41,6 +41,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     private GallerySurfaceView mSurfaceView = null;
     private ImageManager mImageManager = null;
     private ImageLoader mImageLoader = null;
+    private GLESNode mParentNode = null;
 
     private List<ImageObject> mObjects = new LinkedList<>();
 
@@ -63,6 +64,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     private int mDefaultColumnWidth = 0;
 
     private float mStartOffsetY = 0f;
+    private float mPrevStartOffsetY = 0f;
     private float mNextStartOffsetY = 0f;
     private float mEndOffsetY = 0f;
 
@@ -71,6 +73,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     private List<TextureMappingInfo> mTextureMappingInfos = new LinkedList<>();
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
     private SparseArray<ImageObject> mInvisibleObjects = new SparseArray<>();
+    private ArrayList<ImageObject> mAnimationObjects = new ArrayList<>();
 
     private List<GLESAnimator> mAnimators = new ArrayList<>();
     private int mAnimationFinishCount = 0;
@@ -312,12 +315,10 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         while (iter.hasNext()) {
             ImageObject object = iter.next();
 
-            float left = object.getLeft();
-            float top = object.getTop();
-            object.setLeftTop(left, top);
+            object.setPrevLeftTop(object.getLeft(), object.getTop());
 
-            float scale = (float) mPrevColumnWidth / mDefaultColumnWidth;
-            object.setScale(scale);
+            float prevScale = (float) mPrevColumnWidth / mDefaultColumnWidth;
+            object.setPrevScale(prevScale);
 
             float nextLeft = mSpacing + (index % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
             float nextTop = -((index / mNumOfColumns) * (mColumnWidth + mSpacing));
@@ -333,6 +334,31 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     }
 
     private void setupAnimations() {
+        mAnimationObjects.clear();
+
+        if (mParentNode.getVisibility() == false) {
+            int index = 0;
+            Iterator<ImageObject> iter = mObjects.iterator();
+            while (iter.hasNext()) {
+                ImageObject object = iter.next();
+
+                object.hide();
+                mInvisibleObjects.put(index, object);
+                index++;
+            }
+
+            return;
+        }
+
+        float from = 0f;
+        float to = 1f;
+
+        GLESAnimator animator = new GLESAnimator(new GalleryAnimatorCallback());
+        animator.setValues(from, to);
+        animator.setDuration(GalleryConfig.IMAGE_ANIMATION_START_OFFSET, GalleryConfig.IMAGE_ANIMATION_END_OFFSET);
+
+        mAnimators.add(animator);
+
         float viewportTop = mHeight * 0.5f - mGridInfo.getTranslateY() - mAnimationVisibilityPadding;
         float viewportBottom = viewportTop - mHeight + mAnimationVisibilityPadding;
 
@@ -345,27 +371,16 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         while (iter.hasNext()) {
             ImageObject object = iter.next();
 
-            float left = object.getLeft();
-            float top = object.getTop();
-            float bottom = top - mPrevColumnWidth;
-            float scale = object.getScale();
+            float prevTop = object.getPrevTop();
+            float prevBottom = prevTop - mPrevColumnWidth;
 
-            float nextLeft = object.getNextLeft();
             float nextTop = object.getNextTop();
             float nextBottom = nextTop - mColumnWidth;
-            float nextScale = object.getNextScale();
 
-            if ((top + mStartOffsetY >= viewportBottom && bottom + mStartOffsetY <= viewportTop) ||
+            if ((prevTop + mPrevStartOffsetY >= viewportBottom && prevBottom + mPrevStartOffsetY <= viewportTop) ||
                     (nextTop + mNextStartOffsetY >= nextViewportBottom && nextBottom + mNextStartOffsetY <= nextViewportTop)) {
-                GLESVector3 from = new GLESVector3(left, top, scale);
-                GLESVector3 to = new GLESVector3(nextLeft, nextTop, nextScale);
-
-
-                GLESAnimator animator = new GLESAnimator(new GalleryAnimatorCallback(object));
-                animator.setValues(from, to);
-                animator.setDuration(GalleryConfig.IMAGE_ANIMATION_START_OFFSET, GalleryConfig.IMAGE_ANIMATION_END_OFFSET);
-
-                mAnimators.add(animator);
+                object.show();
+                mAnimationObjects.add(object);
             } else {
                 object.hide();
                 mInvisibleObjects.put(index, object);
@@ -387,6 +402,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     // onSurfaceCreated
 
     public void createObjects(GLESNode parentNode) {
+        mParentNode = parentNode;
         cancelLoading();
 
         clear();
@@ -467,6 +483,14 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         return mStartOffsetY;
     }
 
+    public void setPrevStartOffsetY(float prevStartOffsetY) {
+        mPrevStartOffsetY = prevStartOffsetY;
+    }
+
+    public float getPrevStartOffsetY() {
+        return mPrevStartOffsetY;
+    }
+
     public void setNextStartOffsetY(float nextStartOffsetY) {
         mNextStartOffsetY = nextStartOffsetY;
 
@@ -540,6 +564,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         int size = mAnimators.size();
         if (mAnimationFinishCount >= size) {
             mAnimationFinishCount = 0;
+            mAnimators.clear();
         }
     }
 
@@ -595,26 +620,39 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     };
 
     class GalleryAnimatorCallback implements GLESAnimatorCallback {
-        private final ImageObject mObject;
-
-        GalleryAnimatorCallback(ImageObject object) {
-            mObject = object;
+        GalleryAnimatorCallback() {
         }
 
         @Override
         public void onAnimation(GLESVector3 current) {
             mNeedToSetTranslate = false;
 
-            mObject.setLeftTop(current.mX, current.mY);
+            int size = mAnimationObjects.size();
+            for (int i = 0; i < size; i++) {
+                ImageObject object = mAnimationObjects.get(i);
 
-            mScale = current.mZ;
+                float prevLeft = object.getPrevLeft();
+                float nextLeft = object.getNextLeft();
+                float currentLeft = prevLeft + (nextLeft - prevLeft) * current.mX;
 
-            mGridInfo.setScale(mScale);
+                float prevTop = object.getPrevTop();
+                float nextTop = object.getNextTop();
+                float currentTop = prevTop + (nextTop - prevTop) * current.mX;
 
-            float translateX = current.mX - (-mDefaultColumnWidth * mScale * 0.5f);
-            float translateY = mStartOffsetY + current.mY - (mDefaultColumnWidth * mScale * 0.5f);
-            mObject.setTranslate(translateX, translateY);
-            mObject.setScale(current.mZ);
+                object.setLeftTop(currentLeft, currentTop);
+
+                float prevScale = object.getPrevScale();
+                float nextScale = object.getNextScale();
+                float currentScale = prevScale + (nextScale - prevScale) * current.mX;
+
+                mScale = currentScale;
+                mGridInfo.setScale(currentScale);
+                object.setScale(currentScale);
+
+                float translateX = currentLeft - (-mDefaultColumnWidth * currentScale * 0.5f);
+                float translateY = mStartOffsetY + currentTop - (mDefaultColumnWidth * currentScale * 0.5f);
+                object.setTranslate(translateX, translateY);
+            }
         }
 
         @Override

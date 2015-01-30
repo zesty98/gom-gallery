@@ -44,7 +44,7 @@ public class ImageListActivity extends Activity {
             editor.putInt(GalleryConfig.PREF_COLUMNS_WIDTH, columnWidth);
             editor.putInt(GalleryConfig.PREF_NUM_OF_COLUMNS, numOfColumns);
             editor.putInt(GalleryConfig.PREF_MIN_NUM_OF_COLUMNS, numOfColumns);
-            editor.putInt(GalleryConfig.PREF_MAX_NUM_OF_COLUMNS, numOfColumns * 3);
+            editor.putInt(GalleryConfig.PREF_MAX_NUM_OF_COLUMNS, numOfColumns * 2); // FIX_ME
             editor.commit();
         }
 
