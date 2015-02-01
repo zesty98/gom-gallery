@@ -43,7 +43,6 @@ public class ObjectManager implements GridInfoChangeListener {
 
     private int mDateLabelHeight;
 
-    private int mWidth;
     private int mHeight;
 
     private boolean mIsSurfaceChanged = false;
@@ -84,27 +83,25 @@ public class ObjectManager implements GridInfoChangeListener {
     // rendering
 
     public void update(boolean needToMapTexture) {
-        mGLESRenderer.updateScene(mSM);
-
         if (needToMapTexture == true) {
             mGalleryObjects.updateTexture();
         }
 
-        mGalleryObjects.checkVisibility(needToMapTexture);
+        mGalleryObjects.checkVisibility();
 
         mGalleryObjects.update(needToMapTexture);
+
+        mGLESRenderer.updateScene(mSM);
     }
 
     public void drawFrame() {
         mGLESRenderer.drawScene(mSM);
-
         mScrollbar.hide();
     }
 
     // onSurfaceChanged
 
     public void onSurfaceChanged(int width, int height) {
-        mWidth = width;
         mHeight = height;
 
         mGLESRenderer.reset();
@@ -160,8 +157,6 @@ public class ObjectManager implements GridInfoChangeListener {
         mImageNode.setListener(mImageNodeListener);
         mRoot.addChild(mImageNode);
 
-        mGalleryObjects.setSceneManager(mSM);
-
         mGalleryObjects.createObjects(mImageNode);
 
         mScrollbar.createObject(mRoot);
@@ -206,6 +201,30 @@ public class ObjectManager implements GridInfoChangeListener {
         colorShader.setColorAttribIndex(attribName);
 
         return colorShader;
+    }
+
+    // listener / callback
+
+    @Override
+    public void onColumnWidthChanged() {
+        mColumnWidth = mGridInfo.getColumnWidth();
+        mNumOfColumns = mGridInfo.getNumOfColumns();
+
+        if (mIsSurfaceChanged == false) {
+            return;
+        }
+
+        mGalleryObjects.hide();
+    }
+
+    @Override
+    public void onNumOfImageInfosChanged() {
+
+    }
+
+    @Override
+    public void onNumOfDateLabelInfosChanged() {
+        mNumOfDateInfos = mGridInfo.getNumOfDateInfos();
     }
 
     // initialization
@@ -294,6 +313,10 @@ public class ObjectManager implements GridInfoChangeListener {
         return imageIndexingInfo;
     }
 
+    public void cancelLoading() {
+        mGalleryObjects.cancelLoading();
+    }
+
     public void deleteDateLabel(int index) {
         mGalleryObjects.deleteDateLabel(index);
         mGridInfo.deleteDateLabelInfo();
@@ -333,27 +356,6 @@ public class ObjectManager implements GridInfoChangeListener {
         return mGalleryObjects.getImageObject(imageIndexingInfo);
     }
 
-    @Override
-    public void onColumnWidthChanged() {
-        mColumnWidth = mGridInfo.getColumnWidth();
-        mNumOfColumns = mGridInfo.getNumOfColumns();
-
-        if (mIsSurfaceChanged == false) {
-            return;
-        }
-
-        mGalleryObjects.hide();
-    }
-
-    @Override
-    public void onNumOfImageInfosChanged() {
-
-    }
-
-    @Override
-    public void onNumOfDateLabelInfosChanged() {
-        mNumOfDateInfos = mGridInfo.getNumOfDateInfos();
-    }
 
     private GLESNodeListener mImageNodeListener = new GLESNodeListener() {
         @Override

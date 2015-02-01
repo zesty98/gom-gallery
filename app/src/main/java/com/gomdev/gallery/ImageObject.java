@@ -14,6 +14,8 @@ class ImageObject extends GalleryObject {
     private float mStartOffsetY = 0f;
     private float mNextStartOffsetY = 0f;
 
+    private boolean mPrevVisibility = false;
+
     ImageObject(String name) {
         super(name);
     }
@@ -56,5 +58,14 @@ class ImageObject extends GalleryObject {
 
     public float getNextStartOffsetY() {
         return mNextStartOffsetY;
+    }
+
+    void setVisibility(boolean visibility) {
+        mPrevVisibility = mIsVisible;
+        mIsVisible = visibility;
+    }
+
+    boolean isVisibilityChanged() {
+        return (mIsVisible != mPrevVisibility);
     }
 }

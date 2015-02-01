@@ -282,4 +282,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
         float translateY = mGalleryGestureDetector.getTranslateY(top, bottom);
         return translateY;
     }
+
+    public void cancelLoading() {
+        mObjectManager.cancelLoading();
+    }
 }

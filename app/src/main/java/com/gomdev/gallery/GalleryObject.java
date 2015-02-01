@@ -13,17 +13,19 @@ public class GalleryObject extends GLESObject {
 
     private int mIndex = -1;
 
-    private float mLeft = 0;
-    private float mTop = 0;
+    private float mLeft = 200f;
+    private float mTop = 600f;
 
-    private float mPrevLeft = 0;
-    private float mPrevTop = 0;
+    private float mPrevLeft = 200f;
+    private float mPrevTop = 600f;
 
-    private float mNextLeft = 0;
-    private float mNextTop = 0;
+    private float mNextLeft = 200f;
+    private float mNextTop = 600f;
 
-    private float mTranslateX = 0f;
-    private float mTranslateY = 0f;
+    private float mTranslateX = 200f;
+    private float mTranslateY = 600f;
+
+    private boolean mIsTextureMapped = false;
 
     public GalleryObject(String name) {
         super(name);
@@ -98,5 +100,13 @@ public class GalleryObject extends GLESObject {
 
     public float getTranslateY() {
         return mTranslateY;
+    }
+
+    public void setTextureMapping(boolean isTextureMapped) {
+        mIsTextureMapped = isTextureMapped;
+    }
+
+    public boolean isTexturMapped() {
+        return mIsTextureMapped;
     }
 }

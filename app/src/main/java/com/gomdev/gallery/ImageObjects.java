@@ -8,7 +8,6 @@ import com.gomdev.gles.GLESAnimator;
 import com.gomdev.gles.GLESAnimatorCallback;
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
-import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESObject;
 import com.gomdev.gles.GLESObjectListener;
 import com.gomdev.gles.GLESShader;
@@ -39,9 +38,8 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     private final ImageListRenderer mRenderer;
 
     private GallerySurfaceView mSurfaceView = null;
-    private ImageManager mImageManager = null;
     private ImageLoader mImageLoader = null;
-    private GLESNode mParentNode = null;
+    private GalleryNode mParentNode = null;
 
     private List<ImageObject> mObjects = new LinkedList<>();
 
@@ -91,7 +89,6 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     }
 
     private void init() {
-        mImageManager = ImageManager.getInstance();
         mImageLoader = ImageLoader.getInstance();
 
         mVisibilityPadding = GLESUtils.getPixelFromDpi(mContext, VISIBILITY_PADDING_DP);
@@ -161,15 +158,15 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         }
     }
 
-    public void checkVisibility(boolean parentVisibility, boolean needToMapTexture) {
+    public void checkVisibility(boolean parentVisibility) {
         if (parentVisibility == true) {
-            handleVisibleObjects(needToMapTexture);
+            handleVisibleObjects();
         } else {
             handleInvisibleObjects();
         }
     }
 
-    private void handleVisibleObjects(boolean needToMapTexture) {
+    private void handleVisibleObjects() {
         float translateY = mGridInfo.getTranslateY();
         float viewportTop = mHeight * 0.5f - translateY;
         float viewportBottom = viewportTop - mHeight;
@@ -180,7 +177,10 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             ImageObject object = iter.next();
 
             if (mInvisibleObjects.get(index) != null) {
-                unmapTexture(index, object);
+                if (object.isVisibilityChanged() == true) {
+                    unmapTexture(index, object);
+                    object.setTextureMapping(false);
+                }
                 index++;
                 continue;
             }
@@ -190,16 +190,20 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             if ((top - mColumnWidth) < (viewportTop + mVisibilityPadding) &&
                     (top > (viewportBottom - mVisibilityPadding))) {
 
-                object.show();
+                object.setVisibility(true);
 
-                if (needToMapTexture == true) {
-                    mapTexture(index);
+                if (object.isVisibilityChanged() == true) {
+                    if (object.isTexturMapped() == false) {
+                        mapTexture(index);
+                        object.setTextureMapping(true);
+                    }
                 }
             } else {
-                object.hide();
+                object.setVisibility(false);
 
-                if (needToMapTexture == true) {
+                if (object.isVisibilityChanged() == true) {
                     unmapTexture(index, object);
+                    object.setTextureMapping(false);
                 }
             }
 
@@ -212,7 +216,11 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         Iterator<ImageObject> iter = mObjects.iterator();
         while (iter.hasNext()) {
             ImageObject object = iter.next();
+
+            object.setVisibility(false);
+
             unmapTexture(index, object);
+            object.setTextureMapping(false);
 
             index++;
         }
@@ -241,6 +249,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
         GalleryTexture texture = textureMappingInfo.getTexture();
+
         BitmapWorker.cancelWork(texture);
         mWaitingTextures.remove(texture);
 
@@ -342,7 +351,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             while (iter.hasNext()) {
                 ImageObject object = iter.next();
 
-                object.hide();
+                object.setVisibility(false);
                 mInvisibleObjects.put(index, object);
                 index++;
             }
@@ -379,10 +388,12 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
             if ((prevTop + mPrevStartOffsetY >= viewportBottom && prevBottom + mPrevStartOffsetY <= viewportTop) ||
                     (nextTop + mNextStartOffsetY >= nextViewportBottom && nextBottom + mNextStartOffsetY <= nextViewportTop)) {
-                object.show();
+                object.setVisibility(true);
+
                 mAnimationObjects.add(object);
             } else {
-                object.hide();
+                object.setVisibility(false);
+
                 mInvisibleObjects.put(index, object);
             }
 
@@ -401,19 +412,20 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
     // onSurfaceCreated
 
-    public void createObjects(GLESNode parentNode) {
+    public void createObjects(GalleryNode parentNode) {
         mParentNode = parentNode;
         cancelLoading();
 
         clear();
 
         for (int i = 0; i < mNumOfImages; i++) {
-            ImageObject object = new ImageObject("image" + i);
+            ImageObject object = new ImageObject("image " + mDateLabelInfo.getIndex() + " " + i);
             mObjects.add(object);
             parentNode.addChild(object);
             object.setGLState(mGLState);
             object.setShader(mTextureShader);
             object.setTexture(mDummyTexture);
+            object.setVisibility(false);
             object.setListener(mObjectListener);
             object.setIndex(i);
 
@@ -427,18 +439,6 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
             mTextureMappingInfos.add(textureMappingInfo);
         }
     }
-
-    private void cancelLoading() {
-        int size = mTextureMappingInfos.size();
-
-        for (int i = 0; i < size; i++) {
-            GalleryTexture texture = mTextureMappingInfos.get(i).getTexture();
-            if (texture != null) {
-                BitmapWorker.cancelWork(mTextureMappingInfos.get(i).getTexture());
-            }
-        }
-    }
-
 
     // initialization
 
@@ -541,8 +541,8 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
     }
 
     @Override
-    public void onImageLoaded(int position, GalleryTexture texture) {
-        TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(position);
+    public void onImageLoaded(int index, GalleryTexture texture) {
+        TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
         final ImageObject object = (ImageObject) textureMappingInfo.getObject();
 
         final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
@@ -586,8 +586,21 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         float translateY = mStartOffsetY + object.getTop() - mDefaultColumnWidth * object.getScale() * 0.5f;
 
         object.setTranslate(translateX, translateY);
+    }
 
+    public void cancelLoading() {
+        Iterator<TextureMappingInfo> iter = mTextureMappingInfos.iterator();
+        while (iter.hasNext()) {
+            TextureMappingInfo info = iter.next();
+            GalleryTexture texture = info.getTexture();
+            if (texture != null) {
+                BitmapWorker.cancelWork(texture);
 
+                mWaitingTextures.remove(texture);
+
+                info.set(null);
+            }
+        }
     }
 
     private void onAnimationCanceled() {
