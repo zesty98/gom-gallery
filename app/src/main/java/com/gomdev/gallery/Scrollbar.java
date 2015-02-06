@@ -10,6 +10,7 @@ import com.gomdev.gles.GLESObject;
 import com.gomdev.gles.GLESObjectListener;
 import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESTransform;
+import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
 import java.nio.FloatBuffer;
@@ -47,8 +48,9 @@ public class Scrollbar implements GridInfoChangeListener {
     private float mScrollbarRegionLeft = 0f;
     private int mScrollbarRegionWidth = 0;
     private int mScrollbarRegionHeight = 0;
-    private int mScrollbarHeight = 0;
+    private float mScrollbarHeight = 0;
     private float mScrollableDistance = 0f;
+    private float mScrollbarMinHeight = 0f;
 
     private boolean mIsVisible = true;
 
@@ -65,14 +67,20 @@ public class Scrollbar implements GridInfoChangeListener {
         mGLState.setDepthState(false);
         mGLState.setBlendState(true);
         mGLState.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+        mScrollbarMinHeight = GLESUtils.getPixelFromDpi(mContext, GalleryConfig.SCROLLBAR_MIN_HEIGHT_IN_DP);
     }
 
     private void calcScrollbarHeight() {
-        int scrollableHeight = mGridInfo.getScrollableHeight();
+        float scrollableHeight = mGridInfo.getScrollableHeight();
         if (scrollableHeight > mHeight) {
-            mScrollbarHeight = (int) (((float) mScrollbarRegionHeight / scrollableHeight) * mScrollbarRegionHeight);
+            mScrollbarHeight = ((float) mScrollbarRegionHeight / scrollableHeight) * mScrollbarRegionHeight;
         } else {
             mScrollbarHeight = mScrollbarRegionHeight;
+        }
+
+        if (mScrollbarHeight < mScrollbarMinHeight) {
+            mScrollbarHeight = mScrollbarMinHeight;
         }
     }
 
@@ -85,7 +93,7 @@ public class Scrollbar implements GridInfoChangeListener {
         mWidth = width;
         mHeight = height;
 
-        int scrollableHeight = mGridInfo.getScrollableHeight();
+        float scrollableHeight = mGridInfo.getScrollableHeight();
         if (scrollableHeight < height) {
             mIsVisible = false;
         } else {
@@ -103,7 +111,7 @@ public class Scrollbar implements GridInfoChangeListener {
 
     @Override
     public void onColumnWidthChanged() {
-        int scrollableHeight = mGridInfo.getScrollableHeight();
+        float scrollableHeight = mGridInfo.getScrollableHeight();
         if (scrollableHeight < mHeight) {
             mIsVisible = false;
         } else {
@@ -149,12 +157,12 @@ public class Scrollbar implements GridInfoChangeListener {
 
     @Override
     public void onNumOfImageInfosChanged() {
-        mScrollbarHeight = mGridInfo.getScrollableHeight();
+        calcScrollbarHeight();
     }
 
     @Override
     public void onNumOfDateLabelInfosChanged() {
-        mScrollbarHeight = mGridInfo.getScrollableHeight();
+        calcScrollbarHeight();
     }
 
     public void setColor(float r, float g, float b, float a) {
@@ -226,7 +234,7 @@ public class Scrollbar implements GridInfoChangeListener {
 
             transform.setIdentity();
 
-            int scrollableHeight = mGridInfo.getScrollableHeight();
+            float scrollableHeight = mGridInfo.getScrollableHeight();
             float translateY = mGridInfo.getTranslateY();
 
             if (scrollableHeight > mHeight) {

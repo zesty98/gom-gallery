@@ -25,6 +25,8 @@ public class GalleryConfig {
 
     static final int DEFAULT_NUM_OF_COLUMNS = 3;
 
+    static final float SCROLLBAR_MIN_HEIGHT_IN_DP = 50f;
+
     static final long IMAGE_ANIMATION_START_OFFSET = 0L;
     static final long IMAGE_ANIMATION_END_OFFSET = 300L;
     static final long DATE_LABEL_ANIMATION_START_OFFSET = IMAGE_ANIMATION_END_OFFSET;
