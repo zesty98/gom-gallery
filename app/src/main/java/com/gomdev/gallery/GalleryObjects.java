@@ -745,7 +745,7 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
 
         @Override
         public void onAnimation(GLESVector3 current) {
-            mAlpha = current.mX;
+            mAlpha = current.getX();
         }
 
 
@@ -776,8 +776,8 @@ public class GalleryObjects implements ImageLoadingListener, GridInfoChangeListe
                 float nextLeft = object.getNextLeft();
                 float nextTop = object.getNextTop();
 
-                float currentLeft = prevLeft + (nextLeft - prevLeft) * current.mX;
-                float currentTop = prevTop + (nextTop - prevTop) * current.mX;
+                float currentLeft = prevLeft + (nextLeft - prevLeft) * current.getX();
+                float currentTop = prevTop + (nextTop - prevTop) * current.getX();
 
                 object.setLeftTop(currentLeft, currentTop);
 

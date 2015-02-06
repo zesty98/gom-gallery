@@ -646,17 +646,17 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
                 float prevLeft = object.getPrevLeft();
                 float nextLeft = object.getNextLeft();
-                float currentLeft = prevLeft + (nextLeft - prevLeft) * current.mX;
+                float currentLeft = prevLeft + (nextLeft - prevLeft) * current.getX();
 
                 float prevTop = object.getPrevTop();
                 float nextTop = object.getNextTop();
-                float currentTop = prevTop + (nextTop - prevTop) * current.mX;
+                float currentTop = prevTop + (nextTop - prevTop) * current.getX();
 
                 object.setLeftTop(currentLeft, currentTop);
 
                 float prevScale = object.getPrevScale();
                 float nextScale = object.getNextScale();
-                float currentScale = prevScale + (nextScale - prevScale) * current.mX;
+                float currentScale = prevScale + (nextScale - prevScale) * current.getX();
 
                 mScale = currentScale;
                 mGridInfo.setScale(currentScale);
