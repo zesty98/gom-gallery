@@ -156,6 +156,8 @@ public class ImageManager {
             }
         }
 
+        mNumOfImages--;
+
         return isBucketDeleted;
     }
 
