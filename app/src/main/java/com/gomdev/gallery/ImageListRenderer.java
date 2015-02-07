@@ -76,9 +76,8 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
             udpateGestureDetector();
 
             boolean isOnScrolling = mGalleryGestureDetector.isOnScrolling();
-            boolean needToMapTexture = (isOnScrolling == false);
 
-            mObjectManager.update(needToMapTexture);
+            mObjectManager.update(isOnScrolling);
             mObjectManager.drawFrame();
         }
     }

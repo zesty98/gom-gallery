@@ -3,6 +3,8 @@ package com.gomdev.gallery;
 import android.content.Context;
 import android.opengl.GLES20;
 
+import com.gomdev.gles.GLESAnimator;
+import com.gomdev.gles.GLESAnimatorCallback;
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
 import com.gomdev.gles.GLESNode;
@@ -11,6 +13,7 @@ import com.gomdev.gles.GLESObjectListener;
 import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
+import com.gomdev.gles.GLESVector3;
 import com.gomdev.gles.GLESVertexInfo;
 
 import java.nio.FloatBuffer;
@@ -25,9 +28,12 @@ public class Scrollbar implements GridInfoChangeListener {
 
     private final Context mContext;
 
-    private GLESObject mScrollbarObject;
-    private GLESShader mColorShader;
-    private GLESGLState mGLState;
+    private GallerySurfaceView mSurfaceView = null;
+    private GLESObject mScrollbarObject = null;
+    private GLESShader mColorShader = null;
+    private GLESGLState mGLState = null;
+
+    private GLESAnimator mAnimator = null;
 
     private GridInfo mGridInfo;
 
@@ -38,6 +44,8 @@ public class Scrollbar implements GridInfoChangeListener {
     private float mGreen = 0f;
     private float mBlue = 0f;
     private float mAlpha = 1f;
+
+    private float mBlendingAlpha = 1f;
 
     private int mActionBarHeight;
     private int mSpacing;
@@ -69,6 +77,31 @@ public class Scrollbar implements GridInfoChangeListener {
         mGLState.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
         mScrollbarMinHeight = GLESUtils.getPixelFromDpi(mContext, GalleryConfig.SCROLLBAR_MIN_HEIGHT_IN_DP);
+
+        mAnimator = new GLESAnimator(1f, 0f, new ScrollbarAnimatorCallback());
+        mAnimator.setDuration(0L, GalleryConfig.SCROLLBAR_ANIMATION_DURATION);
+    }
+
+    void update(boolean isOnScrolling) {
+        if (isOnScrolling == true) {
+            show();
+
+            mAnimator.cancel();
+
+            int location = mColorShader.getUniformLocation("uAlpha");
+            GLES20.glUniform1f(location, 1f);
+        }
+
+        if (mAnimator.doAnimation() == true) {
+            mSurfaceView.requestRender();
+            return;
+        }
+
+        if (isOnScrolling == false) {
+            mAnimator.cancel();
+            mAnimator.setValues(1f, 0f);
+            mAnimator.start();
+        }
     }
 
     private void calcScrollbarHeight() {
@@ -165,6 +198,10 @@ public class Scrollbar implements GridInfoChangeListener {
         calcScrollbarHeight();
     }
 
+    void setSurfaceView(GallerySurfaceView surfaceView) {
+        mSurfaceView = surfaceView;
+    }
+
     public void setColor(float r, float g, float b, float a) {
         mRed = r;
         mGreen = g;
@@ -208,6 +245,11 @@ public class Scrollbar implements GridInfoChangeListener {
 
     public void setShader(GLESShader shader) {
         mColorShader = shader;
+
+        shader.useProgram();
+
+        int location = shader.getUniformLocation("uAlpha");
+        GLES20.glUniform1f(location, 1.0f);
     }
 
     public void show() {
@@ -248,4 +290,25 @@ public class Scrollbar implements GridInfoChangeListener {
 
         }
     };
+
+    class ScrollbarAnimatorCallback implements GLESAnimatorCallback {
+
+        @Override
+        public void onAnimation(GLESVector3 current) {
+            mBlendingAlpha = current.getX();
+
+            int location = mColorShader.getUniformLocation("uAlpha");
+            GLES20.glUniform1f(location, mBlendingAlpha);
+        }
+
+        @Override
+        public void onCancel() {
+
+        }
+
+        @Override
+        public void onFinished() {
+            mScrollbarObject.hide();
+        }
+    }
 }

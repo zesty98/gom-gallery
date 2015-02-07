@@ -82,21 +82,22 @@ public class ObjectManager implements GridInfoChangeListener {
 
     // rendering
 
-    public void update(boolean needToMapTexture) {
+    public void update(boolean isOnScrolling) {
+        boolean needToMapTexture = (isOnScrolling == false);
+
         if (needToMapTexture == true) {
             mGalleryObjects.updateTexture();
         }
 
         mGalleryObjects.checkVisibility();
-
         mGalleryObjects.update(needToMapTexture);
+        mScrollbar.update(isOnScrolling);
 
         mGLESRenderer.updateScene(mSM);
     }
 
     public void drawFrame() {
         mGLESRenderer.drawScene(mSM);
-        mScrollbar.hide();
     }
 
     // onSurfaceChanged
@@ -139,7 +140,7 @@ public class ObjectManager implements GridInfoChangeListener {
         }
         mGalleryObjects.setDateLabelShader(textureAlphaShader);
 
-        GLESShader colorShader = createColorShader(R.raw.color_20_vs, R.raw.color_20_fs);
+        GLESShader colorShader = createColorShader(R.raw.color_20_vs, R.raw.color_alpha_20_fs);
         if (colorShader == null) {
             return false;
         }
@@ -231,6 +232,7 @@ public class ObjectManager implements GridInfoChangeListener {
 
     public void setSurfaceView(GallerySurfaceView surfaceView) {
         mGalleryObjects.setSurfaceView(surfaceView);
+        mScrollbar.setSurfaceView(surfaceView);
     }
 
     public void setGridInfo(GridInfo gridInfo) {
@@ -361,8 +363,6 @@ public class ObjectManager implements GridInfoChangeListener {
         @Override
         public void update(GLESNode node) {
             GLESTransform transform = node.getTransform();
-            float[] matrix = transform.getMatrix();
-            float prevY = matrix[13];
 
             transform.setIdentity();
 
@@ -374,12 +374,6 @@ public class ObjectManager implements GridInfoChangeListener {
 
             float scrollDistance = mGridInfo.getTranslateY();
             transform.preTranslate(0f, scrollDistance, 0f);
-
-            float currentY = scrollDistance;
-
-            if (prevY != currentY) {
-                mScrollbar.show();
-            }
         }
     };
 }
