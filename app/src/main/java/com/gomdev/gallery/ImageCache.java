@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class ImageCache {
+class ImageCache {
     static final String CLASS = "ImageCache";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -58,7 +58,7 @@ public class ImageCache {
         initDiskCache();
     }
 
-    public static ImageCache getInstance(FragmentManager fragmentManager, ImageCacheParams params) {
+    static ImageCache getInstance(FragmentManager fragmentManager, ImageCacheParams params) {
 
         // Search for, or create an instance of the non-UI RetainFragment
         final RetainFragment mRetainFragment = findOrCreateRetainFragment(fragmentManager);
@@ -155,7 +155,7 @@ public class ImageCache {
         new InitDiskCacheTask().execute(cacheDir);
     }
 
-    public void addBitmapToCache(String key, BitmapDrawable value) {
+    void addBitmapToCache(String key, BitmapDrawable value) {
         if (key == null || value == null) {
             return;
         }
@@ -205,7 +205,7 @@ public class ImageCache {
         }
     }
 
-    public BitmapDrawable getBitmapFromMemCache(String key) {
+    BitmapDrawable getBitmapFromMemCache(String key) {
         BitmapDrawable value = null;
 
         if (mMemoryCache != null) {
@@ -215,7 +215,7 @@ public class ImageCache {
         return value;
     }
 
-    public Bitmap getBitmapFromDiskCache(String key) {
+    Bitmap getBitmapFromDiskCache(String key) {
         Bitmap bitmap = null;
 
         synchronized (mDiskCacheLock) {
@@ -268,14 +268,14 @@ public class ImageCache {
     /**
      * A holder class that contains cache parameters.
      */
-    public static class ImageCacheParams {
-        public File mDiskCacheDir;
+    static class ImageCacheParams {
+        File mDiskCacheDir;
 
-        public ImageCacheParams(Context context, String diskCacheDirectoryName) {
+        ImageCacheParams(Context context, String diskCacheDirectoryName) {
             mDiskCacheDir = getDiskCacheDir(context, diskCacheDirectoryName);
         }
 
-        public void setMemCacheSizePercent(float percent) {
+        void setMemCacheSizePercent(float percent) {
             if (percent < 0.01f || percent > 0.8f) {
                 throw new IllegalArgumentException("setMemCacheSizePercent - percent must be "
                         + "between 0.01 and 0.8 (inclusive)");
@@ -283,17 +283,17 @@ public class ImageCache {
             mMemCacheSize = Math.round(percent * Runtime.getRuntime().maxMemory() / 1024);
         }
 
-        public int mMemCacheSize = DEFAULT_MEM_CACHE_SIZE;
+        int mMemCacheSize = DEFAULT_MEM_CACHE_SIZE;
 
 
-        public int mDiskCacheSize = DEFAULT_DISK_CACHE_SIZE;
+        int mDiskCacheSize = DEFAULT_DISK_CACHE_SIZE;
 
 
-        public CompressFormat mCompressFormat = DEFAULT_COMPRESS_FORMAT;
-        public int mCompressQuality = DEFAULT_COMPRESS_QUALITY;
-        public boolean mMemoryCacheEnabled = DEFAULT_MEM_CACHE_ENABLED;
-        public boolean mDiskCacheEnabled = DEFAULT_DISK_CACHE_ENABLED;
-        public boolean mInitDiskCacheOnCreate = DEFAULT_INIT_DISK_CACHE_ON_CREATE;
+        CompressFormat mCompressFormat = DEFAULT_COMPRESS_FORMAT;
+        int mCompressQuality = DEFAULT_COMPRESS_QUALITY;
+        boolean mMemoryCacheEnabled = DEFAULT_MEM_CACHE_ENABLED;
+        boolean mDiskCacheEnabled = DEFAULT_DISK_CACHE_ENABLED;
+        boolean mInitDiskCacheOnCreate = DEFAULT_INIT_DISK_CACHE_ON_CREATE;
 
 
     }
@@ -302,13 +302,13 @@ public class ImageCache {
      * A simple non-UI Fragment that stores a single Object and is retained over configuration
      * changes. It will be used to retain the ImageCache object.
      */
-    public static class RetainFragment extends Fragment {
+    static class RetainFragment extends Fragment {
         private Object mObject;
 
         /**
          * Empty constructor as per the Fragment documentation
          */
-        public RetainFragment() {
+        RetainFragment() {
         }
 
         @Override
@@ -324,7 +324,7 @@ public class ImageCache {
          *
          * @return The stored object
          */
-        public Object getObject() {
+        Object getObject() {
             return mObject;
         }
 
@@ -333,7 +333,7 @@ public class ImageCache {
          *
          * @param object The object to store
          */
-        public void setObject(Object object) {
+        void setObject(Object object) {
             mObject = object;
         }
     }

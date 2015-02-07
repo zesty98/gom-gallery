@@ -9,7 +9,7 @@ import android.view.MotionEvent;
 /**
  * Created by gomdev on 14. 12. 18..
  */
-public class GallerySurfaceView extends GLSurfaceView {
+class GallerySurfaceView extends GLSurfaceView {
     static final String CLASS = "GallerySurfaceView";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -18,7 +18,7 @@ public class GallerySurfaceView extends GLSurfaceView {
 
     private ImageListRenderer mRenderer = null;
 
-    public GallerySurfaceView(Context context) {
+    GallerySurfaceView(Context context) {
         super(context);
 
         mContext = context;
@@ -26,7 +26,7 @@ public class GallerySurfaceView extends GLSurfaceView {
         init();
     }
 
-    public GallerySurfaceView(Context context, AttributeSet attrs) {
+    GallerySurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         mContext = context;
@@ -81,7 +81,7 @@ public class GallerySurfaceView extends GLSurfaceView {
         return retVal || super.onTouchEvent(event);
     }
 
-    public void setGridInfo(GridInfo gridInfo) {
+    void setGridInfo(GridInfo gridInfo) {
         mRenderer.setGridInfo(gridInfo);
     }
 }

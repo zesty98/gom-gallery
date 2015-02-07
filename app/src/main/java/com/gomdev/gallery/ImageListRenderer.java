@@ -22,7 +22,7 @@ import javax.microedition.khronos.opengles.GL10;
 /**
  * Created by gomdev on 14. 12. 16..
  */
-public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListener {
+class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListener {
     static final String CLASS = "ImageListRenderer";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -48,7 +48,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
 
     private boolean mIsSurfaceChanged = false;
 
-    public ImageListRenderer(Context context) {
+    ImageListRenderer(Context context) {
         mContext = context;
 
         GLESContext.getInstance().setContext(context);
@@ -164,7 +164,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
 
     // touch
 
-    public boolean onTouchEvent(MotionEvent event) {
+    boolean onTouchEvent(MotionEvent event) {
         boolean retVal = mGalleryScaleGestureDetector.onTouchEvent(event);
         if (mIsOnScale == false && mIsOnAnimation == false) {
             retVal = mGalleryGestureDetector.onTouchEvent(event) || retVal;
@@ -175,7 +175,7 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
 
     // Listener
 
-    public void resize(float focusX, float focusY) {
+    void resize(float focusX, float focusY) {
         mFocusY = focusY;
         ImageIndexingInfo imageIndexingInfo = mObjectManager.getNearestImageIndex(focusX, focusY);
         mCenterObject = mObjectManager.getImageObject(imageIndexingInfo);
@@ -207,29 +207,29 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
     public void onNumOfDateLabelInfosChanged() {
     }
 
-    public void onAnimationStarted() {
+    void onAnimationStarted() {
         mIsOnAnimation = true;
     }
 
-    public void onAnimationFinished() {
+    void onAnimationFinished() {
         mIsOnAnimation = false;
     }
 
-    public void onAnimationCanceled() {
+    void onAnimationCanceled() {
         mIsOnAnimation = false;
     }
 
-    public void onScaleBegin() {
+    void onScaleBegin() {
         mIsOnScale = true;
     }
 
-    public void onScaleEnd() {
+    void onScaleEnd() {
         mIsOnScale = false;
     }
 
     // resume
 
-    public void onResume() {
+    void onResume() {
 //        SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
 //
 //        ImageIndexingInfo imageIndexingInfo = mGridInfo.getImageIndexingInfo();
@@ -246,17 +246,17 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
 
     // pause
 
-    public void onPause() {
+    void onPause() {
     }
 
     // set / get
-    public void setSurfaceView(GallerySurfaceView surfaceView) {
+    void setSurfaceView(GallerySurfaceView surfaceView) {
         mObjectManager.setSurfaceView(surfaceView);
         mGalleryGestureDetector.setSurfaceView(surfaceView);
         mGalleryScaleGestureDetector.setSurfaceView(surfaceView);
     }
 
-    public void setGridInfo(GridInfo gridInfo) {
+    void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
 
         mSpacing = gridInfo.getSpacing();
@@ -271,18 +271,18 @@ public class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChange
         mGridInfo.addListener(this);
     }
 
-    public ImageIndexingInfo getSelectedImageIndex(float x, float y) {
+    ImageIndexingInfo getSelectedImageIndex(float x, float y) {
         return mObjectManager.getSelectedImageIndex(x, y);
     }
 
-    public float getNextTranslateY() {
+    float getNextTranslateY() {
         float bottom = mLastObject.getNextTop() - (mColumnWidth + mSpacing) + mLastObject.getNextStartOffsetY();
         float top = mCenterObject.getNextTop() - (mColumnWidth * 0.5f) + mFocusY + mCenterObject.getNextStartOffsetY();
         float translateY = mGalleryGestureDetector.getTranslateY(top, bottom);
         return translateY;
     }
 
-    public void cancelLoading() {
+    void cancelLoading() {
         mObjectManager.cancelLoading();
     }
 }

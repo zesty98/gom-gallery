@@ -7,7 +7,7 @@ import android.view.ScaleGestureDetector;
 /**
  * Created by gomdev on 14. 12. 29..
  */
-public class GalleryScaleGestureDetector implements GridInfoChangeListener {
+class GalleryScaleGestureDetector implements GridInfoChangeListener {
     static final String CLASS = "GalleryScaleGestureDetector";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -24,18 +24,18 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
     private int mMinNumOfColumns;
     private int mMaxNumOfColumns;
 
-    public GalleryScaleGestureDetector(Context context, ImageListRenderer renderer) {
+    GalleryScaleGestureDetector(Context context, ImageListRenderer renderer) {
         mContext = context;
         mRenderer = renderer;
 
         mScaleGestureDetector = new ScaleGestureDetector(context, mScaleGestureListener);
     }
 
-    public void setSurfaceView(GallerySurfaceView surfaceView) {
+    void setSurfaceView(GallerySurfaceView surfaceView) {
         mSurfaceView = surfaceView;
     }
 
-    public void setGridInfo(GridInfo gridInfo) {
+    void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
 
         mNumOfColumns = gridInfo.getNumOfColumns();
@@ -45,7 +45,7 @@ public class GalleryScaleGestureDetector implements GridInfoChangeListener {
         mGridInfo.addListener(this);
     }
 
-    public boolean onTouchEvent(MotionEvent event) {
+    boolean onTouchEvent(MotionEvent event) {
         return mScaleGestureDetector.onTouchEvent(event);
     }
 

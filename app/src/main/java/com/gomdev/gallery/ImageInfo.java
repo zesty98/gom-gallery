@@ -2,7 +2,7 @@ package com.gomdev.gallery;
 
 import java.io.Serializable;
 
-public class ImageInfo implements Serializable, GalleryInfo {
+class ImageInfo implements Serializable, GalleryInfo {
     static final String CLASS = "ImageInfo";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -15,48 +15,48 @@ public class ImageInfo implements Serializable, GalleryInfo {
     private int mWidth;
     private int mHeight;
 
-    public ImageInfo(long id, int orientation) {
+    ImageInfo(long id, int orientation) {
         mImageID = id;
         mOrientation = orientation;
     }
 
-    public int getOrientation() {
+    int getOrientation() {
         return mOrientation;
     }
 
-    public long getImageID() {
+    long getImageID() {
         return mImageID;
     }
 
-    public void setIndex(int index) {
+    void setIndex(int index) {
         mIndex = index;
     }
 
-    public int getIndex() {
+    int getIndex() {
         return mIndex;
     }
 
-    public String getImagePath() {
+    String getImagePath() {
         return mImagePath;
     }
 
-    public void setImagePath(String path) {
+    void setImagePath(String path) {
         mImagePath = path;
     }
 
-    public int getWidth() {
+    int getWidth() {
         return mWidth;
     }
 
-    public void setWidth(int width) {
+    void setWidth(int width) {
         mWidth = width;
     }
 
-    public int getHeight() {
+    int getHeight() {
         return mHeight;
     }
 
-    public void setHeight(int height) {
+    void setHeight(int height) {
         mHeight = height;
     }
 

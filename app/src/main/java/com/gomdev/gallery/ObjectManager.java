@@ -18,7 +18,7 @@ import com.gomdev.gles.GLESUtils;
 /**
  * Created by gomdev on 14. 12. 31..
  */
-public class ObjectManager implements GridInfoChangeListener {
+class ObjectManager implements GridInfoChangeListener {
     static final String CLASS = "ObjectManager";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -47,7 +47,7 @@ public class ObjectManager implements GridInfoChangeListener {
 
     private boolean mIsSurfaceChanged = false;
 
-    public ObjectManager(Context context, ImageListRenderer renderer) {
+    ObjectManager(Context context, ImageListRenderer renderer) {
         mContext = context;
         mRenderer = renderer;
 
@@ -82,7 +82,7 @@ public class ObjectManager implements GridInfoChangeListener {
 
     // rendering
 
-    public void update(boolean isOnScrolling) {
+    void update(boolean isOnScrolling) {
         boolean needToMapTexture = (isOnScrolling == false);
 
         if (needToMapTexture == true) {
@@ -96,13 +96,13 @@ public class ObjectManager implements GridInfoChangeListener {
         mGLESRenderer.updateScene(mSM);
     }
 
-    public void drawFrame() {
+    void drawFrame() {
         mGLESRenderer.drawScene(mSM);
     }
 
     // onSurfaceChanged
 
-    public void onSurfaceChanged(int width, int height) {
+    void onSurfaceChanged(int width, int height) {
         mHeight = height;
 
         mGLESRenderer.reset();
@@ -113,14 +113,14 @@ public class ObjectManager implements GridInfoChangeListener {
         mIsSurfaceChanged = true;
     }
 
-    public void setupObjects(GLESCamera camera) {
+    void setupObjects(GLESCamera camera) {
         mGalleryObjects.setupObjects(camera);
         mScrollbar.setupObject(camera);
     }
 
     // onSurfaceCreated
 
-    public void onSurfaceCreated() {
+    void onSurfaceCreated() {
         mIsSurfaceChanged = false;
 
         createShader();
@@ -150,7 +150,7 @@ public class ObjectManager implements GridInfoChangeListener {
         return true;
     }
 
-    public void createScene() {
+    void createScene() {
         mSM = GLESSceneManager.createSceneManager();
         mRoot = mSM.createRootNode("root");
 
@@ -230,12 +230,12 @@ public class ObjectManager implements GridInfoChangeListener {
 
     // initialization
 
-    public void setSurfaceView(GallerySurfaceView surfaceView) {
+    void setSurfaceView(GallerySurfaceView surfaceView) {
         mGalleryObjects.setSurfaceView(surfaceView);
         mScrollbar.setSurfaceView(surfaceView);
     }
 
-    public void setGridInfo(GridInfo gridInfo) {
+    void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
 
         mBucketInfo = gridInfo.getBucketInfo();
@@ -251,15 +251,15 @@ public class ObjectManager implements GridInfoChangeListener {
         gridInfo.addListener(this);
     }
 
-    public void setDummyImageTexture(GLESTexture dummyTexture) {
+    void setDummyImageTexture(GLESTexture dummyTexture) {
         mGalleryObjects.setDummyImageTexture(dummyTexture);
     }
 
-    public void setDummyDateLabelTexture(GLESTexture dummyTexture) {
+    void setDummyDateLabelTexture(GLESTexture dummyTexture) {
         mGalleryObjects.setDummyDateLabelTexture(dummyTexture);
     }
 
-    public int getDateLabelIndex(float y) {
+    int getDateLabelIndex(float y) {
         float translateY = mGridInfo.getTranslateY();
 
         float yPos = mHeight * 0.5f - (y + translateY);
@@ -269,7 +269,7 @@ public class ObjectManager implements GridInfoChangeListener {
         return selectedDateLabelIndex;
     }
 
-    public ImageIndexingInfo getSelectedImageIndex(float x, float y) {
+    ImageIndexingInfo getSelectedImageIndex(float x, float y) {
         BucketInfo bucketInfo = mGridInfo.getBucketInfo();
         int bucketIndex = bucketInfo.getIndex();
 
@@ -292,7 +292,7 @@ public class ObjectManager implements GridInfoChangeListener {
         return imageIndexingInfo;
     }
 
-    public ImageIndexingInfo getNearestImageIndex(float x, float y) {
+    ImageIndexingInfo getNearestImageIndex(float x, float y) {
         BucketInfo bucketInfo = mGridInfo.getBucketInfo();
         int bucketIndex = bucketInfo.getIndex();
 
@@ -315,16 +315,16 @@ public class ObjectManager implements GridInfoChangeListener {
         return imageIndexingInfo;
     }
 
-    public void cancelLoading() {
+    void cancelLoading() {
         mGalleryObjects.cancelLoading();
     }
 
-    public void deleteDateLabel(int index) {
+    void deleteDateLabel(int index) {
         mGalleryObjects.deleteDateLabel(index);
         mGridInfo.deleteDateLabelInfo();
     }
 
-    public void deleteImage(ImageIndexingInfo indexingInfo) {
+    void deleteImage(ImageIndexingInfo indexingInfo) {
         mGalleryObjects.deleteImage(indexingInfo);
         mGridInfo.deleteImageInfo();
     }
@@ -354,7 +354,7 @@ public class ObjectManager implements GridInfoChangeListener {
         return selectedDateLabelIndex;
     }
 
-    public ImageObject getImageObject(ImageIndexingInfo imageIndexingInfo) {
+    ImageObject getImageObject(ImageIndexingInfo imageIndexingInfo) {
         return mGalleryObjects.getImageObject(imageIndexingInfo);
     }
 

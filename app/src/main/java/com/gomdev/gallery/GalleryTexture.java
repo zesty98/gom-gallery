@@ -9,8 +9,8 @@ import com.gomdev.gles.GLESTexture;
 /**
  * Created by gomdev on 14. 12. 17..
  */
-public class GalleryTexture implements BitmapContainer {
-    public static final String CLASS = "GalleryTexture";
+class GalleryTexture implements BitmapContainer {
+    static final String CLASS = "GalleryTexture";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
@@ -24,11 +24,11 @@ public class GalleryTexture implements BitmapContainer {
     boolean mIsTextureLoadingStarted = false;
     private int mPosition = 0;
 
-    public GalleryTexture(int width, int height) {
+    GalleryTexture(int width, int height) {
         mBuilder = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, width, height);
     }
 
-    public GLESTexture getTexture() {
+    GLESTexture getTexture() {
         return mTexture;
     }
 
@@ -56,23 +56,23 @@ public class GalleryTexture implements BitmapContainer {
         return mDrawable;
     }
 
-    public void load(Bitmap bitmap) {
+    void load(Bitmap bitmap) {
         mTexture = mBuilder.load(bitmap);
     }
 
-    public void setPosition(int position) {
+    void setPosition(int position) {
         mPosition = position;
     }
 
-    public int getPosition() {
+    int getPosition() {
         return mPosition;
     }
 
-    public void setImageLoadingListener(ImageLoadingListener listener) {
+    void setImageLoadingListener(ImageLoadingListener listener) {
         mImageLoadingListener = listener;
     }
 
-    public boolean isTextureLoadingNeeded() {
+    boolean isTextureLoadingNeeded() {
         return (mIsTextureLoadingFinished == false) && (mIsTextureLoadingStarted == false);
     }
 }

@@ -6,7 +6,7 @@ import java.util.LinkedList;
 /**
  * Created by gomdev on 15. 1. 9..
  */
-public class DateLabelInfo implements Serializable, GalleryInfo {
+class DateLabelInfo implements Serializable, GalleryInfo {
     static final String CLASS = "DateInfo";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -21,54 +21,54 @@ public class DateLabelInfo implements Serializable, GalleryInfo {
 
     private LinkedList<ImageInfo> mImageInfos = new LinkedList<>();
 
-    public DateLabelInfo(String date) {
+    DateLabelInfo(String date) {
         mDate = date;
 
         mImageInfos.clear();
     }
 
-    public String getDate() {
+    String getDate() {
         return mDate;
     }
 
-    public void setIndex(int index) {
+    void setIndex(int index) {
         mIndex = index;
     }
 
-    public int getIndex() {
+    int getIndex() {
         return mIndex;
     }
 
-    public void add(ImageInfo imageInfo) {
+    void add(ImageInfo imageInfo) {
         mImageInfos.add(imageInfo);
         imageInfo.setIndex(mImageIndex++);
     }
 
-    public ImageInfo get(int position) {
+    ImageInfo get(int position) {
         return mImageInfos.get(position);
     }
 
-    public ImageInfo getFirst() {
+    ImageInfo getFirst() {
         return mImageInfos.getFirst();
     }
 
-    public ImageInfo getLast() {
+    ImageInfo getLast() {
         return mImageInfos.getLast();
     }
 
-    public int getNumOfImages() {
+    int getNumOfImages() {
         return mImageInfos.size();
     }
 
-    public void setNumOfColumns(int numOfColumns) {
+    void setNumOfColumns(int numOfColumns) {
         mNumOfRows = (int) Math.ceil((double) mImageInfos.size() / numOfColumns);
     }
 
-    public int getNumOfRows() {
+    int getNumOfRows() {
         return mNumOfRows;
     }
 
-    public void deleteImageInfo(int index) {
+    void deleteImageInfo(int index) {
         mImageInfos.remove(index);
 
         int size = mImageInfos.size();

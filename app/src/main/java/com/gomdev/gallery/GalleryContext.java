@@ -2,7 +2,7 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 
-public class GalleryContext {
+class GalleryContext {
     static final Object sLockObject = new Object();
     private static GalleryContext sGalleryContext;
 
@@ -16,14 +16,14 @@ public class GalleryContext {
 
     private int mVersionCode = 100;
 
-    public static GalleryContext newInstance(Context context) {
+    static GalleryContext newInstance(Context context) {
         sGalleryContext = new GalleryContext();
         ImageManager.newInstance(context);
         ImageLoader.newInstance(context);
         return sGalleryContext;
     }
 
-    public static GalleryContext getInstance() {
+    static GalleryContext getInstance() {
         return sGalleryContext;
     }
 
@@ -32,48 +32,48 @@ public class GalleryContext {
     }
 
 
-    public void setScreenSize(int width, int height) {
+    void setScreenSize(int width, int height) {
         mWidth = width;
         mHeight = height;
     }
 
-    public int getWidth() {
+    int getWidth() {
         return mWidth;
     }
 
-    public int getHeight() {
+    int getHeight() {
         return mHeight;
     }
 
-    public int getColumnWidth() {
+    int getColumnWidth() {
         return mGridColumnWidth;
     }
 
-    public void setColumnWidth(int columnWidth) {
+    void setColumnWidth(int columnWidth) {
         mGridColumnWidth = columnWidth;
     }
 
-    public int getNumOfColumns() {
+    int getNumOfColumns() {
         return mNumOfColumns;
     }
 
-    public void setNumOfColumns(int numOfColumns) {
+    void setNumOfColumns(int numOfColumns) {
         mNumOfColumns = numOfColumns;
     }
 
-    public int getActionBarHeight() {
+    int getActionBarHeight() {
         return mActionBarHeight;
     }
 
-    public void setActionbarHeight(int height) {
+    void setActionbarHeight(int height) {
         mActionBarHeight = height;
     }
 
-    public int getVersionCode() {
+    int getVersionCode() {
         return mVersionCode;
     }
 
-    public void setVersionCode(int version) {
+    void setVersionCode(int version) {
         mVersionCode = version;
     }
 }

@@ -14,7 +14,7 @@ import java.util.Set;
 /**
  * Created by gomdev on 15. 1. 13..
  */
-public class ReusableBitmaps {
+class ReusableBitmaps {
     static final String CLASS = "RecyclingBitmapDrawable";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -23,7 +23,7 @@ public class ReusableBitmaps {
 
     private Set<SoftReference<Bitmap>> mReusableBitmaps;
 
-    public static ReusableBitmaps getInstance() {
+    static ReusableBitmaps getInstance() {
         return sReusableBitmaps;
     }
 
@@ -32,7 +32,7 @@ public class ReusableBitmaps {
                 Collections.synchronizedSet(new HashSet<SoftReference<Bitmap>>());
     }
 
-    public void addBitmapToResuableSet(Bitmap bitmap) {
+    void addBitmapToResuableSet(Bitmap bitmap) {
         synchronized (mReusableBitmaps) {
             mReusableBitmaps.add(new SoftReference<>(bitmap));
         }
@@ -44,7 +44,7 @@ public class ReusableBitmaps {
 
     // This method iterates through the reusable bitmaps, looking for one
     // to use for inBitmap:
-    public Bitmap getBitmapFromReusableSet(BitmapFactory.Options options) {
+    Bitmap getBitmapFromReusableSet(BitmapFactory.Options options) {
         Bitmap bitmap = null;
 
         if (mReusableBitmaps != null && !mReusableBitmaps.isEmpty()) {

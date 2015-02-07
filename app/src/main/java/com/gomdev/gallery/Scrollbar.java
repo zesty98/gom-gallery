@@ -21,7 +21,7 @@ import java.nio.FloatBuffer;
 /**
  * Created by gomdev on 14. 12. 29..
  */
-public class Scrollbar implements GridInfoChangeListener {
+class Scrollbar implements GridInfoChangeListener {
     static final String CLASS = "Scrollbar";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -62,7 +62,7 @@ public class Scrollbar implements GridInfoChangeListener {
 
     private boolean mIsVisible = true;
 
-    public Scrollbar(Context context) {
+    Scrollbar(Context context) {
         mContext = context;
 
         init();
@@ -122,7 +122,7 @@ public class Scrollbar implements GridInfoChangeListener {
         mScrollableDistance = bottom + (mHeight * 0.5f - mSpacing);
     }
 
-    public void onSurfaceChanged(int width, int height) {
+    void onSurfaceChanged(int width, int height) {
         mWidth = width;
         mHeight = height;
 
@@ -202,14 +202,14 @@ public class Scrollbar implements GridInfoChangeListener {
         mSurfaceView = surfaceView;
     }
 
-    public void setColor(float r, float g, float b, float a) {
+    void setColor(float r, float g, float b, float a) {
         mRed = r;
         mGreen = g;
         mBlue = b;
         mAlpha = a;
     }
 
-    public void setGridInfo(GridInfo gridInfo) {
+    void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
 
         mSpacing = gridInfo.getSpacing();
@@ -220,7 +220,7 @@ public class Scrollbar implements GridInfoChangeListener {
         gridInfo.addListener(this);
     }
 
-    public GLESObject createObject(GLESNode parent) {
+    GLESObject createObject(GLESNode parent) {
         mScrollbarObject = new GLESObject("scrollbar");
         parent.addChild(mScrollbarObject);
 
@@ -231,7 +231,7 @@ public class Scrollbar implements GridInfoChangeListener {
         return mScrollbarObject;
     }
 
-    public void setupObject(GLESCamera camera) {
+    void setupObject(GLESCamera camera) {
         mScrollbarObject.setCamera(camera);
 
         GLESVertexInfo vertexInfo = GalleryUtils.createColorVertexInfo(mColorShader,
@@ -243,7 +243,7 @@ public class Scrollbar implements GridInfoChangeListener {
         mScrollbarObject.hide();
     }
 
-    public void setShader(GLESShader shader) {
+    void setShader(GLESShader shader) {
         mColorShader = shader;
 
         shader.useProgram();
@@ -252,13 +252,13 @@ public class Scrollbar implements GridInfoChangeListener {
         GLES20.glUniform1f(location, 1.0f);
     }
 
-    public void show() {
+    void show() {
         if (mScrollbarObject != null && mIsVisible == true) {
             mScrollbarObject.show();
         }
     }
 
-    public void hide() {
+    void hide() {
         if (mScrollbarObject != null) {
             mScrollbarObject.hide();
         }

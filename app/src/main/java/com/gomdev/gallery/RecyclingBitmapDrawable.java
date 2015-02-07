@@ -39,7 +39,7 @@ class RecyclingBitmapDrawable extends BitmapDrawable {
     private ImageCache mImageCache = null;
     private ReusableBitmaps mReusableBitmaps = null;
 
-    public RecyclingBitmapDrawable(Resources res, Bitmap bitmap, ImageCache cache) {
+    RecyclingBitmapDrawable(Resources res, Bitmap bitmap, ImageCache cache) {
         super(res, bitmap);
         mImageCache = cache;
         mReusableBitmaps = ReusableBitmaps.getInstance();
@@ -52,7 +52,7 @@ class RecyclingBitmapDrawable extends BitmapDrawable {
      *
      * @param isDisplayed - Whether the drawable is being displayed or not
      */
-    public void setIsDisplayed(boolean isDisplayed) {
+    void setIsDisplayed(boolean isDisplayed) {
         synchronized (this) {
             if (isDisplayed) {
                 mDisplayRefCount++;
@@ -73,7 +73,7 @@ class RecyclingBitmapDrawable extends BitmapDrawable {
      *
      * @param isCached - Whether the drawable is being cached or not
      */
-    public void setIsCached(boolean isCached) {
+    void setIsCached(boolean isCached) {
         synchronized (this) {
             if (isCached) {
                 mCacheRefCount++;

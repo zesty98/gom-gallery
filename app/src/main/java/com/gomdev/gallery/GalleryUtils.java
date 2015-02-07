@@ -10,7 +10,7 @@ import com.gomdev.gles.GLESVertexInfo;
 /**
  * Created by gomdev on 14. 12. 27..
  */
-public class GalleryUtils {
+class GalleryUtils {
 
     // prevent to create instance
     private GalleryUtils() {

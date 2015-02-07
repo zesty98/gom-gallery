@@ -118,7 +118,7 @@ public class ImageLoader {
         cursor.close();
     }
 
-    private void loadImageInfoFromBucketInfo(BucketInfo bucketInfo) {
+    void loadImageInfoFromBucketInfo(BucketInfo bucketInfo) {
         int bucketID = bucketInfo.getID();
         String[] projection = {
                 MediaStore.Images.Media._ID,
@@ -189,11 +189,11 @@ public class ImageLoader {
         cursor.close();
     }
 
-    public void setLoadingBitmap(Bitmap bitmap) {
+    void setLoadingBitmap(Bitmap bitmap) {
         mLoadingBitmap = bitmap;
     }
 
-    public <T extends BitmapContainer> void loadThumbnail(ImageInfo imageInfo, T container) {
+    <T extends BitmapContainer> void loadThumbnail(ImageInfo imageInfo, T container) {
         final String imageKey = String.valueOf(imageInfo.getImageID());
         final BitmapDrawable value = mImageCache.getBitmapFromMemCache(imageKey);
 
@@ -214,7 +214,7 @@ public class ImageLoader {
         }
     }
 
-    public <T extends BitmapContainer> boolean loadThumbnailFromMemCache(ImageInfo imageInfo, T container) {
+    <T extends BitmapContainer> boolean loadThumbnailFromMemCache(ImageInfo imageInfo, T container) {
         final String imageKey = String.valueOf(imageInfo.getImageID());
         final BitmapDrawable value = mImageCache.getBitmapFromMemCache(imageKey);
 
@@ -226,7 +226,7 @@ public class ImageLoader {
         return false;
     }
 
-    public void loadBitmap(ImageInfo imageInfo, RecyclingImageView imageView,
+    void loadBitmap(ImageInfo imageInfo, RecyclingImageView imageView,
                            int requestWidth, int requestHeight) {
         if (BitmapWorker.cancelPotentialWork(imageInfo, imageView)) {
             final BitmapLoaderTask<RecyclingImageView> task = new BitmapLoaderTask(imageView,
@@ -358,7 +358,7 @@ public class ImageLoader {
         return BitmapFactory.decodeFile(path, options);
     }
 
-    public static Bitmap decodeSampledBitmapFromDescriptor(
+    static Bitmap decodeSampledBitmapFromDescriptor(
             FileDescriptor fileDescriptor, int reqWidth, int reqHeight) {
 
         // First decode with inJustDecodeBounds=true to check dimensions
@@ -377,7 +377,7 @@ public class ImageLoader {
                 .decodeFileDescriptor(fileDescriptor, null, options);
     }
 
-    public static Bitmap decodeSampledBitmapFromDescriptor(
+    static Bitmap decodeSampledBitmapFromDescriptor(
             FileDescriptor fileDescriptor,
             int reqWidth, int reqHeight,
             ImageCache cache) {
@@ -431,12 +431,12 @@ public class ImageLoader {
         private int mRequestWidth = 0;
         private int mRequestHeight = 0;
 
-        public BitmapLoaderTask(T container) {
+        BitmapLoaderTask(T container) {
             super(container);
             mNeedThumbnail = true;
         }
 
-        public BitmapLoaderTask(T container, int requestWidth,
+        BitmapLoaderTask(T container, int requestWidth,
                                 int requestHeight) {
             super(container);
 

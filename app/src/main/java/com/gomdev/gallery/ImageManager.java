@@ -11,19 +11,19 @@ import java.util.List;
 /**
  * Created by gomdev on 15. 1. 22..
  */
-public class ImageManager {
+class ImageManager {
     static final String CLASS = "ImageManager";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private static ImageManager sImageManager;
 
-    public static ImageManager newInstance(Context context) {
+    static ImageManager newInstance(Context context) {
         sImageManager = new ImageManager(context);
         return sImageManager;
     }
 
-    public static ImageManager getInstance() {
+    static ImageManager getInstance() {
         return sImageManager;
     }
 
@@ -43,40 +43,40 @@ public class ImageManager {
         mNumOfImages = 0;
     }
 
-    public void setObjectManager(ObjectManager objectManager) {
+    void setObjectManager(ObjectManager objectManager) {
         mObjectManager = objectManager;
     }
 
-    public void addBucketInfo(BucketInfo bucketInfo) {
+    void addBucketInfo(BucketInfo bucketInfo) {
         mBucketInfos.add(bucketInfo);
         bucketInfo.setIndex(mBucketIndex++);
     }
 
-    public BucketInfo getBucketInfo(int index) {
+    BucketInfo getBucketInfo(int index) {
         return mBucketInfos.get(index);
     }
 
-    public void setCurrentBucketInfo(int index) {
+    void setCurrentBucketInfo(int index) {
         mCurrentBucketInfo = mBucketInfos.get(index);
     }
 
-    public BucketInfo getCurrentBucketInfo() {
+    BucketInfo getCurrentBucketInfo() {
         return mCurrentBucketInfo;
     }
 
-    public int getNumOfBucketInfos() {
+    int getNumOfBucketInfos() {
         return mBucketInfos.size();
     }
 
-    public void setNumOfImages(int numOfImages) {
+    void setNumOfImages(int numOfImages) {
         mNumOfImages = numOfImages;
     }
 
-    public int getNumOfImages() {
+    int getNumOfImages() {
         return mNumOfImages;
     }
 
-    public int getImageIndex(ImageIndexingInfo imageIndexingInfo) {
+    int getImageIndex(ImageIndexingInfo imageIndexingInfo) {
         int index = 0;
 
         BucketInfo bucketInfo = mBucketInfos.get(imageIndexingInfo.mBucketIndex);
@@ -93,7 +93,7 @@ public class ImageManager {
         return index;
     }
 
-    public ImageIndexingInfo getImageIndexingInfo(int index) {
+    ImageIndexingInfo getImageIndexingInfo(int index) {
         int bucketIndex = mCurrentBucketInfo.getIndex();
         int dateLabelIndex = 0;
         int imageIndex = 0;
@@ -115,14 +115,14 @@ public class ImageManager {
         return new ImageIndexingInfo(bucketIndex, dateLabelIndex, imageIndex);
     }
 
-    public ImageInfo getImageInfo(ImageIndexingInfo indexingInfo) {
+    ImageInfo getImageInfo(ImageIndexingInfo indexingInfo) {
         DateLabelInfo dateLabelInfo = mCurrentBucketInfo.get(indexingInfo.mDateLabelIndex);
         ImageInfo imageInfo = dateLabelInfo.get(indexingInfo.mImageIndex);
 
         return imageInfo;
     }
 
-    public boolean deleteImage(ImageIndexingInfo imageIndexingInfo) {
+    boolean deleteImage(ImageIndexingInfo imageIndexingInfo) {
         boolean isBucketDeleted = false;
 
         DateLabelInfo dateLabelInfo = mCurrentBucketInfo.get(imageIndexingInfo.mDateLabelIndex);

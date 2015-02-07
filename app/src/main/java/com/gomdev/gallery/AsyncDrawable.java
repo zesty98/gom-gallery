@@ -10,14 +10,14 @@ class AsyncDrawable extends BitmapDrawable {
 
     private final WeakReference<BitmapWorker.BitmapWorkerTask> mBitmapWorkerTaskReference;
 
-    public AsyncDrawable(Resources res, Bitmap bitmap,
+    AsyncDrawable(Resources res, Bitmap bitmap,
                          BitmapWorker.BitmapWorkerTask bitmapLoaderTask) {
         super(res, bitmap);
         mBitmapWorkerTaskReference =
                 new WeakReference<>(bitmapLoaderTask);
     }
 
-    public BitmapWorker.BitmapWorkerTask getBitmapWorkerTask() {
+    BitmapWorker.BitmapWorkerTask getBitmapWorkerTask() {
         return mBitmapWorkerTaskReference.get();
     }
 }

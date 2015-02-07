@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * Created by gomdev on 15. 1. 13..
  */
-public class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
+class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     static final String CLASS = "ImageObjects";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -81,7 +81,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
     private boolean mNeedToSetTranslate = false;
 
-    public ImageObjects(Context context, ImageListRenderer renderer) {
+    ImageObjects(Context context, ImageListRenderer renderer) {
         mContext = context;
         mRenderer = renderer;
 
@@ -106,7 +106,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
     // rendering
 
-    public void update() {
+    void update() {
         int requestRenderCount = 0;
 
         int size = mAnimators.size();
@@ -141,7 +141,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         object.setTranslate(translateX, translateY);
     }
 
-    public void updateTexture() {
+    void updateTexture() {
         GalleryTexture texture = mWaitingTextures.poll();
 
         if (texture != null) {
@@ -158,7 +158,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         }
     }
 
-    public void checkVisibility(boolean parentVisibility) {
+    void checkVisibility(boolean parentVisibility) {
         if (parentVisibility == true) {
             handleVisibleObjects();
         } else {
@@ -259,12 +259,12 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
     // onSurfaceChanged
 
-    public void onSurfaceChanged(int width, int height) {
+    void onSurfaceChanged(int width, int height) {
         mWidth = width;
         mHeight = height;
     }
 
-    public void setupObjects(GLESCamera camera) {
+    void setupObjects(GLESCamera camera) {
         int index = 0;
         Iterator<ImageObject> iter = mObjects.iterator();
         while (iter.hasNext()) {
@@ -412,7 +412,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
     // onSurfaceCreated
 
-    public void createObjects(GalleryNode parentNode) {
+    void createObjects(GalleryNode parentNode) {
         mParentNode = parentNode;
         cancelLoading();
 
@@ -442,11 +442,11 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
 
     // initialization
 
-    public void setSurfaceView(GallerySurfaceView surfaceView) {
+    void setSurfaceView(GallerySurfaceView surfaceView) {
         mSurfaceView = surfaceView;
     }
 
-    public void setGridInfo(GridInfo gridInfo) {
+    void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
 
         mSpacing = gridInfo.getSpacing();
@@ -461,13 +461,13 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         mGridInfo.addListener(this);
     }
 
-    public void setDateLabelInfo(DateLabelInfo dateLabelInfo) {
+    void setDateLabelInfo(DateLabelInfo dateLabelInfo) {
         mDateLabelInfo = dateLabelInfo;
 
         mNumOfImages = mDateLabelInfo.getNumOfImages();
     }
 
-    public void setStartOffsetY(float startOffsetY) {
+    void setStartOffsetY(float startOffsetY) {
         mStartOffsetY = startOffsetY;
 
         mNeedToSetTranslate = true;
@@ -479,19 +479,19 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         }
     }
 
-    public float getStartOffsetY() {
+    float getStartOffsetY() {
         return mStartOffsetY;
     }
 
-    public void setPrevStartOffsetY(float prevStartOffsetY) {
+    void setPrevStartOffsetY(float prevStartOffsetY) {
         mPrevStartOffsetY = prevStartOffsetY;
     }
 
-    public float getPrevStartOffsetY() {
+    float getPrevStartOffsetY() {
         return mPrevStartOffsetY;
     }
 
-    public void setNextStartOffsetY(float nextStartOffsetY) {
+    void setNextStartOffsetY(float nextStartOffsetY) {
         mNextStartOffsetY = nextStartOffsetY;
 
         Iterator<ImageObject> iter = mObjects.iterator();
@@ -501,35 +501,35 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         }
     }
 
-    public float getNextStartOffsetY() {
+    float getNextStartOffsetY() {
         return mNextStartOffsetY;
     }
 
-    public float getBottom() {
+    float getBottom() {
         return mEndOffsetY + mStartOffsetY;
     }
 
-    public int getNumOfImages() {
+    int getNumOfImages() {
         return mNumOfImages;
     }
 
-    public void setShader(GLESShader shader) {
+    void setShader(GLESShader shader) {
         mTextureShader = shader;
     }
 
-    public void setGLState(GLESGLState state) {
+    void setGLState(GLESGLState state) {
         mGLState = state;
     }
 
-    public void setDummyTexture(GLESTexture texture) {
+    void setDummyTexture(GLESTexture texture) {
         mDummyTexture = texture;
     }
 
-    public ImageObject getObject(int index) {
+    ImageObject getObject(int index) {
         return mObjects.get(index);
     }
 
-    public void delete(int index) {
+    void delete(int index) {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
 
         GalleryTexture texture = textureMappingInfo.getTexture();
@@ -568,7 +568,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         }
     }
 
-    public void invalidateObjects() {
+    void invalidateObjects() {
         int size = mInvisibleObjects.size();
         for (int i = 0; i < size; i++) {
             ImageObject object = mInvisibleObjects.valueAt(i);
@@ -588,7 +588,7 @@ public class ImageObjects implements ImageLoadingListener, GridInfoChangeListene
         object.setTranslate(translateX, translateY);
     }
 
-    public void cancelLoading() {
+    void cancelLoading() {
         Iterator<TextureMappingInfo> iter = mTextureMappingInfos.iterator();
         while (iter.hasNext()) {
             TextureMappingInfo info = iter.next();

@@ -3,7 +3,7 @@ package com.gomdev.gallery;
 /**
  * Created by gomdev on 14. 12. 23..
  */
-public class TextureMappingInfo {
+class TextureMappingInfo {
     static final String CLASS = "ImageManager";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -13,24 +13,24 @@ public class TextureMappingInfo {
     private GalleryInfo mGalleryInfo;
 
 
-    public TextureMappingInfo(GalleryObject object, GalleryInfo galleryInfo) {
+    TextureMappingInfo(GalleryObject object, GalleryInfo galleryInfo) {
         mObject = object;
         mGalleryInfo = galleryInfo;
     }
 
-    public GalleryObject getObject() {
+    GalleryObject getObject() {
         return mObject;
     }
 
-    public GalleryTexture getTexture() {
+    GalleryTexture getTexture() {
         return mTexture;
     }
 
-    public GalleryInfo getGalleryInfo() {
+    GalleryInfo getGalleryInfo() {
         return mGalleryInfo;
     }
 
-    public void set(GalleryTexture texture) {
+    void set(GalleryTexture texture) {
         mTexture = texture;
     }
 }

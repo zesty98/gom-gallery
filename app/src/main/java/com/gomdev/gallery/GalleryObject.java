@@ -6,7 +6,7 @@ import com.gomdev.gles.GLESTexture;
 /**
  * Created by gomdev on 14. 12. 18..
  */
-public class GalleryObject extends GLESObject {
+class GalleryObject extends GLESObject {
     static final String CLASS = "GalleryObject";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -27,7 +27,7 @@ public class GalleryObject extends GLESObject {
 
     private boolean mIsTextureMapped = false;
 
-    public GalleryObject(String name) {
+    GalleryObject(String name) {
         super(name);
         init();
     }
@@ -35,78 +35,78 @@ public class GalleryObject extends GLESObject {
     private void init() {
     }
 
-    public void setTexture(GalleryTexture texture) {
+    void setTexture(GalleryTexture texture) {
         GLESTexture prevTexture = getTexture();
         prevTexture.destroy();
 
         this.setTexture(texture.getTexture());
     }
 
-    public void setIndex(int position) {
+    void setIndex(int position) {
         mIndex = position;
     }
 
-    public int getIndex() {
+    int getIndex() {
         return mIndex;
     }
 
-    public void setLeftTop(float x, float y) {
+    void setLeftTop(float x, float y) {
         mLeft = x;
         mTop = y;
     }
 
-    public float getLeft() {
+    float getLeft() {
         return mLeft;
     }
 
-    public float getTop() {
+    float getTop() {
         return mTop;
     }
 
-    public void setNextLeftTop(float x, float y) {
+    void setNextLeftTop(float x, float y) {
         mNextLeft = x;
         mNextTop = y;
     }
 
-    public float getNextLeft() {
+    float getNextLeft() {
         return mNextLeft;
     }
 
-    public float getNextTop() {
+    float getNextTop() {
         return mNextTop;
     }
 
-    public void setPrevLeftTop(float x, float y) {
+    void setPrevLeftTop(float x, float y) {
         mPrevLeft = x;
         mPrevTop = y;
     }
 
-    public float getPrevLeft() {
+    float getPrevLeft() {
         return mPrevLeft;
     }
 
-    public float getPrevTop() {
+    float getPrevTop() {
         return mPrevTop;
     }
 
-    public void setTranslate(float x, float y) {
+    void setTranslate(float x, float y) {
         mTranslateX = x;
         mTranslateY = y;
     }
 
-    public float getTranslateX() {
+    float getTranslateX() {
         return mTranslateX;
     }
 
-    public float getTranslateY() {
+    float getTranslateY() {
         return mTranslateY;
     }
 
-    public void setTextureMapping(boolean isTextureMapped) {
+    void setTextureMapping(boolean isTextureMapped) {
         mIsTextureMapped = isTextureMapped;
     }
 
-    public boolean isTexturMapped() {
+    boolean isTexturMapped() {
         return mIsTextureMapped;
     }
 }

@@ -10,12 +10,12 @@ import java.lang.ref.WeakReference;
 /**
  * Created by gomdev on 15. 1. 12..
  */
-public class BitmapWorker {
+class BitmapWorker {
     static final String CLASS = "BitmapWorker";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    public static <T extends BitmapContainer> boolean cancelPotentialWork(GalleryInfo galleryInfo,
+    static <T extends BitmapContainer> boolean cancelPotentialWork(GalleryInfo galleryInfo,
                                                                           T container) {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(container);
 
@@ -35,7 +35,7 @@ public class BitmapWorker {
         return true;
     }
 
-    public static <T extends BitmapContainer> void cancelWork(T container) {
+    static <T extends BitmapContainer> void cancelWork(T container) {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(container);
         if (bitmapWorkerTask != null) {
             bitmapWorkerTask.cancel(true);
@@ -58,7 +58,7 @@ public class BitmapWorker {
         return null;
     }
 
-    public static class BitmapWorkerTask<T extends BitmapContainer> extends AsyncTask<GalleryInfo, Void, BitmapDrawable> {
+    static class BitmapWorkerTask<T extends BitmapContainer> extends AsyncTask<GalleryInfo, Void, BitmapDrawable> {
         static final String CLASS = "BitmapWorkerTask";
         static final String TAG = GalleryConfig.TAG + "_" + CLASS;
         static final boolean DEBUG = GalleryConfig.DEBUG;

@@ -17,7 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 
-public class ImageViewActivity extends FragmentActivity implements View.OnClickListener {
+class ImageViewActivity extends FragmentActivity implements View.OnClickListener {
     static final String CLASS = "ImageViewActivity";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -133,7 +133,7 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
     private class ImagePagerAdapter extends FragmentStatePagerAdapter {
         private final int mSize;
 
-        public ImagePagerAdapter(FragmentManager fm, int size) {
+        ImagePagerAdapter(FragmentManager fm, int size) {
             super(fm);
             mSize = size;
         }

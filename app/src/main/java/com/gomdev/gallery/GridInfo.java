@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Created by gomdev on 14. 12. 20..
  */
-public class GridInfo {
+class GridInfo {
     static final String CLASS = "GridInfo";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -42,7 +42,7 @@ public class GridInfo {
 
     private List<GridInfoChangeListener> mListeners = new ArrayList<>();
 
-    public GridInfo(Context context, BucketInfo bucketInfo) {
+    GridInfo(Context context, BucketInfo bucketInfo) {
         mContext = context;
         mBucketInfo = bucketInfo;
 
@@ -76,18 +76,18 @@ public class GridInfo {
         }
     }
 
-    public void addListener(GridInfoChangeListener listener) {
+    void addListener(GridInfoChangeListener listener) {
         mListeners.add(listener);
     }
 
-    public void setScreenSize(int width, int height) {
+    void setScreenSize(int width, int height) {
         mWidth = width;
         mHeight = height;
 
         mDateLabelWidth = mWidth - mSpacing * 2;
     }
 
-    public void resize(int numOfColumns) {
+    void resize(int numOfColumns) {
         mNumOfColumns = numOfColumns;
 
         setNumOfColumnsToDateInfo(mNumOfColumns);
@@ -131,75 +131,75 @@ public class GridInfo {
         return totalNumOfRows;
     }
 
-    public BucketInfo getBucketInfo() {
+    BucketInfo getBucketInfo() {
         return mBucketInfo;
     }
 
-    public int getActionBarHeight() {
+    int getActionBarHeight() {
         return mActionBarHeight;
     }
 
-    public int getSpacing() {
+    int getSpacing() {
         return mSpacing;
     }
 
-    public int getColumnWidth() {
+    int getColumnWidth() {
         return mColumnWidth;
     }
 
-    public int getDefaultColumnWidth() {
+    int getDefaultColumnWidth() {
         return mDefaultColumnWidth;
     }
 
-    public int getNumOfColumns() {
+    int getNumOfColumns() {
         return mNumOfColumns;
     }
 
-    public int getMinNumOfColumns() {
+    int getMinNumOfColumns() {
         return mMinNumOfColumns;
     }
 
-    public int getMaxNumOfColumns() {
+    int getMaxNumOfColumns() {
         return mMaxNumOfColumns;
     }
 
-    public int getNumOfImages() {
+    int getNumOfImages() {
         return mNumOfImages;
     }
 
-    public int getNumOfDateInfos() {
+    int getNumOfDateInfos() {
         return mNumOfDateInfos;
     }
 
-    public int getDateLabelWidth() {
+    int getDateLabelWidth() {
         return mDateLabelWidth;
     }
 
-    public int getDateLabelHeight() {
+    int getDateLabelHeight() {
         return mDateLabelHeight;
     }
 
-    public int getScrollableHeight() {
+    int getScrollableHeight() {
         return mScrollableHeight;
     }
 
-    public void setImageIndexingInfo(ImageIndexingInfo indexingInfo) {
+    void setImageIndexingInfo(ImageIndexingInfo indexingInfo) {
         mImageIndexingInfo = indexingInfo;
     }
 
-    public ImageIndexingInfo getImageIndexingInfo() {
+    ImageIndexingInfo getImageIndexingInfo() {
         return mImageIndexingInfo;
     }
 
-    public void setScale(float scale) {
+    void setScale(float scale) {
         mScale = scale;
     }
 
-    public float getScale() {
+    float getScale() {
         return mScale;
     }
 
-    public void deleteImageInfo() {
+    void deleteImageInfo() {
         synchronized (GalleryContext.sLockObject) {
             mNumOfImages = mBucketInfo.getNumOfImages();
 
@@ -215,7 +215,7 @@ public class GridInfo {
         }
     }
 
-    public void deleteDateLabelInfo() {
+    void deleteDateLabelInfo() {
         synchronized (GalleryContext.sLockObject) {
             mNumOfDateInfos = mBucketInfo.getNumOfDateInfos();
 
@@ -236,35 +236,35 @@ public class GridInfo {
     private float mTranslateZ = 0f;
     private float mRotateX = 0f;
 
-    public void setTranslateY(float y) {
+    void setTranslateY(float y) {
         mTranslateY = y;
     }
 
-    public float getTranslateY() {
+    float getTranslateY() {
         return mTranslateY;
     }
 
-    public void setNextTranslateY(float y) {
+    void setNextTranslateY(float y) {
         mNextTranslateY = y;
     }
 
-    public float getNextTranslateY() {
+    float getNextTranslateY() {
         return mNextTranslateY;
     }
 
-    public void setTranslateZ(float z) {
+    void setTranslateZ(float z) {
         mTranslateZ = z;
     }
 
-    public float getTranslateZ() {
+    float getTranslateZ() {
         return mTranslateZ;
     }
 
-    public void setRotateX(float angle) {
+    void setRotateX(float angle) {
         mRotateX = angle;
     }
 
-    public float getRotateX() {
+    float getRotateX() {
         return mRotateX;
     }
 }

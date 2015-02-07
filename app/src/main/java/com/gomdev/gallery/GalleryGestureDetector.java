@@ -17,7 +17,7 @@ import com.gomdev.gles.GLESUtils;
 /**
  * Created by gomdev on 14. 12. 29..
  */
-public class GalleryGestureDetector implements GridInfoChangeListener {
+class GalleryGestureDetector implements GridInfoChangeListener {
     static final String CLASS = "GalleryGestureDetector";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -66,7 +66,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
     private int mWidth = 0;
     private int mHeight = 0;
 
-    public GalleryGestureDetector(Context context, ImageListRenderer renderer) {
+    GalleryGestureDetector(Context context, ImageListRenderer renderer) {
         mContext = context;
         mRenderer = renderer;
 
@@ -79,11 +79,11 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         mMaxTranslateZ = GLESUtils.getPixelFromDpi(mContext, MAX_TRANSLATE_Z_DP);
     }
 
-    public void setSurfaceView(GallerySurfaceView surfaceView) {
+    void setSurfaceView(GallerySurfaceView surfaceView) {
         mSurfaceView = surfaceView;
     }
 
-    public void setGridInfo(GridInfo gridInfo) {
+    void setGridInfo(GridInfo gridInfo) {
         mGridInfo = gridInfo;
 
         mColumnWidth = mGridInfo.getColumnWidth();
@@ -102,7 +102,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         gridInfo.addListener(this);
     }
 
-    public void surfaceChanged(int width, int height) {
+    void surfaceChanged(int width, int height) {
         mWidth = width;
         mHeight = height;
 
@@ -167,7 +167,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         setViewportBottomLeft(left, top, true);
     }
 
-    public void adjustViewport(float top, float bottom) {
+    void adjustViewport(float top, float bottom) {
         float left = mSurfaceBufferLeft;
 
         mSurfaceBufferBottom = bottom;
@@ -177,7 +177,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         setViewportBottomLeft(left, top, true);
     }
 
-    public float getTranslateY(float top, float bottom) {
+    float getTranslateY(float top, float bottom) {
         int nextScrollableHeight = (int) (mHeight * 0.5f - bottom);
 
         float curHeight = mCurrentViewport.height();
@@ -214,13 +214,13 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         return dist;
     }
 
-    public boolean onTouchEvent(MotionEvent event) {
+    boolean onTouchEvent(MotionEvent event) {
         mIsOnScrolling = false;
         mSurfaceView.requestRender();
         return mGestureDetector.onTouchEvent(event);
     }
 
-    public void update() {
+    void update() {
         float currVelocity = mScroller.getCurrVelocity();
         if (currVelocity > 0f) {
             computeScroll();
@@ -280,7 +280,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         }
     }
 
-    public boolean isOnScrolling() {
+    boolean isOnScrolling() {
         boolean isOnScrolling = mIsOnScrolling;
         mIsOnScrolling = false;
         return isOnScrolling;
@@ -407,7 +407,7 @@ public class GalleryGestureDetector implements GridInfoChangeListener {
         invalidateViewport();
     }
 
-    public void computeScroll() {
+    void computeScroll() {
         if (mScroller.computeScrollOffset()) {
             int currY = mScroller.getCurrY();
 

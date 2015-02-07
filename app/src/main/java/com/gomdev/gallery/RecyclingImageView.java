@@ -7,20 +7,20 @@ import android.graphics.drawable.LayerDrawable;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 
-public class RecyclingImageView extends ImageView implements BitmapContainer {
+class RecyclingImageView extends ImageView implements BitmapContainer {
     static final String CLASS = "RecyclingBitmapDrawable";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    public RecyclingImageView(Context context) {
+    RecyclingImageView(Context context) {
         super(context);
     }
 
-    public RecyclingImageView(Context context, AttributeSet attrs) {
+    RecyclingImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public RecyclingImageView(Context context, AttributeSet attrs, int defStyle) {
+    RecyclingImageView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 
