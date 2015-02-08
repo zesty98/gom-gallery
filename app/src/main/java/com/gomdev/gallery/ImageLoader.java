@@ -227,7 +227,7 @@ public class ImageLoader {
     }
 
     void loadBitmap(ImageInfo imageInfo, RecyclingImageView imageView,
-                           int requestWidth, int requestHeight) {
+                    int requestWidth, int requestHeight) {
         if (BitmapWorker.cancelPotentialWork(imageInfo, imageView)) {
             final BitmapLoaderTask<RecyclingImageView> task = new BitmapLoaderTask(imageView,
                     requestWidth, requestHeight);
@@ -437,7 +437,7 @@ public class ImageLoader {
         }
 
         BitmapLoaderTask(T container, int requestWidth,
-                                int requestHeight) {
+                         int requestHeight) {
             super(container);
 
             mNeedThumbnail = false;
@@ -466,7 +466,7 @@ public class ImageLoader {
                     }
                 }
 
-                value = new RecyclingBitmapDrawable(mContext.getResources(), bitmap, mImageCache);
+                value = new RecyclingBitmapDrawable(mContext.getResources(), bitmap);
 
                 mImageCache.addBitmapToCache(imageKey, value);
             } else {

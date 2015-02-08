@@ -17,7 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 
-class ImageViewActivity extends FragmentActivity implements View.OnClickListener {
+public class ImageViewActivity extends FragmentActivity implements View.OnClickListener {
     static final String CLASS = "ImageViewActivity";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -45,7 +45,6 @@ class ImageViewActivity extends FragmentActivity implements View.OnClickListener
         int imageIndex = getIntent().getIntExtra(GalleryConfig.IMAGE_INDEX, 0);
 
         mCurrentImageIndexingInfo = new ImageIndexingInfo(bucketIndex, dateLabelIndex, imageIndex);
-
 
         GalleryContext galleryContext = GalleryContext.getInstance();
         if (galleryContext == null) {

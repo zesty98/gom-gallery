@@ -24,7 +24,6 @@ class GridInfo {
     private final int mSpacing;
 
     private int mNumOfDateInfos = 0;
-    private int mNumOfImages = 0;
     private int mColumnWidth = 0;
     private int mDefaultColumnWidth = 0;
     private int mNumOfRows = 0;
@@ -36,9 +35,6 @@ class GridInfo {
     private int mMaxNumOfColumns = 0;
 
     private int mWidth = 0;
-    private int mHeight = 0;
-
-    private float mScale = 1f;
 
     private List<GridInfoChangeListener> mListeners = new ArrayList<>();
 
@@ -48,7 +44,6 @@ class GridInfo {
 
         mListeners.clear();
 
-        mNumOfImages = bucketInfo.getNumOfImages();
         mNumOfDateInfos = bucketInfo.getNumOfDateInfos();
         mSpacing = context.getResources().getDimensionPixelSize(R.dimen.gridview_spacing);
 
@@ -82,7 +77,6 @@ class GridInfo {
 
     void setScreenSize(int width, int height) {
         mWidth = width;
-        mHeight = height;
 
         mDateLabelWidth = mWidth - mSpacing * 2;
     }
@@ -163,10 +157,6 @@ class GridInfo {
         return mMaxNumOfColumns;
     }
 
-    int getNumOfImages() {
-        return mNumOfImages;
-    }
-
     int getNumOfDateInfos() {
         return mNumOfDateInfos;
     }
@@ -191,18 +181,8 @@ class GridInfo {
         return mImageIndexingInfo;
     }
 
-    void setScale(float scale) {
-        mScale = scale;
-    }
-
-    float getScale() {
-        return mScale;
-    }
-
     void deleteImageInfo() {
         synchronized (GalleryContext.sLockObject) {
-            mNumOfImages = mBucketInfo.getNumOfImages();
-
             setNumOfColumnsToDateInfo(mNumOfColumns);
 
             mNumOfRows = calcNumOfRows();
@@ -232,7 +212,6 @@ class GridInfo {
     }
 
     private float mTranslateY = 0f;
-    private float mNextTranslateY = 0f;
     private float mTranslateZ = 0f;
     private float mRotateX = 0f;
 
@@ -242,14 +221,6 @@ class GridInfo {
 
     float getTranslateY() {
         return mTranslateY;
-    }
-
-    void setNextTranslateY(float y) {
-        mNextTranslateY = y;
-    }
-
-    float getNextTranslateY() {
-        return mNextTranslateY;
     }
 
     void setTranslateZ(float z) {

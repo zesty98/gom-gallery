@@ -114,7 +114,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         GalleryTexture texture = mWaitingTextures.poll();
 
         if (texture != null) {
-            TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(texture.getPosition());
+            TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(texture.getIndex());
             final GalleryObject object = textureMappingInfo.getObject();
 
             final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
@@ -220,7 +220,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         GalleryTexture texture = textureMappingInfo.getTexture();
         if (texture == null) {
             texture = new GalleryTexture(mWidth, mHeight);
-            texture.setPosition(index);
+            texture.setIndex(index);
             texture.setImageLoadingListener(this);
         }
 

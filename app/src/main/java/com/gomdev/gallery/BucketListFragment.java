@@ -173,7 +173,7 @@ public class BucketListFragment extends Fragment {
             RecyclingImageView imageView = (RecyclingImageView) layout
                     .findViewById(R.id.image);
             BucketInfo bucketInfo = mImageManager.getBucketInfo(position - mNumOfColumns);
-            DateLabelInfo dateLabelInfo = bucketInfo.get(0);
+            DateLabelInfo dateLabelInfo = bucketInfo.getFirst();
             ImageInfo imageInfo = dateLabelInfo.get(0);
 
             imageView.setLayoutParams(mImageViewLayoutParams);

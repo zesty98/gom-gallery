@@ -16,8 +16,6 @@ class BucketInfo implements Serializable {
     private String mName;
     private int mDateLableIndex = 0;
 
-    private int mNumOfImages = 0;
-
     private LinkedList<DateLabelInfo> mDateLabelInfos = new LinkedList<>();
 
     BucketInfo(int id) {

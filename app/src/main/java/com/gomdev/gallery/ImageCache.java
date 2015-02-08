@@ -302,13 +302,13 @@ class ImageCache {
      * A simple non-UI Fragment that stores a single Object and is retained over configuration
      * changes. It will be used to retain the ImageCache object.
      */
-    static class RetainFragment extends Fragment {
+    public static class RetainFragment extends Fragment {
         private Object mObject;
 
         /**
          * Empty constructor as per the Fragment documentation
          */
-        RetainFragment() {
+        public RetainFragment() {
         }
 
         @Override
@@ -324,7 +324,7 @@ class ImageCache {
          *
          * @return The stored object
          */
-        Object getObject() {
+        public Object getObject() {
             return mObject;
         }
 
@@ -333,7 +333,7 @@ class ImageCache {
          *
          * @param object The object to store
          */
-        void setObject(Object object) {
+        public void setObject(Object object) {
             mObject = object;
         }
     }

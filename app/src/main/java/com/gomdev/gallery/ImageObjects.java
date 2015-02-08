@@ -145,7 +145,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         GalleryTexture texture = mWaitingTextures.poll();
 
         if (texture != null) {
-            TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(texture.getPosition());
+            TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(texture.getIndex());
             final ImageObject object = (ImageObject) textureMappingInfo.getObject();
             final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
             texture.load(bitmap);
@@ -233,7 +233,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         GalleryTexture texture = textureMappingInfo.getTexture();
         if (texture == null) {
             texture = new GalleryTexture(imageInfo.getWidth(), imageInfo.getHeight());
-            texture.setPosition(index);
+            texture.setIndex(index);
             texture.setImageLoadingListener(this);
         }
 
@@ -659,7 +659,6 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
                 float currentScale = prevScale + (nextScale - prevScale) * current.getX();
 
                 mScale = currentScale;
-                mGridInfo.setScale(currentScale);
                 object.setScale(currentScale);
 
                 float translateX = currentLeft - (-mDefaultColumnWidth * currentScale * 0.5f);

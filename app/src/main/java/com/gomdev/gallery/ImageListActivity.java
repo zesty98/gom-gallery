@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
-class ImageListActivity extends Activity {
+public class ImageListActivity extends Activity {
     static final String CLASS = "ImageListActivity";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;

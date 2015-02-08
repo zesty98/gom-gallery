@@ -16,7 +16,7 @@ class BitmapWorker {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     static <T extends BitmapContainer> boolean cancelPotentialWork(GalleryInfo galleryInfo,
-                                                                          T container) {
+                                                                   T container) {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(container);
 
         if (bitmapWorkerTask != null) {

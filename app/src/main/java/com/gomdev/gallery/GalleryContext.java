@@ -6,14 +6,9 @@ class GalleryContext {
     static final Object sLockObject = new Object();
     private static GalleryContext sGalleryContext;
 
-    private int mWidth;
-    private int mHeight;
-
     private int mNumOfColumns = GalleryConfig.DEFAULT_NUM_OF_COLUMNS;
     private int mGridColumnWidth;
-
     private int mActionBarHeight = 0;
-
     private int mVersionCode = 100;
 
     static GalleryContext newInstance(Context context) {
@@ -29,20 +24,6 @@ class GalleryContext {
 
     private GalleryContext() {
 
-    }
-
-
-    void setScreenSize(int width, int height) {
-        mWidth = width;
-        mHeight = height;
-    }
-
-    int getWidth() {
-        return mWidth;
-    }
-
-    int getHeight() {
-        return mHeight;
     }
 
     int getColumnWidth() {

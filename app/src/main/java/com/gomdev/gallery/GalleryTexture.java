@@ -22,7 +22,7 @@ class GalleryTexture implements BitmapContainer {
 
     boolean mIsTextureLoadingFinished = false;
     boolean mIsTextureLoadingStarted = false;
-    private int mPosition = 0;
+    private int mIndex = 0;
 
     GalleryTexture(int width, int height) {
         mBuilder = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, width, height);
@@ -46,7 +46,7 @@ class GalleryTexture implements BitmapContainer {
         }
 
         if (mIsTextureLoadingFinished == false) {
-            mImageLoadingListener.onImageLoaded(mPosition, this);
+            mImageLoadingListener.onImageLoaded(mIndex, this);
         }
         mIsTextureLoadingFinished = true;
     }
@@ -60,12 +60,12 @@ class GalleryTexture implements BitmapContainer {
         mTexture = mBuilder.load(bitmap);
     }
 
-    void setPosition(int position) {
-        mPosition = position;
+    void setIndex(int index) {
+        mIndex = index;
     }
 
-    int getPosition() {
-        return mPosition;
+    int getIndex() {
+        return mIndex;
     }
 
     void setImageLoadingListener(ImageLoadingListener listener) {

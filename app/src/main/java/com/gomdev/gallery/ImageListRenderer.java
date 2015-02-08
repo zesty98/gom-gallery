@@ -37,7 +37,6 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     private GridInfo mGridInfo = null;
     private int mSpacing = 0;
     private int mDefaultColumnWidth = 0;
-    private int mPrevColumnWidth = 0;
     private int mColumnWidth = 0;
 
     private ImageObject mCenterObject = null;
@@ -195,7 +194,6 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
     @Override
     public void onColumnWidthChanged() {
-        mPrevColumnWidth = mColumnWidth;
         mColumnWidth = mGridInfo.getColumnWidth();
     }
 
@@ -230,18 +228,6 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     // resume
 
     void onResume() {
-//        SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
-//
-//        ImageIndexingInfo imageIndexingInfo = mGridInfo.getImageIndexingInfo();
-//        if (imageIndexingInfo == null) {
-//            int bucketIndex = pref.getInt(GalleryConfig.PREF_BUCKET_INDEX, 0);
-//            int dateLabelIndex = pref.getInt(GalleryConfig.PREF_DATE_LABEL_INDEX, 0);
-//            int currentImageIndex = pref.getInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
-//
-//            imageIndexingInfo = new ImageIndexingInfo(bucketIndex, dateLabelIndex, currentImageIndex);
-//        }
-//
-//        mGridInfo.setImageIndexingInfo(imageIndexingInfo);
     }
 
     // pause
