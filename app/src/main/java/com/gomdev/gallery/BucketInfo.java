@@ -1,9 +1,7 @@
 package com.gomdev.gallery;
 
 import java.io.Serializable;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.ListIterator;
+import java.util.ArrayList;
 
 class BucketInfo implements Serializable {
     static final String CLASS = "BucketInfo";
@@ -16,7 +14,7 @@ class BucketInfo implements Serializable {
     private String mName;
     private int mDateLableIndex = 0;
 
-    private LinkedList<DateLabelInfo> mDateLabelInfos = new LinkedList<>();
+    private ArrayList<DateLabelInfo> mDateLabelInfos = new ArrayList<>();
 
     BucketInfo(int id) {
         mID = id;
@@ -53,15 +51,12 @@ class BucketInfo implements Serializable {
     }
 
     DateLabelInfo getFirst() {
-        return mDateLabelInfos.getFirst();
+        return mDateLabelInfos.get(0);
     }
 
     DateLabelInfo getLast() {
-        return mDateLabelInfos.getLast();
-    }
-
-    Iterator<DateLabelInfo> getIterator() {
-        return mDateLabelInfos.iterator();
+        int size = mDateLabelInfos.size();
+        return mDateLabelInfos.get(size - 1);
     }
 
     int getNumOfDateInfos() {
@@ -71,10 +66,9 @@ class BucketInfo implements Serializable {
     int getNumOfImages() {
         int numOfImages = 0;
 
-        Iterator<DateLabelInfo> iterator = mDateLabelInfos.iterator();
-        DateLabelInfo dateLabelInfo = null;
-        while (iterator.hasNext()) {
-            dateLabelInfo = iterator.next();
+        int size = mDateLabelInfos.size();
+        for (int i = 0; i < size; i++) {
+            DateLabelInfo dateLabelInfo = mDateLabelInfos.get(i);
             numOfImages += dateLabelInfo.getNumOfImages();
         }
 
@@ -84,11 +78,11 @@ class BucketInfo implements Serializable {
     void deleteDateLabel(int index) {
         mDateLabelInfos.remove(index);
 
-        ListIterator<DateLabelInfo> iterator = mDateLabelInfos.listIterator(index);
-        DateLabelInfo dateLabelInfo = null;
-        while (iterator.hasNext()) {
-            dateLabelInfo = iterator.next();
+        int size = mDateLabelInfos.size();
+        for (int i = index; i < size; i++) {
+            DateLabelInfo dateLabelInfo = mDateLabelInfos.get(i);
             dateLabelInfo.setIndex(index++);
         }
+
     }
 }

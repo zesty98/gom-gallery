@@ -1,8 +1,7 @@
 package com.gomdev.gallery;
 
 import java.io.Serializable;
-import java.util.LinkedList;
-import java.util.ListIterator;
+import java.util.ArrayList;
 
 /**
  * Created by gomdev on 15. 1. 9..
@@ -20,7 +19,7 @@ class DateLabelInfo implements Serializable, GalleryInfo {
 
     private int mImageIndex = 0;
 
-    private LinkedList<ImageInfo> mImageInfos = new LinkedList<>();
+    private ArrayList<ImageInfo> mImageInfos = new ArrayList<>();
 
     DateLabelInfo(String date) {
         mDate = date;
@@ -50,11 +49,12 @@ class DateLabelInfo implements Serializable, GalleryInfo {
     }
 
     ImageInfo getFirst() {
-        return mImageInfos.getFirst();
+        return mImageInfos.get(0);
     }
 
     ImageInfo getLast() {
-        return mImageInfos.getLast();
+        int size = mImageInfos.size();
+        return mImageInfos.get(size - 1);
     }
 
     int getNumOfImages() {
@@ -72,9 +72,10 @@ class DateLabelInfo implements Serializable, GalleryInfo {
     void deleteImageInfo(int index) {
         mImageInfos.remove(index);
 
-        ListIterator<ImageInfo> iter = mImageInfos.listIterator(index);
-        while (iter.hasNext()) {
-            ImageInfo imageInfo = iter.next();
+
+        int size = mImageInfos.size();
+        for (int i = index; i < size; i++) {
+            ImageInfo imageInfo = mImageInfos.get(i);
             imageInfo.setIndex(index++);
         }
     }

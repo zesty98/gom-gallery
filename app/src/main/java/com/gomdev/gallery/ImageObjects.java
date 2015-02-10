@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.SparseArray;
 
-import com.gomdev.gles.GLESAnimator;
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
 import com.gomdev.gles.GLESObject;
@@ -16,8 +15,6 @@ import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -39,7 +36,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     private ImageLoader mImageLoader = null;
     private GalleryNode mParentNode = null;
 
-    private List<ImageObject> mObjects = new LinkedList<>();
+    private List<ImageObject> mObjects = new ArrayList<>();
 
     private GLESShader mTextureShader = null;
     private GLESGLState mGLState = null;
@@ -66,7 +63,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private float mVisibilityPadding = 0f;
 
-    private List<TextureMappingInfo> mTextureMappingInfos = new LinkedList<>();
+    private List<TextureMappingInfo> mTextureMappingInfos = new ArrayList<>();
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
     private SparseArray<ImageObject> mInvisibleObjects = new SparseArray<>();
     private ArrayList<ImageObject> mAnimationObjects = new ArrayList<>();
@@ -109,9 +106,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     private void setTranslate() {
         mNeedToSetTranslate = false;
 
-        Iterator<ImageObject> iter = mObjects.iterator();
-        while (iter.hasNext()) {
-            ImageObject object = iter.next();
+        int size = mObjects.size();
+        for (int i = 0; i < size; i++) {
+            ImageObject object = mObjects.get(i);
             setTranslate(object);
         }
     }
@@ -152,17 +149,15 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         float viewportTop = mHeight * 0.5f - translateY;
         float viewportBottom = viewportTop - mHeight;
 
-        int index = 0;
-        Iterator<ImageObject> iter = mObjects.iterator();
-        while (iter.hasNext()) {
-            ImageObject object = iter.next();
+        int size = mObjects.size();
+        for (int i = 0; i < size; i++) {
+            ImageObject object = mObjects.get(i);
 
-            if (mInvisibleObjects.get(index) != null) {
+            if (mInvisibleObjects.get(i) != null) {
                 if (object.isVisibilityChanged() == true) {
-                    unmapTexture(index, object);
+                    unmapTexture(i, object);
                     object.setTextureMapping(false);
                 }
-                index++;
                 continue;
             }
 
@@ -175,7 +170,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
                 if (object.isVisibilityChanged() == true) {
                     if (object.isTexturMapped() == false) {
-                        mapTexture(index);
+                        mapTexture(i);
                         object.setTextureMapping(true);
                     }
                 }
@@ -183,27 +178,22 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
                 object.setVisibility(false);
 
                 if (object.isVisibilityChanged() == true) {
-                    unmapTexture(index, object);
+                    unmapTexture(i, object);
                     object.setTextureMapping(false);
                 }
             }
-
-            index++;
         }
     }
 
     private void handleInvisibleObjects() {
-        int index = 0;
-        Iterator<ImageObject> iter = mObjects.iterator();
-        while (iter.hasNext()) {
-            ImageObject object = iter.next();
+        int size = mObjects.size();
+        for (int i = 0; i < size; i++) {
+            ImageObject object = mObjects.get(i);
 
             object.setVisibility(false);
 
-            unmapTexture(index, object);
+            unmapTexture(i, object);
             object.setTextureMapping(false);
-
-            index++;
         }
     }
 
@@ -246,14 +236,13 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     void setupObjects(GLESCamera camera) {
-        int index = 0;
-        Iterator<ImageObject> iter = mObjects.iterator();
-        while (iter.hasNext()) {
-            ImageObject object = iter.next();
+        int size = mObjects.size();
+        for (int i = 0; i < size; i++) {
+            ImageObject object = mObjects.get(i);
             object.setCamera(camera);
 
-            float left = mSpacing + (index % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
-            float top = -((index / mNumOfColumns) * (mColumnWidth + mSpacing));
+            float left = mSpacing + (i % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
+            float top = -((i / mNumOfColumns) * (mColumnWidth + mSpacing));
 
             object.setTranslate(left - (-mColumnWidth * 0.5f), mStartOffsetY + top - (mColumnWidth * 0.5f));
             object.setScale(mScale);
@@ -266,8 +255,6 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setLeftTop(left, top);
 
             mEndOffsetY = top - mColumnWidth;
-
-            index++;
         }
     }
 
@@ -286,26 +273,23 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     private void changeImageObjectPosition() {
-        int index = 0;
-        Iterator<ImageObject> iter = mObjects.iterator();
-        while (iter.hasNext()) {
-            ImageObject object = iter.next();
+        int size = mObjects.size();
+        for (int i = 0; i < size; i++) {
+            ImageObject object = mObjects.get(i);
 
             object.setPrevLeftTop(object.getLeft(), object.getTop());
 
             float prevScale = (float) mPrevColumnWidth / mDefaultColumnWidth;
             object.setPrevScale(prevScale);
 
-            float nextLeft = mSpacing + (index % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
-            float nextTop = -((index / mNumOfColumns) * (mColumnWidth + mSpacing));
+            float nextLeft = mSpacing + (i % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
+            float nextTop = -((i / mNumOfColumns) * (mColumnWidth + mSpacing));
             object.setNextLeftTop(nextLeft, nextTop);
 
             float nextScale = (float) mColumnWidth / mDefaultColumnWidth;
             object.setNextScale(nextScale);
 
             mEndOffsetY = nextTop - mDefaultColumnWidth * nextScale;
-
-            index++;
         }
     }
 
@@ -313,14 +297,12 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         mAnimationObjects.clear();
 
         if (mParentNode.getVisibility() == false) {
-            int index = 0;
-            Iterator<ImageObject> iter = mObjects.iterator();
-            while (iter.hasNext()) {
-                ImageObject object = iter.next();
+            int size = mObjects.size();
+            for (int i = 0; i < size; i++) {
+                ImageObject object = mObjects.get(i);
 
                 object.setVisibility(false);
-                mInvisibleObjects.put(index, object);
-                index++;
+                mInvisibleObjects.put(i, object);
             }
 
             return;
@@ -333,10 +315,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         float nextViewportTop = mHeight * 0.5f - nextTranslateY - mAnimationVisibilityPadding;
         float nextViewportBottom = nextViewportTop - mHeight + mAnimationVisibilityPadding;
 
-        int index = 0;
-        Iterator<ImageObject> iter = mObjects.iterator();
-        while (iter.hasNext()) {
-            ImageObject object = iter.next();
+        int size = mObjects.size();
+        for (int i = 0; i < size; i++) {
+            ImageObject object = mObjects.get(i);
 
             float prevTop = object.getPrevTop();
             float prevBottom = prevTop - mPrevColumnWidth;
@@ -352,10 +333,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             } else {
                 object.setVisibility(false);
 
-                mInvisibleObjects.put(index, object);
+                mInvisibleObjects.put(i, object);
             }
-
-            index++;
         }
     }
 
@@ -430,9 +409,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         mNeedToSetTranslate = true;
 
-        Iterator<ImageObject> iter = mObjects.iterator();
-        while (iter.hasNext()) {
-            ImageObject object = iter.next();
+        int size = mObjects.size();
+        for (int i = 0; i < size; i++) {
+            ImageObject object = mObjects.get(i);
             object.setStartOffsetY(startOffsetY);
         }
     }
@@ -452,9 +431,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     void setNextStartOffsetY(float nextStartOffsetY) {
         mNextStartOffsetY = nextStartOffsetY;
 
-        Iterator<ImageObject> iter = mObjects.iterator();
-        while (iter.hasNext()) {
-            ImageObject object = iter.next();
+        int size = mObjects.size();
+        for (int i = 0; i < size; i++) {
+            ImageObject object = mObjects.get(i);
             object.setNextStartOffsetY(nextStartOffsetY);
         }
     }
@@ -516,9 +495,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     void cancelLoading() {
-        Iterator<TextureMappingInfo> iter = mTextureMappingInfos.iterator();
-        while (iter.hasNext()) {
-            TextureMappingInfo info = iter.next();
+        int size = mTextureMappingInfos.size();
+        for (int i = 0; i < size; i++) {
+            TextureMappingInfo info = mTextureMappingInfos.get(i);
             GalleryTexture texture = info.getTexture();
             if (texture != null) {
                 BitmapWorker.cancelWork(texture);

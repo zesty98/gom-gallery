@@ -4,8 +4,7 @@ import android.content.Context;
 import android.provider.MediaStore;
 import android.widget.Toast;
 
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,7 +29,7 @@ class ImageManager {
     private final Context mContext;
 
     private int mNumOfImages = 0;
-    private List<BucketInfo> mBucketInfos = null;
+    private List<BucketInfo> mBucketInfos = new ArrayList<>();
     private BucketInfo mCurrentBucketInfo = null;
     private ObjectManager mObjectManager = null;
 
@@ -39,7 +38,7 @@ class ImageManager {
     private ImageManager(Context context) {
         mContext = context;
 
-        mBucketInfos = new LinkedList<>();
+        mBucketInfos.clear();
         mNumOfImages = 0;
     }
 
@@ -98,9 +97,9 @@ class ImageManager {
         int dateLabelIndex = 0;
         int imageIndex = 0;
 
-        Iterator<DateLabelInfo> iter = mCurrentBucketInfo.getIterator();
-        while (iter.hasNext()) {
-            DateLabelInfo dateLabelInfo = iter.next();
+        int size = mCurrentBucketInfo.getNumOfDateInfos();
+        for (int i = 0; i < size; i++) {
+            DateLabelInfo dateLabelInfo = mCurrentBucketInfo.get(i);
             int maxIndexInDateLabel = dateLabelInfo.getNumOfImages() - 1;
             if (maxIndexInDateLabel < index) {
                 index -= (maxIndexInDateLabel + 1);
