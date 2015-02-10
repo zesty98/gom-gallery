@@ -9,6 +9,7 @@ class DateLabelObject extends GalleryObject {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private GalleryNode mParentNode = null;
+    private ImageObjects mImageObjects = null;
 
     DateLabelObject(String name) {
         super(name);
@@ -20,5 +21,13 @@ class DateLabelObject extends GalleryObject {
 
     GalleryNode getParentNode() {
         return mParentNode;
+    }
+
+    void setImageObjects(ImageObjects imageObjects) {
+        mImageObjects = imageObjects;
+    }
+
+    ImageObjects getImageObjects() {
+        return mImageObjects;
     }
 }

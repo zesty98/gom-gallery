@@ -358,6 +358,10 @@ class ObjectManager implements GridInfoChangeListener {
         return mGalleryObjects.getImageObject(imageIndexingInfo);
     }
 
+    DateLabelObject getDateLabelObject(int index) {
+        return mGalleryObjects.getObject(index);
+    }
+
 
     private GLESNodeListener mImageNodeListener = new GLESNodeListener() {
         @Override
@@ -376,4 +380,12 @@ class ObjectManager implements GridInfoChangeListener {
             transform.preTranslate(0f, scrollDistance, 0f);
         }
     };
+
+    void onAnimation(float x) {
+        mGalleryObjects.onAnimation(x);
+    }
+
+    void onAnimationFinished() {
+        mGalleryObjects.onAnimationFinished();
+    }
 }

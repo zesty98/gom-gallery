@@ -10,11 +10,14 @@ import android.os.Build;
 import android.util.Log;
 import android.view.MotionEvent;
 
+import com.gomdev.gles.GLESAnimator;
+import com.gomdev.gles.GLESAnimatorCallback;
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESContext;
 import com.gomdev.gles.GLESRect;
 import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESUtils;
+import com.gomdev.gles.GLESVector3;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -38,12 +41,20 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     private int mSpacing = 0;
     private int mDefaultColumnWidth = 0;
     private int mColumnWidth = 0;
+    private int mPrevColumnWidth = 0;
+    private int mNumOfColumns = 0;
+    private int mPrevNumOfColumns = 0;
 
     private ImageObject mCenterObject = null;
-    private ImageObject mLastObject = null;
+    //    private ImageObject mLastObject = null;
     private float mFocusY = 0f;
     private boolean mIsOnAnimation = false;
     private boolean mIsOnScale = false;
+
+    private GLESAnimator mAnimator = null;
+    private float mBottom = 0f;
+    private float mPrevBottom = 0f;
+    private float mNextBottom = 0f;
 
     private boolean mIsSurfaceChanged = false;
 
@@ -58,6 +69,9 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
         mGalleryGestureDetector = new GalleryGestureDetector(mContext, this);
         mGalleryScaleGestureDetector = new GalleryScaleGestureDetector(mContext, this);
+
+        mAnimator = new GLESAnimator(new AnimatorCallback());
+        mAnimator.setDuration(GalleryConfig.IMAGE_ANIMATION_START_OFFSET, GalleryConfig.IMAGE_ANIMATION_END_OFFSET);
     }
 
     // rendering
@@ -78,15 +92,15 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
             mObjectManager.update(isOnScrolling);
             mObjectManager.drawFrame();
+            mAnimator.doAnimation();
         }
     }
 
     private void udpateGestureDetector() {
         if (mCenterObject != null && mIsOnAnimation == true) {
             float columnWidth = mDefaultColumnWidth * mCenterObject.getScale();
-            float bottom = mLastObject.getTop() - (columnWidth + mSpacing) + mLastObject.getStartOffsetY();
             float top = mCenterObject.getTop() + mFocusY - columnWidth * 0.5f + mCenterObject.getStartOffsetY();
-            mGalleryGestureDetector.adjustViewport(top, bottom);
+            mGalleryGestureDetector.adjustViewport(top, mBottom);
         }
 
         mGalleryGestureDetector.update();
@@ -182,19 +196,35 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
         mGridInfo.setImageIndexingInfo(imageIndexingInfo);
 
-        BucketInfo bucketInfo = mGridInfo.getBucketInfo();
-        DateLabelInfo lastDateLabelInfo = bucketInfo.getLast();
-        int lastDateLabelIndex = lastDateLabelInfo.getIndex();
-        int lastImageIndex = lastDateLabelInfo.getLast().getIndex();
-        imageIndexingInfo = new ImageIndexingInfo(bucketInfo.getIndex(), lastDateLabelIndex, lastImageIndex);
-        mLastObject = mObjectManager.getImageObject(imageIndexingInfo);
-
         onAnimationStarted();
     }
 
     @Override
     public void onColumnWidthChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onColumnWidthChanged()");
+        }
+
+        mPrevColumnWidth = mColumnWidth;
         mColumnWidth = mGridInfo.getColumnWidth();
+
+        mPrevNumOfColumns = mNumOfColumns;
+        mNumOfColumns = mGridInfo.getNumOfColumns();
+
+        BucketInfo bucketInfo = mGridInfo.getBucketInfo();
+        DateLabelInfo lastDateLabelInfo = bucketInfo.getLast();
+        int lastDateLabelIndex = lastDateLabelInfo.getIndex();
+        DateLabelObject object = mObjectManager.getDateLabelObject(lastDateLabelIndex);
+
+        int numOfImages = lastDateLabelInfo.getNumOfImages();
+        int numOfRows = (int) Math.ceil((float) (numOfImages) / mPrevNumOfColumns);
+        mPrevBottom = object.getPrevTop() - mGridInfo.getDateLabelHeight() - mSpacing - (mPrevColumnWidth + mSpacing) * numOfRows;
+        mBottom = mPrevBottom;
+        numOfRows = (int) Math.ceil((float) (numOfImages) / mNumOfColumns);
+        mNextBottom = object.getNextTop() - mGridInfo.getDateLabelHeight() - mSpacing - (mColumnWidth + mSpacing) * numOfRows;
+
+        mAnimator.setValues(0f, 1f);
+        mAnimator.start();
     }
 
     @Override
@@ -211,10 +241,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
     void onAnimationFinished() {
         mIsOnAnimation = false;
-    }
-
-    void onAnimationCanceled() {
-        mIsOnAnimation = false;
+        mObjectManager.onAnimationFinished();
     }
 
     void onScaleBegin() {
@@ -248,6 +275,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         mSpacing = gridInfo.getSpacing();
         mDefaultColumnWidth = gridInfo.getDefaultColumnWidth();
         mColumnWidth = mGridInfo.getColumnWidth();
+        mNumOfColumns = mGridInfo.getNumOfColumns();
 
         mGalleryGestureDetector.setGridInfo(gridInfo);
         mGalleryScaleGestureDetector.setGridInfo(gridInfo);
@@ -262,13 +290,34 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     }
 
     float getNextTranslateY() {
-        float bottom = mLastObject.getNextTop() - (mColumnWidth + mSpacing) + mLastObject.getNextStartOffsetY();
         float top = mCenterObject.getNextTop() - (mColumnWidth * 0.5f) + mFocusY + mCenterObject.getNextStartOffsetY();
-        float translateY = mGalleryGestureDetector.getTranslateY(top, bottom);
+        float translateY = mGalleryGestureDetector.getTranslateY(top, mNextBottom);
         return translateY;
     }
 
     void cancelLoading() {
         mObjectManager.cancelLoading();
+    }
+
+
+    class AnimatorCallback implements GLESAnimatorCallback {
+        AnimatorCallback() {
+        }
+
+        @Override
+        public void onAnimation(GLESVector3 current) {
+            mBottom = mPrevBottom + (mNextBottom - mPrevBottom) * current.getX();
+            mObjectManager.onAnimation(current.getX());
+        }
+
+        @Override
+        public void onCancel() {
+
+        }
+
+        @Override
+        public void onFinished() {
+            onAnimationFinished();
+        }
     }
 }

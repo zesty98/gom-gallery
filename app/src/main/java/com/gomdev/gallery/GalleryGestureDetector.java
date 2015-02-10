@@ -7,7 +7,6 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.v4.view.GestureDetectorCompat;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.OverScroller;
@@ -326,8 +325,6 @@ class GalleryGestureDetector implements GridInfoChangeListener {
             editor.commit();
 
             mGridInfo.setImageIndexingInfo(imageIndexingInfo);
-
-            Log.d(TAG, "onSingleTapUp() >>> startActivity()");
 
             mRenderer.cancelLoading();
 

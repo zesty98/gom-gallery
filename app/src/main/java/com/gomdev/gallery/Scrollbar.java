@@ -163,15 +163,10 @@ class Scrollbar implements GridInfoChangeListener {
         GLESVertexInfo vertexInfo = mScrollbarObject.getVertexInfo();
         FloatBuffer position = (FloatBuffer) vertexInfo.getBuffer(mColorShader.getPositionAttribIndex());
 
-        int scrollbarHeight = 0;
-        if (scrollableHeight > mHeight) {
-            scrollbarHeight = (int) (((float) mScrollbarRegionHeight / scrollableHeight) * mScrollbarRegionHeight);
-        } else {
-            scrollbarHeight = mScrollbarRegionHeight;
-        }
+        calcScrollbarHeight();
 
         float top = position.get(7);
-        float bottom = top - scrollbarHeight;
+        float bottom = top - mScrollbarHeight;
         float left = mScrollbarRegionLeft;
         float right = mScrollbarRegionLeft + mScrollbarRegionWidth;
 
