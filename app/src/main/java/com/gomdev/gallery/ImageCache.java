@@ -27,7 +27,7 @@ class ImageCache {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     // Default memory cache size in kilobytes
-    private static final int DEFAULT_MEM_CACHE_SIZE = 1024 * 5; // 5MB
+    private static final int DEFAULT_MEM_CACHE_SIZE = 1024 * 10; // 10MB
 
     // Default disk cache size in bytes
     private static final int DEFAULT_DISK_CACHE_SIZE = 1024 * 1024 * 10; // 10MB
@@ -281,6 +281,11 @@ class ImageCache {
                         + "between 0.01 and 0.8 (inclusive)");
             }
             mMemCacheSize = Math.round(percent * Runtime.getRuntime().maxMemory() / 1024);
+            Log.d(TAG, "setMemCacheSizePercent() mMemCacheSize=" + mMemCacheSize);
+        }
+
+        void setMemCacheSize(int memCacheSize) {
+            mMemCacheSize = memCacheSize;
         }
 
         int mMemCacheSize = DEFAULT_MEM_CACHE_SIZE;
