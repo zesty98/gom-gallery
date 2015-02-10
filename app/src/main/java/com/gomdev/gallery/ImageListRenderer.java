@@ -83,6 +83,8 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
             return;
         }
 
+        GLESUtils.checkFPS();
+
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         synchronized (GalleryContext.sLockObject) {
