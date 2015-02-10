@@ -62,6 +62,6 @@ class ImageInfo implements Serializable, GalleryInfo {
 
     @Override
     public String toString() {
-        return "id=" + mImageID + "\n" + "imagePath=" + mImagePath + "\n";
+        return "ImageInfo id=" + mImageID + "\n" + "imagePath=" + mImagePath + "\n";
     }
 }

@@ -209,6 +209,7 @@ public class ImageLoader {
                         new AsyncDrawable(mContext.getResources(),
                                 mLoadingBitmap, task);
                 container.setBitmapDrawable(asyncDrawable);
+//                Log.d(TAG, "loadThumbnail() >>> execute() " + imageInfo);
                 task.execute(imageInfo);
             }
         }

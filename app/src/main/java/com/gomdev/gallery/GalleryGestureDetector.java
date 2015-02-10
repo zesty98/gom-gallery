@@ -214,7 +214,6 @@ class GalleryGestureDetector implements GridInfoChangeListener {
     }
 
     boolean onTouchEvent(MotionEvent event) {
-        mIsOnScrolling = false;
         mSurfaceView.requestRender();
         return mGestureDetector.onTouchEvent(event);
     }
@@ -280,9 +279,7 @@ class GalleryGestureDetector implements GridInfoChangeListener {
     }
 
     boolean isOnScrolling() {
-        boolean isOnScrolling = mIsOnScrolling;
-        mIsOnScrolling = false;
-        return isOnScrolling;
+        return mIsOnScrolling;
     }
 
     private final GestureDetector.SimpleOnGestureListener mGestureListener

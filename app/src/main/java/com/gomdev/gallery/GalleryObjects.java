@@ -98,12 +98,12 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     // Rendering
 
-    void update(boolean needToMapTexture) {
-        if (needToMapTexture == true) {
+    void update(boolean isOnScrolling) {
+        if (isOnScrolling == false) {
             updateTexture();
         }
 
-        checkVisibility();
+        checkVisibility(isOnScrolling);
 
         update();
     }
@@ -137,7 +137,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         }
     }
 
-    void checkVisibility() {
+    void checkVisibility(boolean isOnScrolling) {
         float translateY = mGridInfo.getTranslateY();
         float viewportTop = mHeight * 0.5f - translateY;
         float viewportBottom = viewportTop - mHeight;
@@ -165,23 +165,25 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             if (bottom < viewportTop && top > viewportBottom) {
                 parentNode.setVisibility(true);
 
-                if (parentNode.isVisibilityChanged() == true) {
+                if (isOnScrolling == false) {
                     if (object.isTexturMapped() == false) {
                         mapTexture(i);
                         object.setTextureMapping(true);
                     }
                 }
 
-                imageObjects.checkVisibility(true);
+                imageObjects.checkVisibility(true, isOnScrolling);
             } else {
                 parentNode.setVisibility(false);
 
                 if (parentNode.isVisibilityChanged() == true) {
-                    unmapTexture(i, object);
-                    object.setTextureMapping(false);
+                    if (object.isTexturMapped() == true) {
+                        unmapTexture(i, object);
+                        object.setTextureMapping(false);
+                    }
                 }
 
-                imageObjects.checkVisibility(false);
+                imageObjects.checkVisibility(false, isOnScrolling);
             }
         }
     }

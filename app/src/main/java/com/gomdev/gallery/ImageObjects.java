@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.util.Log;
 import android.util.SparseArray;
 
 import com.gomdev.gles.GLESCamera;
@@ -25,7 +26,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     static final String CLASS = "ImageObjects";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
-    static final boolean DEBUG = GalleryConfig.DEBUG;
+    static final boolean DEBUG = true;//GalleryConfig.DEBUG;
 
     private final float VISIBILITY_PADDING_DP = 60f;    // dp
 
@@ -73,7 +74,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private boolean mNeedToSetTranslate = false;
 
-    private boolean mIsObjectCreated = false;
+//    private boolean mIsObjectCreated = false;
 
     ImageObjects(Context context, ImageListRenderer renderer) {
         mContext = context;
@@ -138,23 +139,23 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         }
     }
 
-    void checkVisibility(boolean parentVisibility) {
+    void checkVisibility(boolean parentVisibility, boolean isOnScrolling) {
         if (parentVisibility == true) {
-            if (mIsObjectCreated == false) {
-                loadObjects();
-            }
+//            if (mIsObjectCreated == false) {
+//                loadObjects();
+//            }
 
-            handleVisibleObjects();
+            handleVisibleObjects(isOnScrolling);
         } else {
-            if (mIsObjectCreated == true) {
-                releaseObjects();
-            }
+//            if (mIsObjectCreated == true) {
+//                releaseObjects();
+//            }
 
-            handleInvisibleObjects();
+            handleInvisibleObjects(isOnScrolling);
         }
     }
 
-    private void handleVisibleObjects() {
+    private void handleVisibleObjects(boolean isOnScrolling) {
         float translateY = mGridInfo.getTranslateY();
         float viewportTop = mHeight * 0.5f - translateY;
         float viewportBottom = viewportTop - mHeight;
@@ -165,8 +166,10 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             if (mInvisibleObjects.get(i) != null) {
                 if (object.isVisibilityChanged() == true) {
-                    unmapTexture(i, object);
-                    object.setTextureMapping(false);
+                    if (object.isTexturMapped() == true) {
+                        unmapTexture(i, object);
+                        object.setTextureMapping(false);
+                    }
                 }
                 continue;
             }
@@ -178,7 +181,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
                 object.setVisibility(true);
 
-                if (object.isVisibilityChanged() == true) {
+                if (isOnScrolling == false) {
                     if (object.isTexturMapped() == false) {
                         mapTexture(i);
                         object.setTextureMapping(true);
@@ -188,14 +191,16 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
                 object.setVisibility(false);
 
                 if (object.isVisibilityChanged() == true) {
-                    unmapTexture(i, object);
-                    object.setTextureMapping(false);
+                    if (object.isTexturMapped() == true) {
+                        unmapTexture(i, object);
+                        object.setTextureMapping(false);
+                    }
                 }
             }
         }
     }
 
-    private void handleInvisibleObjects() {
+    private void handleInvisibleObjects(boolean isOnScrolling) {
         int size = mObjects.size();
         for (int i = 0; i < size; i++) {
             ImageObject object = mObjects.get(i);
@@ -237,18 +242,26 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         textureMappingInfo.set(null);
     }
 
-    void loadObjects() {
-        if (mIsObjectCreated == true) {
-            return;
-        }
-
-        createObjects();
-        setupObjects();
-
-        mIsObjectCreated = true;
-    }
+//    void loadObjects() {
+//        if (DEBUG) {
+//            Log.d(TAG, "loadObjects()");
+//        }
+//
+//        if (mIsObjectCreated == true) {
+//            return;
+//        }
+//
+//        createObjects();
+//        setupObjects();
+//
+//        mIsObjectCreated = true;
+//    }
 
     private void createObjects() {
+        if (DEBUG) {
+            Log.d(TAG, "createObjects()");
+        }
+
         for (int i = 0; i < mNumOfImages; i++) {
             ImageObject object = ImageObjectPool.pop();
 
@@ -275,6 +288,10 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     private void setupObjects() {
+        if (DEBUG) {
+            Log.d(TAG, "setupObjects()");
+        }
+
         int size = mObjects.size();
         for (int i = 0; i < size; i++) {
             ImageObject object = mObjects.get(i);
@@ -297,28 +314,42 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         }
     }
 
-    void releaseObjects() {
-        int size = mObjects.size();
-        for (int i = 0; i < size; i++) {
-            ImageObject object = mObjects.get(i);
-            ImageObjectPool.push(object);
-        }
-
-        clear();
-    }
+//    void releaseObjects() {
+//        if (DEBUG) {
+//            Log.d(TAG, "releaseObjects()");
+//        }
+//
+//        int size = mObjects.size();
+//        for (int i = 0; i < size; i++) {
+//            ImageObject object = mObjects.get(i);
+//            ImageObjectPool.push(object);
+//        }
+//
+//        clear();
+//
+//        mIsObjectCreated = false;
+//    }
 
 
     // onSurfaceChanged
 
     void onSurfaceChanged(int width, int height) {
+        if (DEBUG) {
+            Log.d(TAG, "onSurfaceChanged() width=" + width + " height=" + height);
+        }
+
         mWidth = width;
         mHeight = height;
     }
 
     void setupObjects(GLESCamera camera) {
+        if (DEBUG) {
+            Log.d(TAG, "setupObjects(camera)");
+        }
+
         mCamera = camera;
 
-        mIsObjectCreated = false;
+        setupObjects();
     }
 
 
@@ -414,10 +445,18 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     // onSurfaceCreated
 
     void createObjects(GalleryNode parentNode) {
+        if (DEBUG) {
+            Log.d(TAG, "createObjects(parentNode)");
+        }
+
         mParentNode = parentNode;
         cancelLoading();
 
-        mIsObjectCreated = false;
+        clear();
+
+        createObjects();
+
+//        mIsObjectCreated = false;
     }
 
     // set / get
@@ -521,9 +560,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     @Override
     public void onImageLoaded(int index, GalleryTexture texture) {
-        if (mIsObjectCreated == false) {
-            return;
-        }
+//        if (mIsObjectCreated == false) {
+//            return;
+//        }
 
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
         final ImageObject object = (ImageObject) textureMappingInfo.getObject();

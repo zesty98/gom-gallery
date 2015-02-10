@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.opengl.GLES20;
+import android.util.Log;
 
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
@@ -83,14 +84,12 @@ class ObjectManager implements GridInfoChangeListener {
     // rendering
 
     void update(boolean isOnScrolling) {
-        boolean needToMapTexture = (isOnScrolling == false);
-
-        if (needToMapTexture == true) {
+        if (isOnScrolling == false) {
             mGalleryObjects.updateTexture();
         }
 
-        mGalleryObjects.checkVisibility();
-        mGalleryObjects.update(needToMapTexture);
+        mGalleryObjects.checkVisibility(isOnScrolling);
+        mGalleryObjects.update(isOnScrolling);
         mScrollbar.update(isOnScrolling);
 
         mGLESRenderer.updateScene(mSM);
