@@ -7,8 +7,10 @@ import android.graphics.Color;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
+import android.support.v4.view.MotionEventCompat;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.animation.AccelerateDecelerateInterpolator;
 
 import com.gomdev.gles.GLESAnimator;
 import com.gomdev.gles.GLESAnimatorCallback;
@@ -46,7 +48,6 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     private int mPrevNumOfColumns = 0;
 
     private ImageObject mCenterObject = null;
-    //    private ImageObject mLastObject = null;
     private float mFocusY = 0f;
     private boolean mIsOnAnimation = false;
     private boolean mIsOnScale = false;
@@ -71,6 +72,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         mGalleryScaleGestureDetector = new GalleryScaleGestureDetector(mContext, this);
 
         mAnimator = new GLESAnimator(new AnimatorCallback());
+        mAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
         mAnimator.setDuration(GalleryConfig.IMAGE_ANIMATION_START_OFFSET, GalleryConfig.IMAGE_ANIMATION_END_OFFSET);
     }
 
@@ -83,7 +85,8 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
             return;
         }
 
-        GLESUtils.checkFPS();
+//        GLESUtils.checkFPS();
+
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
@@ -91,6 +94,9 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
             udpateGestureDetector();
 
             boolean isOnScrolling = mGalleryGestureDetector.isOnScrolling();
+            if (mIsOnAnimation == true) {
+                mGalleryGestureDetector.resetOnScrolling();
+            }
 
             mObjectManager.update(isOnScrolling);
             mObjectManager.drawFrame();
@@ -193,8 +199,8 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     void resize(float focusX, float focusY) {
         mFocusY = focusY;
         ImageIndexingInfo imageIndexingInfo = mObjectManager.getNearestImageIndex(focusX, focusY);
-        mCenterObject = mObjectManager.getImageObject(imageIndexingInfo);
         Log.d(TAG, "resize() mCenterObject indexing info " + imageIndexingInfo);
+        mCenterObject = mObjectManager.getImageObject(imageIndexingInfo);
 
         mGridInfo.setImageIndexingInfo(imageIndexingInfo);
 

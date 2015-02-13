@@ -49,6 +49,10 @@ class ObjectManager implements GridInfoChangeListener {
     private boolean mIsSurfaceChanged = false;
 
     ObjectManager(Context context, ImageListRenderer renderer) {
+        if (DEBUG) {
+            Log.d(TAG, "ObjectManager()");
+        }
+
         mContext = context;
         mRenderer = renderer;
 
@@ -102,6 +106,10 @@ class ObjectManager implements GridInfoChangeListener {
     // onSurfaceChanged
 
     void onSurfaceChanged(int width, int height) {
+        if (DEBUG) {
+            Log.d(TAG, "onSurfaceChanged()");
+        }
+
         mHeight = height;
 
         mGLESRenderer.reset();
@@ -113,6 +121,10 @@ class ObjectManager implements GridInfoChangeListener {
     }
 
     void setupObjects(GLESCamera camera) {
+        if (DEBUG) {
+            Log.d(TAG, "setupObjects()");
+        }
+
         mGalleryObjects.setupObjects(camera);
         mScrollbar.setupObject(camera);
     }
@@ -120,6 +132,10 @@ class ObjectManager implements GridInfoChangeListener {
     // onSurfaceCreated
 
     void onSurfaceCreated() {
+        if (DEBUG) {
+            Log.d(TAG, "onSurfaceCreated()");
+        }
+
         mIsSurfaceChanged = false;
 
         createShader();
@@ -150,6 +166,10 @@ class ObjectManager implements GridInfoChangeListener {
     }
 
     void createScene() {
+        if (DEBUG) {
+            Log.d(TAG, "createScene()");
+        }
+
         mSM = GLESSceneManager.createSceneManager();
         mRoot = mSM.createRootNode("root");
 
@@ -207,6 +227,10 @@ class ObjectManager implements GridInfoChangeListener {
 
     @Override
     public void onColumnWidthChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onColumnWidthChanged()");
+        }
+
         mColumnWidth = mGridInfo.getColumnWidth();
         mNumOfColumns = mGridInfo.getNumOfColumns();
 
@@ -219,22 +243,37 @@ class ObjectManager implements GridInfoChangeListener {
 
     @Override
     public void onNumOfImageInfosChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onNumOfImageInfosChanged()");
+        }
 
     }
 
     @Override
     public void onNumOfDateLabelInfosChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onNumOfDateLabelInfosChanged()");
+        }
+
         mNumOfDateInfos = mGridInfo.getNumOfDateInfos();
     }
 
     // initialization
 
     void setSurfaceView(GallerySurfaceView surfaceView) {
+        if (DEBUG) {
+            Log.d(TAG, "setSurfaceView()");
+        }
+
         mGalleryObjects.setSurfaceView(surfaceView);
         mScrollbar.setSurfaceView(surfaceView);
     }
 
     void setGridInfo(GridInfo gridInfo) {
+        if (DEBUG) {
+            Log.d(TAG, "setGridInfo()");
+        }
+
         mGridInfo = gridInfo;
 
         mBucketInfo = gridInfo.getBucketInfo();

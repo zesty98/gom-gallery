@@ -45,7 +45,8 @@ public class ImageLoader {
         ImageCache.ImageCacheParams params = new ImageCache.ImageCacheParams(mContext, DISK_CACHE_SUBDIR);
         params.mCompressFormat = Bitmap.CompressFormat.JPEG;
         params.mCompressQuality = 70;
-        params.setMemCacheSize(10 * 1024);
+//        params.setMemCacheSizePercent(0.25f);
+        params.setMemCacheSize(15 * 1024);
         params.mDiskCacheEnabled = true;
         params.mMemoryCacheEnabled = true;
         mImageCache = ImageCache.getInstance(((Activity) context).getFragmentManager(), params);

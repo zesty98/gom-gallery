@@ -281,10 +281,11 @@ class ImageCache {
                         + "between 0.01 and 0.8 (inclusive)");
             }
             mMemCacheSize = Math.round(percent * Runtime.getRuntime().maxMemory() / 1024);
-            Log.d(TAG, "setMemCacheSizePercent() mMemCacheSize=" + mMemCacheSize);
+            Log.d(TAG, "setMemCacheSize() mMemCacheSize=" + mMemCacheSize);
         }
 
         void setMemCacheSize(int memCacheSize) {
+            Log.d(TAG, "setMemCacheSize() maxMemory=" + Runtime.getRuntime().maxMemory());
             mMemCacheSize = memCacheSize;
         }
 

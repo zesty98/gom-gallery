@@ -3,6 +3,9 @@ package com.gomdev.gallery;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v4.view.MotionEventCompat;
+import android.util.Log;
+import android.view.MotionEvent;
 
 public class ImageListActivity extends Activity {
     static final String CLASS = "ImageListActivity";

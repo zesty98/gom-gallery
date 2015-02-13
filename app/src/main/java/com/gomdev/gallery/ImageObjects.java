@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     static final String CLASS = "ImageObjects";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
-    static final boolean DEBUG = true;//GalleryConfig.DEBUG;
+    static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final float VISIBILITY_PADDING_DP = 60f;    // dp
 
@@ -74,7 +74,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private boolean mNeedToSetTranslate = false;
 
-//    private boolean mIsObjectCreated = false;
+//    private boolean mIsObjectLoaded = false;
 
     ImageObjects(Context context, ImageListRenderer renderer) {
         mContext = context;
@@ -141,16 +141,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     void checkVisibility(boolean parentVisibility, boolean isOnScrolling) {
         if (parentVisibility == true) {
-//            if (mIsObjectCreated == false) {
-//                loadObjects();
-//            }
-
             handleVisibleObjects(isOnScrolling);
         } else {
-//            if (mIsObjectCreated == true) {
-//                releaseObjects();
-//            }
-
             handleInvisibleObjects(isOnScrolling);
         }
     }
@@ -247,14 +239,18 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 //            Log.d(TAG, "loadObjects()");
 //        }
 //
-//        if (mIsObjectCreated == true) {
+//        if (mIsObjectLoaded == true) {
 //            return;
 //        }
 //
-//        createObjects();
-//        setupObjects();
+//        Log.d(TAG, "loadObject() index=" + mDateLabelInfo.getIndex());
 //
-//        mIsObjectCreated = true;
+//        synchronized (this) {
+//            createObjects();
+//            setupObjects();
+//        }
+//
+//        mIsObjectLoaded = true;
 //    }
 
     private void createObjects() {
@@ -263,7 +259,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         }
 
         for (int i = 0; i < mNumOfImages; i++) {
-            ImageObject object = ImageObjectPool.pop();
+//            ImageObject object = ImageObjectPool.pop();
+            ImageObject object = new ImageObject("ImageObject_" + mDateLabelInfo.getIndex() + "_" + i);
 
             mObjects.add(object);
             mParentNode.addChild(object);
@@ -319,15 +316,23 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 //            Log.d(TAG, "releaseObjects()");
 //        }
 //
-//        int size = mObjects.size();
-//        for (int i = 0; i < size; i++) {
-//            ImageObject object = mObjects.get(i);
-//            ImageObjectPool.push(object);
+//        if (mIsObjectLoaded == false) {
+//            return;
 //        }
 //
-//        clear();
+//        Log.d(TAG, "releaseObjects() index=" + mDateLabelInfo.getIndex());
 //
-//        mIsObjectCreated = false;
+//        synchronized (this) {
+//            int size = mObjects.size();
+//            for (int i = 0; i < size; i++) {
+//                ImageObject object = mObjects.get(i);
+//                ImageObjectPool.push(object);
+//            }
+//
+//            clear();
+//        }
+//
+//        mIsObjectLoaded = false;
 //    }
 
 
@@ -355,6 +360,10 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     @Override
     public void onColumnWidthChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onColumnWidthChanged()");
+        }
+
         mPrevColumnWidth = mColumnWidth;
         mColumnWidth = mGridInfo.getColumnWidth();
 
@@ -420,8 +429,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             float nextTop = object.getNextTop();
             float nextBottom = nextTop - mColumnWidth;
 
-            if ((prevTop + mPrevStartOffsetY >= viewportBottom && prevBottom + mPrevStartOffsetY <= viewportTop) ||
-                    (nextTop + mNextStartOffsetY >= nextViewportBottom && nextBottom + mNextStartOffsetY <= nextViewportTop)) {
+            if (((prevTop + mPrevStartOffsetY) >= viewportBottom && (prevBottom + mPrevStartOffsetY) <= viewportTop) ||
+                    ((nextTop + mNextStartOffsetY) >= nextViewportBottom && (nextBottom + mNextStartOffsetY) <= nextViewportTop)) {
                 object.setVisibility(true);
 
                 mAnimationObjects.add(object);
@@ -454,9 +463,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         clear();
 
-        createObjects();
+//        mIsObjectLoaded = false;
 
-//        mIsObjectCreated = false;
+        createObjects();
     }
 
     // set / get
@@ -560,7 +569,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     @Override
     public void onImageLoaded(int index, GalleryTexture texture) {
-//        if (mIsObjectCreated == false) {
+//        if (mIsObjectLoaded == false) {
 //            return;
 //        }
 

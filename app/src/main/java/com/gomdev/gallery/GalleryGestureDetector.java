@@ -7,6 +7,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.v4.view.GestureDetectorCompat;
+import android.support.v4.view.MotionEventCompat;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.OverScroller;
@@ -29,13 +30,13 @@ class GalleryGestureDetector implements GridInfoChangeListener {
 
     private GallerySurfaceView mSurfaceView = null;
 
-    private ImageManager mImageManager = null;
     private GridInfo mGridInfo = null;
 
     private GestureDetectorCompat mGestureDetector;
 
     private OverScroller mScroller;
     private boolean mIsOnScrolling = false;
+    private boolean mIsOnFling = false;
 
     private RectF mCurrentViewport = null;   // OpenGL ES coordinate
     private RectF mScrollerStartViewport = new RectF();
@@ -62,14 +63,11 @@ class GalleryGestureDetector implements GridInfoChangeListener {
     private float mMaxTranslateZ = 0f;
     private float mTranslateZ = 0f;
 
-    private int mWidth = 0;
     private int mHeight = 0;
 
     GalleryGestureDetector(Context context, ImageListRenderer renderer) {
         mContext = context;
         mRenderer = renderer;
-
-        mImageManager = ImageManager.getInstance();
 
         mGestureDetector = new GestureDetectorCompat(context, mGestureListener);
 
@@ -102,7 +100,6 @@ class GalleryGestureDetector implements GridInfoChangeListener {
     }
 
     void surfaceChanged(int width, int height) {
-        mWidth = width;
         mHeight = height;
 
         mContentRect.set(0, 0, width, height);
@@ -215,6 +212,23 @@ class GalleryGestureDetector implements GridInfoChangeListener {
 
     boolean onTouchEvent(MotionEvent event) {
         mSurfaceView.requestRender();
+
+        final int action = MotionEventCompat.getActionMasked(event);
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+                mIsOnScrolling = true;
+                break;
+            case MotionEvent.ACTION_UP:
+                mIsOnScrolling = false;
+                break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                mIsOnScrolling = false;
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                mIsOnScrolling = false;
+                break;
+        }
+
         return mGestureDetector.onTouchEvent(event);
     }
 
@@ -234,10 +248,12 @@ class GalleryGestureDetector implements GridInfoChangeListener {
         if (mScroller.isFinished() == true) {
             mRotationAngle = 0f;
             mTranslateZ = 0f;
+
+            if (mIsOnFling == true) {
+                mIsOnFling = false;
+            }
             return;
         }
-
-        mIsOnScrolling = true;
 
         float startY = mScroller.getStartY();
         float finalY = mScroller.getFinalY();
@@ -248,8 +264,6 @@ class GalleryGestureDetector implements GridInfoChangeListener {
         if (scrollDistance < mMaxDistance) {
             mRotationAngle = 0f;
             mTranslateZ = 0f;
-
-            mIsOnScrolling = false;
 
             return;
         }
@@ -267,19 +281,14 @@ class GalleryGestureDetector implements GridInfoChangeListener {
         if (startY > finalY) {
             mRotationAngle = -mRotationAngle;
         }
+    }
 
-        mIsOnScrolling = true;
-
-        if (mTranslateY == finalY) {
-            mRotationAngle = 0f;
-            mTranslateZ = 0f;
-
-            mIsOnScrolling = false;
-        }
+    void resetOnScrolling() {
+        mIsOnScrolling = false;
     }
 
     boolean isOnScrolling() {
-        return mIsOnScrolling;
+        return (mIsOnScrolling || mIsOnFling);
     }
 
     private final GestureDetector.SimpleOnGestureListener mGestureListener
@@ -292,6 +301,7 @@ class GalleryGestureDetector implements GridInfoChangeListener {
             mScrollerStartViewport.set(mCurrentViewport);
             mScroller.forceFinished(true);
             invalidateViewport();
+
             return true;
         }
 
@@ -361,22 +371,26 @@ class GalleryGestureDetector implements GridInfoChangeListener {
             }
 
             mSurfaceView.requestRender();
+
+            mIsOnScrolling = false;
         }
 
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            float viewportOffsetY = -distanceY;
+            mIsOnScrolling = true;
 
+            float viewportOffsetY = -distanceY;
             setViewportBottomLeft(mCurrentViewport.left,
                     (mCurrentViewport.bottom + viewportOffsetY), true);
 
-            mIsOnScrolling = true;
 
             return true;
         }
 
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            mIsOnFling = true;
+
             fling((int) -velocityX, (int) -velocityY);
 
             return true;
