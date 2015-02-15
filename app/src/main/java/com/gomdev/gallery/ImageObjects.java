@@ -364,6 +364,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             Log.d(TAG, "onColumnWidthChanged()");
         }
 
+        mNeedToSetTranslate = false;
+
         mPrevColumnWidth = mColumnWidth;
         mColumnWidth = mGridInfo.getColumnWidth();
 

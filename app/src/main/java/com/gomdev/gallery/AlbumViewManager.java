@@ -1,13 +1,19 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
+import android.graphics.RectF;
 import android.opengl.GLES20;
 import android.util.Log;
+import android.view.animation.AccelerateDecelerateInterpolator;
 
+import com.gomdev.gles.GLESAnimator;
+import com.gomdev.gles.GLESAnimatorCallback;
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
 import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESNodeListener;
+import com.gomdev.gles.GLESObject;
+import com.gomdev.gles.GLESObjectListener;
 import com.gomdev.gles.GLESRenderer;
 import com.gomdev.gles.GLESSceneManager;
 import com.gomdev.gles.GLESShader;
@@ -15,11 +21,15 @@ import com.gomdev.gles.GLESShaderConstant;
 import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
+import com.gomdev.gles.GLESVector3;
+import com.gomdev.gles.GLESVertexInfo;
+
+import java.nio.FloatBuffer;
 
 /**
  * Created by gomdev on 14. 12. 31..
  */
-class ObjectManager implements GridInfoChangeListener {
+class AlbumViewManager implements GridInfoChangeListener {
     static final String CLASS = "ObjectManager";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -27,13 +37,25 @@ class ObjectManager implements GridInfoChangeListener {
     private final Context mContext;
     private final ImageListRenderer mRenderer;
 
-    private GLESRenderer mGLESRenderer;
-    private GLESSceneManager mSM;
-    private GLESNode mRoot;
-    private GLESNode mImageNode;
+    private GLESRenderer mGLESRenderer = null;
+    private GallerySurfaceView mSurfaceView = null;
+    private GLESSceneManager mSM = null;
+    private GLESNode mRoot = null;
+    private GLESNode mImageNode = null;
+
+    private GLESGLState mGLState = null;
+    private GLESShader mTextureShader = null;
+    private GLESShader mColorShader = null;
 
     private GalleryObjects mGalleryObjects = null;
     private Scrollbar mScrollbar = null;
+
+    private ImageObject mDetailObject = null;
+
+    private ImageObject mSelectedImageObject = null;
+    private ImageObject mBGObject = null;
+    private ImageInfo mSelectedImageInfo = null;
+    private GLESAnimator mSelectionAnimator = null;
 
     private GridInfo mGridInfo = null;
     private BucketInfo mBucketInfo = null;
@@ -44,11 +66,12 @@ class ObjectManager implements GridInfoChangeListener {
 
     private int mDateLabelHeight;
 
-    private int mHeight;
+    private int mWidth = 0;
+    private int mHeight = 0;
 
     private boolean mIsSurfaceChanged = false;
 
-    ObjectManager(Context context, ImageListRenderer renderer) {
+    AlbumViewManager(Context context, ImageListRenderer renderer) {
         if (DEBUG) {
             Log.d(TAG, "ObjectManager()");
         }
@@ -71,16 +94,21 @@ class ObjectManager implements GridInfoChangeListener {
 
         mGalleryObjects.setImageGLState(glState);
 
-        glState = new GLESGLState();
-        glState.setCullFaceState(true);
-        glState.setCullFace(GLES20.GL_BACK);
-        glState.setBlendState(true);
-        glState.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+        mGLState = new GLESGLState();
+        mGLState.setCullFaceState(true);
+        mGLState.setCullFace(GLES20.GL_BACK);
+        mGLState.setBlendState(true);
+        mGLState.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
-        mGalleryObjects.setDateLabelGLState(glState);
+        mGalleryObjects.setDateLabelGLState(mGLState);
 
         mScrollbar = new Scrollbar(mContext);
         mScrollbar.setColor(0.3f, 0.3f, 0.3f, 0.7f);
+
+        mSelectionAnimator = new GLESAnimator(new SelectionAnimatorCallback());
+        mSelectionAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        mSelectionAnimator.setDuration(GalleryConfig.SELECTION_ANIMATION_START_OFFSET, GalleryConfig.SELECTION_ANIMATION_END_OFFSET);
+
 
         mIsSurfaceChanged = false;
     }
@@ -90,6 +118,10 @@ class ObjectManager implements GridInfoChangeListener {
     void update(boolean isOnScrolling) {
         if (isOnScrolling == false) {
             mGalleryObjects.updateTexture();
+        }
+
+        if (mSelectionAnimator.doAnimation() == true) {
+            mSurfaceView.requestRender();
         }
 
         mGalleryObjects.checkVisibility(isOnScrolling);
@@ -110,6 +142,7 @@ class ObjectManager implements GridInfoChangeListener {
             Log.d(TAG, "onSurfaceChanged()");
         }
 
+        mWidth = width;
         mHeight = height;
 
         mGLESRenderer.reset();
@@ -127,6 +160,29 @@ class ObjectManager implements GridInfoChangeListener {
 
         mGalleryObjects.setupObjects(camera);
         mScrollbar.setupObject(camera);
+
+        mDetailObject.setCamera(camera);
+
+        GLESVertexInfo vertexInfo = new GLESVertexInfo();
+
+        float[] vertex = GLESUtils.makePositionCoord(-mWidth * 0.5f, mWidth * 0.5f, mWidth, mWidth);
+        vertexInfo.setBuffer(mTextureShader.getPositionAttribIndex(), vertex, 3);
+
+        float[] texCoord = GLESUtils.makeTexCoord(0f, 0f, 1f, 1f);
+        vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);
+
+        vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
+        vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
+
+        mDetailObject.setVertexInfo(vertexInfo, false, false);
+
+        mBGObject.setCamera(camera);
+
+        vertexInfo = GalleryUtils.createColorVertexInfo(mColorShader,
+                -mWidth * 0.5f, mHeight * 0.5f,
+                mWidth, mHeight,
+                0f, 0f, 0f, 1f);
+        mBGObject.setVertexInfo(vertexInfo, false, false);
     }
 
     // onSurfaceCreated
@@ -142,12 +198,12 @@ class ObjectManager implements GridInfoChangeListener {
     }
 
     private boolean createShader() {
-        GLESShader textureShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_20_fs);
-        if (textureShader == null) {
+        mTextureShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_20_fs);
+        if (mTextureShader == null) {
             return false;
         }
 
-        mGalleryObjects.setImageShader(textureShader);
+        mGalleryObjects.setImageShader(mTextureShader);
 
         GLESShader textureAlphaShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_alpha_20_fs);
         if (textureAlphaShader == null) {
@@ -155,12 +211,12 @@ class ObjectManager implements GridInfoChangeListener {
         }
         mGalleryObjects.setDateLabelShader(textureAlphaShader);
 
-        GLESShader colorShader = createColorShader(R.raw.color_20_vs, R.raw.color_alpha_20_fs);
-        if (colorShader == null) {
+        mColorShader = createColorShader(R.raw.color_20_vs, R.raw.color_alpha_20_fs);
+        if (mColorShader == null) {
             return false;
         }
 
-        mScrollbar.setShader(colorShader);
+        mScrollbar.setShader(mColorShader);
 
         return true;
     }
@@ -180,6 +236,26 @@ class ObjectManager implements GridInfoChangeListener {
         mGalleryObjects.createObjects(mImageNode);
 
         mScrollbar.createObject(mRoot);
+
+        {
+            mBGObject = new ImageObject("BG");
+            mRoot.addChild(mBGObject);
+
+            mBGObject.setGLState(mGLState);
+            mBGObject.setShader(mColorShader);
+            mBGObject.setListener(mBGObjectListener);
+            mBGObject.hide();
+        }
+
+        {
+            mDetailObject = new ImageObject("selectedObject");
+            mRoot.addChild(mDetailObject);
+
+            mDetailObject.setGLState(mGLState);
+            mDetailObject.setShader(mTextureShader);
+            mDetailObject.setListener(mSelectedImageObjectListener);
+            mDetailObject.hide();
+        }
     }
 
     private GLESShader createTextureShader(int vsResID, int fsResID) {
@@ -246,7 +322,6 @@ class ObjectManager implements GridInfoChangeListener {
         if (DEBUG) {
             Log.d(TAG, "onNumOfImageInfosChanged()");
         }
-
     }
 
     @Override
@@ -258,6 +333,33 @@ class ObjectManager implements GridInfoChangeListener {
         mNumOfDateInfos = mGridInfo.getNumOfDateInfos();
     }
 
+    private float mTranslateX = 0f;
+    private float mTranslateY = 0f;
+    private float mDstX = 0f;
+    private float mDstY = 0f;
+
+    void onImageSelected(ImageIndexingInfo indexingInfo, RectF viewport) {
+        mDstX = viewport.centerX();
+        mDstY = viewport.centerY();
+
+        mSelectedImageObject = getImageObject(indexingInfo);
+        mSelectedImageInfo = ImageManager.getInstance().getImageInfo(indexingInfo);
+
+        mTranslateX = mSelectedImageObject.getTranslateX();
+        mTranslateY = mSelectedImageObject.getTranslateY();
+
+        mSelectedImageObject.hide();
+
+        mDetailObject.setTexture(mSelectedImageObject.getTexture());
+
+        Log.d(TAG, "onImageSelected() >>> start()");
+        mSelectionAnimator.setValues(0f, 1f);
+        mSelectionAnimator.cancel();
+        mSelectionAnimator.start();
+
+        mSurfaceView.requestRender();
+    }
+
     // initialization
 
     void setSurfaceView(GallerySurfaceView surfaceView) {
@@ -265,15 +367,13 @@ class ObjectManager implements GridInfoChangeListener {
             Log.d(TAG, "setSurfaceView()");
         }
 
+        mSurfaceView = surfaceView;
+
         mGalleryObjects.setSurfaceView(surfaceView);
         mScrollbar.setSurfaceView(surfaceView);
     }
 
     void setGridInfo(GridInfo gridInfo) {
-        if (DEBUG) {
-            Log.d(TAG, "setGridInfo()");
-        }
-
         mGridInfo = gridInfo;
 
         mBucketInfo = gridInfo.getBucketInfo();
@@ -419,11 +519,163 @@ class ObjectManager implements GridInfoChangeListener {
         }
     };
 
+    private GLESObjectListener mSelectedImageObjectListener = new GLESObjectListener() {
+        @Override
+        public void update(GLESObject object) {
+            ImageObject imageObject = (ImageObject) object;
+            GLESTransform transform = object.getTransform();
+            transform.setIdentity();
+
+            float x = imageObject.getTranslateX();
+            float y = imageObject.getTranslateY();
+            float scale = imageObject.getScale();
+
+            transform.setTranslate(x, y, 0f);
+            transform.setScale(scale);
+        }
+
+        @Override
+        public void apply(GLESObject object) {
+        }
+    };
+
+    private GLESObjectListener mBGObjectListener = new GLESObjectListener() {
+        @Override
+        public void update(GLESObject object) {
+            ImageObject imageObject = (ImageObject) object;
+            GLESTransform transform = object.getTransform();
+            transform.setIdentity();
+
+            transform.setTranslate(mDstX, mDstY, 0f);
+            transform.setScale(1f);
+        }
+
+        @Override
+        public void apply(GLESObject object) {
+            int location = GLES20.glGetUniformLocation(object.getShader().getProgram(), "uAlpha");
+            GLES20.glUniform1f(location, ((ImageObject) object).getAlpha());
+        }
+    };
+
     void onAnimation(float x) {
         mGalleryObjects.onAnimation(x);
     }
 
     void onAnimationFinished() {
         mGalleryObjects.onAnimationFinished();
+    }
+
+    class SelectionAnimatorCallback implements GLESAnimatorCallback {
+        SelectionAnimatorCallback() {
+        }
+
+        @Override
+        public void onAnimation(GLESVector3 current) {
+            float normalizedValue = current.getX();
+
+            updateDetailViewObject(normalizedValue);
+
+            updateBGObject(normalizedValue);
+        }
+
+        private void updateDetailViewObject(float normalizedValue) {
+            mDetailObject.show();
+
+            float x = mTranslateX + (mDstX - mTranslateX) * normalizedValue;
+            float y = mTranslateY + (mDstY - mTranslateY) * normalizedValue;
+
+            float fromScale = (float) mColumnWidth / mWidth;
+            float scale = fromScale + (1f - fromScale) * normalizedValue;
+
+            mDetailObject.setTranslate(x, y);
+            mDetailObject.setScale(scale);
+
+            GLESVertexInfo vertexInfo = mDetailObject.getVertexInfo();
+            FloatBuffer positionBuffer = (FloatBuffer) vertexInfo.getBuffer(mTextureShader.getPositionAttribIndex());
+
+            int imageWidth = 0;
+            int imageHeight = 0;
+
+            if (mSelectedImageInfo.getOrientation() == 90 || mSelectedImageInfo.getOrientation() == 270) {
+                imageWidth = mSelectedImageInfo.getHeight();
+                imageHeight = mSelectedImageInfo.getWidth();
+            } else {
+                imageWidth = mSelectedImageInfo.getWidth();
+                imageHeight = mSelectedImageInfo.getHeight();
+            }
+
+            float prevTop = mWidth * 0.5f;
+            float nextTop = 0f;
+
+            float prevRight = mWidth * 0.5f;
+            float nextRight = 0f;
+
+            nextTop = ((float) imageHeight / imageWidth) * mWidth * 0.5f;
+            nextRight = prevRight;
+
+            if (nextTop > mHeight * 0.5f) {
+                nextTop = mHeight * 0.5f;
+                nextRight = ((float) imageWidth / imageHeight) * mHeight * 0.5f;
+            }
+
+            float currentTop = prevTop + (nextTop - prevTop) * normalizedValue;
+            float currentRight = prevRight + (nextRight - prevRight) * normalizedValue;
+
+            positionBuffer.put(0, -currentRight);
+            positionBuffer.put(1, -currentTop);
+
+            positionBuffer.put(3, currentRight);
+            positionBuffer.put(4, -currentTop);
+
+            positionBuffer.put(6, -currentRight);
+            positionBuffer.put(7, currentTop);
+
+            positionBuffer.put(9, currentRight);
+            positionBuffer.put(10, currentTop);
+
+
+            FloatBuffer srcTexBuffer = (FloatBuffer) mSelectedImageObject.getVertexInfo().getBuffer(mTextureShader.getTexCoordAttribIndex());
+
+            float minS = srcTexBuffer.get(0);
+            float minT = srcTexBuffer.get(5);
+
+            float maxS = srcTexBuffer.get(2);
+            float maxT = srcTexBuffer.get(1);
+
+            float currentMinS = minS + (0f - minS) * normalizedValue;
+            float currentMinT = minT + (0f - minT) * normalizedValue;
+
+            float currentMaxS = maxS + (1f - maxS) * normalizedValue;
+            float currentMaxT = maxT + (1f - maxT) * normalizedValue;
+
+            FloatBuffer texBuffer = (FloatBuffer) mDetailObject.getVertexInfo().getBuffer(mTextureShader.getTexCoordAttribIndex());
+
+            texBuffer.put(0, currentMinS);
+            texBuffer.put(1, currentMaxT);
+
+            texBuffer.put(2, currentMaxS);
+            texBuffer.put(3, currentMaxT);
+
+            texBuffer.put(4, currentMinS);
+            texBuffer.put(5, currentMinT);
+
+            texBuffer.put(6, currentMaxS);
+            texBuffer.put(7, currentMinT);
+        }
+
+        private void updateBGObject(float normalizedValue) {
+            mBGObject.show();
+            mBGObject.setAlpha(normalizedValue);
+        }
+
+        @Override
+        public void onCancel() {
+
+        }
+
+        @Override
+        public void onFinished() {
+//            mDetailObject.hide();
+        }
     }
 }
