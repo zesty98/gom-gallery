@@ -100,6 +100,7 @@ class Scrollbar implements GridInfoChangeListener {
 
             mAnimator.cancel();
 
+            mColorShader.useProgram();
             int location = mColorShader.getUniformLocation("uAlpha");
             GLES20.glUniform1f(location, 1f);
         }
@@ -289,7 +290,8 @@ class Scrollbar implements GridInfoChangeListener {
 
         @Override
         public void apply(GLESObject object) {
-
+            int location = mColorShader.getUniformLocation("uAlpha");
+            GLES20.glUniform1f(location, mBlendingAlpha);
         }
     };
 
@@ -298,9 +300,6 @@ class Scrollbar implements GridInfoChangeListener {
         @Override
         public void onAnimation(GLESVector3 current) {
             mBlendingAlpha = current.getX();
-
-            int location = mColorShader.getUniformLocation("uAlpha");
-            GLES20.glUniform1f(location, mBlendingAlpha);
         }
 
         @Override
