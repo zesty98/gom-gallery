@@ -124,9 +124,9 @@ class GalleryGestureDetector implements GridInfoChangeListener {
 
             // OpenGL ES coordiante.
             mCurrentViewport = new RectF(left, bottom, right, top);
-
-            adjustViewport();
         }
+
+        adjustViewport();
     }
 
     RectF getCurrentViewport() {

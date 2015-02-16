@@ -3,6 +3,7 @@ package com.gomdev.gallery;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
@@ -17,6 +18,9 @@ public class ImageListActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if (DEBUG) {
+            Log.d(TAG, "onCreate()");
+        }
         super.onCreate(savedInstanceState);
 
         init(savedInstanceState);
@@ -68,6 +72,10 @@ public class ImageListActivity extends Activity {
 
     @Override
     protected void onResume() {
+        if (DEBUG) {
+            Log.d(TAG, "onResume()");
+        }
+
         super.onResume();
 
         if (mSurfaceView != null) {
@@ -77,6 +85,10 @@ public class ImageListActivity extends Activity {
 
     @Override
     protected void onPause() {
+        if (DEBUG) {
+            Log.d(TAG, "onPause()");
+        }
+
         if (mSurfaceView != null) {
             mSurfaceView.onPause();
         }

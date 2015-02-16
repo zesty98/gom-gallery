@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.RectF;
@@ -33,7 +34,7 @@ import javax.microedition.khronos.opengles.GL10;
 class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListener {
     static final String CLASS = "ImageListRenderer";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
-    static final boolean DEBUG = true;//GalleryConfig.DEBUG;
+    static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final Context mContext;
     private final GridInfo mGridInfo;
@@ -69,9 +70,12 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     private boolean mIsSurfaceChanged = false;
 
     ImageListRenderer(Context context, GridInfo gridInfo) {
+        if (DEBUG) {
+            Log.d(TAG, "ImageListRenderer()");
+        }
+
         mContext = context;
         mGridInfo = gridInfo;
-
 
         GLESContext.getInstance().setContext(context);
         ImageManager imageManager = ImageManager.getInstance();
@@ -100,6 +104,10 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     }
 
     private void setGridInfo(GridInfo gridInfo) {
+        if (DEBUG) {
+            Log.d(TAG, "setGridInfo()");
+        }
+
         mSpacing = gridInfo.getSpacing();
         mDefaultColumnWidth = gridInfo.getDefaultColumnWidth();
         mColumnWidth = mGridInfo.getColumnWidth();
@@ -156,7 +164,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     @TargetApi(Build.VERSION_CODES.KITKAT)
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         if (DEBUG) {
-            Log.d(TAG, "onSurfaceChanged()");
+            Log.d(TAG, "onSurfaceChanged() width=" + width + " height=" + height);
         }
 
         mGLESRenderer.reset();
@@ -175,6 +183,10 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     }
 
     private GLESCamera setupCamera(int width, int height) {
+        if (DEBUG) {
+            Log.d(TAG, "setupCamera()");
+        }
+
         GLESCamera camera = new GLESCamera();
 
         float screenRatio = (float) width / height;
@@ -235,6 +247,10 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     // Listener
 
     void resize(float focusX, float focusY) {
+        if (DEBUG) {
+            Log.d(TAG, "resize()");
+        }
+
         mFocusY = focusY;
         ImageIndexingInfo imageIndexingInfo = mAlbumViewManager.getNearestImageIndex(focusX, focusY);
         Log.d(TAG, "resize() mCenterObject indexing info " + imageIndexingInfo);
@@ -281,10 +297,16 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
     @Override
     public void onNumOfImageInfosChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onNumOfImageInfosChanged()");
+        }
     }
 
     @Override
     public void onNumOfDateLabelInfosChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onNumOfDateLabelInfosChanged()");
+        }
     }
 
     void onAnimationStarted() {
@@ -307,15 +329,35 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     // resume
 
     void onResume() {
+        if (DEBUG) {
+            Log.d(TAG, "onResume()");
+        }
+
+        SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
+        int bucketIndex = pref.getInt(GalleryConfig.PREF_BUCKET_INDEX, 0);
+        int dateLabelIndex = pref.getInt(GalleryConfig.PREF_DATE_LABEL_INDEX, 0);
+        int imageIndex = pref.getInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
+
+        ImageIndexingInfo imageIndexingInfo = new ImageIndexingInfo(bucketIndex, dateLabelIndex, imageIndex);
+        mCenterObject = mAlbumViewManager.getImageObject(imageIndexingInfo);
+        mGridInfo.setImageIndexingInfo(imageIndexingInfo);
     }
 
     // pause
 
     void onPause() {
+        if (DEBUG) {
+            Log.d(TAG, "onPause()");
+        }
+
     }
 
     // set / get
     void setSurfaceView(GallerySurfaceView surfaceView) {
+        if (DEBUG) {
+            Log.d(TAG, "setSurfaceView()");
+        }
+
         mSurfaceView = surfaceView;
         mAlbumViewManager.setSurfaceView(surfaceView);
         mGalleryGestureDetector.setSurfaceView(surfaceView);
