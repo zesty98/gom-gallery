@@ -3,9 +3,8 @@ package com.gomdev.gallery;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v4.view.MotionEventCompat;
-import android.util.Log;
-import android.view.MotionEvent;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 public class ImageListActivity extends Activity {
     static final String CLASS = "ImageListActivity";
@@ -55,8 +54,10 @@ public class ImageListActivity extends Activity {
 
         mGridInfo = new GridInfo(this, bucketInfo);
 
-        mSurfaceView = (GallerySurfaceView) findViewById(R.id.surfaceview);
-        mSurfaceView.setGridInfo(mGridInfo);
+        FrameLayout layout = (FrameLayout) findViewById(R.id.container);
+
+        mSurfaceView = new GallerySurfaceView(this, mGridInfo);
+        layout.addView(mSurfaceView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         SharedPreferences.Editor editor = pref.edit();
         editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, bucketInfo.getIndex());

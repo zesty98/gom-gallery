@@ -25,7 +25,6 @@ import com.gomdev.gles.GLESVector3;
 import com.gomdev.gles.GLESVertexInfo;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -40,21 +39,20 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final Context mContext;
-    private final ImageListRenderer mRenderer;
+    private final GridInfo mGridInfo;
+    private final BucketInfo mBucketInfo;
+
     private final ReusableBitmaps mReusableBitmaps;
 
     private GallerySurfaceView mSurfaceView = null;
+    private ImageListRenderer mRenderer = null;
 
     private List<DateLabelObject> mDateLabelObjects = new ArrayList<>();
-    private HashMap<DateLabelObject, ImageObjects> mObjectsMap = new HashMap<>();
 
     private GLESGLState mDateLabelGLState = null;
     private GLESGLState mImageGLState = null;
     private GLESShader mDateLabelShader = null;
-    private GLESShader mImageShader = null;
 
-    private GridInfo mGridInfo = null;
-    private BucketInfo mBucketInfo = null;
     private int mNumOfDateInfos = 0;
     private int mDateLabelHeight = 0;
     private int mSpacing = 0;
@@ -66,7 +64,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private Bitmap mLoadingBitmap = null;
     private GLESTexture mDummyDateLabelTexture = null;
-    private GLESTexture mDummyImageTexture = null;
 
     private int mWidth = 0;
     private int mHeight = 0;
@@ -79,22 +76,40 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     private GLESAnimator mAnimator = null;
     private float mAlpha = 1.0f;
 
-    GalleryObjects(Context context, ImageListRenderer renderer) {
+    GalleryObjects(Context context, GridInfo gridInfo, BucketInfo bucketInfo) {
         if (DEBUG) {
             Log.d(TAG, "GalleryObjects()");
         }
 
         mContext = context;
-        mRenderer = renderer;
-        mReusableBitmaps = ReusableBitmaps.getInstance();
+        mGridInfo = gridInfo;
+        mBucketInfo = bucketInfo;
 
-        clear();
+        setGridInfo(gridInfo);
+
+        mReusableBitmaps = ReusableBitmaps.getInstance();
+    }
+
+    private void setGridInfo(GridInfo gridInfo) {
+        if (DEBUG) {
+            Log.d(TAG, "setGridInfo()");
+        }
+
+        mNumOfDateInfos = gridInfo.getNumOfDateInfos();
+        mDateLabelHeight = gridInfo.getDateLabelHeight();
+        mSpacing = gridInfo.getSpacing();
+        mColumnWidth = gridInfo.getColumnWidth();
+        mNumOfColumns = gridInfo.getNumOfColumns();
+        mActionBarHeight = gridInfo.getActionBarHeight();
+
+        mGridInfo.addListener(this);
     }
 
     void clear() {
-        mDateLabelObjects.clear();
-        mObjectsMap.clear();
-        mTextureMappingInfos.clear();
+        if (DEBUG) {
+            Log.d(TAG, "clear()");
+        }
+
         mWaitingTextures.clear();
         mAnimationObjects.clear();
     }
@@ -135,7 +150,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         for (int i = 0; i < size; i++) {
             DateLabelObject dateLabelObject = mDateLabelObjects.get(i);
 
-            ImageObjects imageObjects = mObjectsMap.get(dateLabelObject);
+            ImageObjects imageObjects = dateLabelObject.getImageObjects();
             imageObjects.updateTexture();
         }
     }
@@ -144,9 +159,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         float translateY = mGridInfo.getTranslateY();
         float viewportTop = mHeight * 0.5f - translateY;
         float viewportBottom = viewportTop - mHeight;
-
-        int firstVisibleIndex = -1;
-        int lastVisibleIndex = -1;
 
         int size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
@@ -163,7 +175,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
                 continue;
             }
 
-            ImageObjects imageObjects = mObjectsMap.get(object);
+            ImageObjects imageObjects = object.getImageObjects();
 
             float top = object.getTop();
             float bottom = 0f;
@@ -174,12 +186,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             }
 
             if (bottom < viewportTop && top > viewportBottom) {
-                if (firstVisibleIndex == -1) {
-                    firstVisibleIndex = i;
-                }
-
-                lastVisibleIndex = i;
-
                 parentNode.setVisibility(true);
 
                 if (isOnScrolling == false) {
@@ -189,7 +195,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
                     }
                 }
 
-//                imageObjects.loadObjects();
                 imageObjects.checkVisibility(true, isOnScrolling);
             } else {
                 parentNode.setVisibility(false);
@@ -204,36 +209,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
                 imageObjects.checkVisibility(false, isOnScrolling);
             }
         }
-
-//        for (int i = 1; i < 3; i++) {
-//            int index = firstVisibleIndex - i;
-//
-//            if (index >= 0) {
-//                ImageObjects imageObjects = mDateLabelObjects.get(index).getImageObjects();
-//                imageObjects.loadObjects();
-//            }
-//
-//            index = lastVisibleIndex + i;
-//            if (index < size) {
-//                ImageObjects imageObjects = mDateLabelObjects.get(index).getImageObjects();
-//                imageObjects.loadObjects();
-//            }
-//        }
-//
-//        for (int i = 3; i < 5; i++) {
-//            int index = firstVisibleIndex - i;
-//
-//            if (index >= 0) {
-//                ImageObjects imageObjects = mDateLabelObjects.get(index).getImageObjects();
-//                imageObjects.releaseObjects();
-//            }
-//
-//            index = lastVisibleIndex + i;
-//            if (index < size) {
-//                ImageObjects imageObjects = mDateLabelObjects.get(index).getImageObjects();
-//                imageObjects.releaseObjects();
-//            }
-//        }
     }
 
     private void update() {
@@ -244,7 +219,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         int size = mAnimationObjects.size();
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mAnimationObjects.get(i);
-            ImageObjects imageObjects = mObjectsMap.get(object);
+            ImageObjects imageObjects = object.getImageObjects();
             imageObjects.update();
         }
     }
@@ -294,7 +269,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mDateLabelObjects.get(i);
 
-            ImageObjects imageObjects = mObjectsMap.get(object);
+            ImageObjects imageObjects = object.getImageObjects();
             imageObjects.onSurfaceChanged(width, height);
         }
     }
@@ -320,11 +295,9 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setLeftTop(left, top);
             object.setTranslate(left + width * 0.5f, top - height * 0.5f);
 
-            float[] vertex = GLESUtils.makePositionCoord(-width * 0.5f, height * 0.5f, width, height);
-
             GLESVertexInfo vertexInfo = object.getVertexInfo();
+            float[] vertex = GLESUtils.makePositionCoord(-width * 0.5f, height * 0.5f, width, height);
             vertexInfo.setBuffer(mDateLabelShader.getPositionAttribIndex(), vertex, 3);
-
             float[] texCoord = GLESUtils.makeTexCoord(0f, 0f, 1f, 1f);
             vertexInfo.setBuffer(mDateLabelShader.getTexCoordAttribIndex(), texCoord, 2);
 
@@ -333,10 +306,39 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             DateLabelInfo dateLabelInfo = mBucketInfo.get(i);
             yOffset -= (dateLabelInfo.getNumOfRows() * (mColumnWidth + mSpacing));
 
-            ImageObjects imageObjects = mObjectsMap.get(object);
-
+            ImageObjects imageObjects = object.getImageObjects();
+            imageObjects.setSurfaceView(mSurfaceView);
             imageObjects.setStartOffsetY(top - mGridInfo.getDateLabelHeight() - mGridInfo.getSpacing());
             imageObjects.setupObjects(camera);
+        }
+    }
+
+    // onSurfaceCreated
+
+    void onSurfaceCreated() {
+        if (DEBUG) {
+            Log.d(TAG, "onSurfaceCreated()");
+        }
+
+        clear();
+
+        int size = mDateLabelObjects.size();
+        for (int i = 0; i < size; i++) {
+            DateLabelObject object = mDateLabelObjects.get(i);
+            object.setShader(mDateLabelShader);
+
+            GLESVertexInfo vertexInfo = new GLESVertexInfo();
+            vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
+            vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
+            object.setVertexInfo(vertexInfo, false, false);
+
+            ImageObjects imageObjects = object.getImageObjects();
+            imageObjects.onSurfaceCreated();
+        }
+
+        size = mTextureMappingInfos.size();
+        for (int i = 0; i < size; i++) {
+            mTextureMappingInfos.get(i).set(null);
         }
     }
 
@@ -372,7 +374,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         int size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mDateLabelObjects.get(i);
-            ImageObjects imageObjects = mObjectsMap.get(object);
+            ImageObjects imageObjects = object.getImageObjects();
 
             float prevTop = object.getTop();
             object.setPrevLeftTop(object.getLeft(), prevTop);
@@ -415,7 +417,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         int lastVisibleIndex = 0;
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mDateLabelObjects.get(i);
-            ImageObjects imageObjects = mObjectsMap.get(object);
+            ImageObjects imageObjects = object.getImageObjects();
             DateLabelInfo dateLabelInfo = mBucketInfo.get(i);
             GalleryNode parentNode = object.getParentNode();
 
@@ -434,8 +436,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
                 mAnimationObjects.add(object);
 
                 lastVisibleIndex = i;
-
-//                imageObjects.loadObjects();
             } else {
                 if (lastVisibleIndex + 1 == i) {
                     parentNode.setVisibility(true);
@@ -458,7 +458,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         int size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mDateLabelObjects.get(i);
-            ImageObjects imageObjects = mObjectsMap.get(object);
+            ImageObjects imageObjects = object.getImageObjects();
 
             imageObjects.onNumOfImageInfosChanged();
         }
@@ -475,20 +475,19 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         int size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mDateLabelObjects.get(i);
-            ImageObjects imageObjects = mObjectsMap.get(object);
+            ImageObjects imageObjects = object.getImageObjects();
 
             imageObjects.onNumOfDateLabelInfosChanged();
         }
     }
 
-    // onSurfaceCreated
+
+    // initialization
 
     void createObjects(GLESNode parentNode) {
         if (DEBUG) {
             Log.d(TAG, "createObjects()");
         }
-
-        clear();
 
         for (int i = 0; i < mNumOfDateInfos; i++) {
             GalleryNode node = new GalleryNode("node" + i);
@@ -501,43 +500,20 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setParentNode(node);
 
             object.setGLState(mDateLabelGLState);
-            object.setShader(mDateLabelShader);
-            object.setTexture(mDummyDateLabelTexture);
             object.setListener(mObjectListener);
             object.setIndex(i);
 
-            GLESVertexInfo vertexInfo = new GLESVertexInfo();
-            vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
-            vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
-            object.setVertexInfo(vertexInfo, false, false);
-
             DateLabelInfo dateLabelInfo = mBucketInfo.get(i);
             TextureMappingInfo textureMappingInfo = new TextureMappingInfo(object, dateLabelInfo);
-            addTextureMapingInfo(textureMappingInfo);
+            mTextureMappingInfos.add(textureMappingInfo);
 
-            ImageObjects imageObjects = new ImageObjects(mContext, mRenderer);
-            imageObjects.setGridInfo(mGridInfo);
+            ImageObjects imageObjects = new ImageObjects(mContext, mGridInfo, dateLabelInfo);
             imageObjects.setGLState(mImageGLState);
-            imageObjects.setShader(mImageShader);
-            imageObjects.setDummyTexture(mDummyImageTexture);
-            imageObjects.setDateLabelInfo(dateLabelInfo);
             imageObjects.createObjects(node);
-            imageObjects.setSurfaceView(mSurfaceView);
 
             object.setImageObjects(imageObjects);
-            mObjectsMap.put(object, imageObjects);
         }
     }
-
-    void addTextureMapingInfo(TextureMappingInfo info) {
-        mTextureMappingInfos.add(info);
-    }
-
-    DateLabelObject getObject(int i) {
-        return mDateLabelObjects.get(i);
-    }
-
-    // initialization
 
     void setSurfaceView(GallerySurfaceView surfaceView) {
         if (DEBUG) {
@@ -545,6 +521,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         }
 
         mSurfaceView = surfaceView;
+        mRenderer = mSurfaceView.getRenderer();
     }
 
     void setDateLabelGLState(GLESGLState state) {
@@ -579,38 +556,39 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             Log.d(TAG, "setImageShader()");
         }
 
-        mImageShader = shader;
+        int size = mDateLabelObjects.size();
+        for (int i = 0; i < size; i++) {
+            DateLabelObject object = mDateLabelObjects.get(i);
+            ImageObjects imageObjects = object.getImageObjects();
+            imageObjects.setShader(shader);
+        }
     }
 
-    void setGridInfo(GridInfo gridInfo) {
+    void setDummyTexture(GLESTexture dummyDateLabelTexture, GLESTexture dummyImageTexture) {
         if (DEBUG) {
-            Log.d(TAG, "setGridInfo()");
+            Log.d(TAG, "setDummyTexture()");
         }
 
-        mGridInfo = gridInfo;
+        mDummyDateLabelTexture = dummyDateLabelTexture;
 
-        mBucketInfo = gridInfo.getBucketInfo();
-        mNumOfDateInfos = gridInfo.getNumOfDateInfos();
-        mDateLabelHeight = gridInfo.getDateLabelHeight();
-        mSpacing = gridInfo.getSpacing();
-        mColumnWidth = gridInfo.getColumnWidth();
-        mNumOfColumns = gridInfo.getNumOfColumns();
-        mActionBarHeight = gridInfo.getActionBarHeight();
+        int size = mDateLabelObjects.size();
+        for (int i = 0; i < size; i++) {
+            DateLabelObject object = mDateLabelObjects.get(i);
+            object.setTexture(dummyDateLabelTexture);
+            object.setTextureMapping(false);
 
-        mGridInfo.addListener(this);
+            ImageObjects imageObjects = object.getImageObjects();
+            imageObjects.setDummyTexture(dummyImageTexture);
+        }
     }
 
-    void setDummyDateLabelTexture(GLESTexture texture) {
-        mDummyDateLabelTexture = texture;
-    }
-
-    void setDummyImageTexture(GLESTexture texture) {
-        mDummyImageTexture = texture;
+    DateLabelObject getObject(int i) {
+        return mDateLabelObjects.get(i);
     }
 
     ImageObject getImageObject(ImageIndexingInfo indexingInfo) {
-        DateLabelObject dateLabelObject = mDateLabelObjects.get(indexingInfo.mDateLabelIndex);
-        ImageObjects imageObjects = mObjectsMap.get(dateLabelObject);
+        DateLabelObject object = mDateLabelObjects.get(indexingInfo.mDateLabelIndex);
+        ImageObjects imageObjects = object.getImageObjects();
         ImageObject imageObject = imageObjects.getObject(indexingInfo.mImageIndex);
 
         return imageObject;
@@ -627,7 +605,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
                     new AsyncDrawable(mContext.getResources(),
                             mLoadingBitmap, task);
             DateLabelObject object = (DateLabelObject) mTextureMappingInfos.get(dateLableInfo.getIndex()).getObject();
-            object.setTexture(mDummyDateLabelTexture);
             texture.setBitmapDrawable(asyncDrawable);
             task.execute(dateLableInfo);
         }
@@ -645,8 +622,8 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     void deleteImage(ImageIndexingInfo indexingInfo) {
-        DateLabelObject dateLabelObject = mDateLabelObjects.get(indexingInfo.mDateLabelIndex);
-        ImageObjects imageObjects = mObjectsMap.get(dateLabelObject);
+        DateLabelObject object = mDateLabelObjects.get(indexingInfo.mDateLabelIndex);
+        ImageObjects imageObjects = object.getImageObjects();
         imageObjects.delete(indexingInfo.mImageIndex);
     }
 
@@ -675,7 +652,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mDateLabelObjects.get(i);
-            ImageObjects imageObjects = mObjectsMap.get(object);
+            ImageObjects imageObjects = object.getImageObjects();
             imageObjects.cancelLoading();
         }
     }
@@ -770,7 +747,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mDateLabelObjects.get(i);
-            ImageObjects imageObjects = mObjectsMap.get(object);
+            ImageObjects imageObjects = object.getImageObjects();
             imageObjects.invalidateObjects();
         }
     }
@@ -801,7 +778,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             object.setLeftTop(currentLeft, currentTop);
 
-            ImageObjects imageObjects = mObjectsMap.get(object);
+            ImageObjects imageObjects = object.getImageObjects();
             imageObjects.setStartOffsetY(currentTop - mDateLabelHeight - mSpacing);
             imageObjects.onAnimation(x);
 

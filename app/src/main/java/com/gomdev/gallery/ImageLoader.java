@@ -210,7 +210,6 @@ public class ImageLoader {
                         new AsyncDrawable(mContext.getResources(),
                                 mLoadingBitmap, task);
                 container.setBitmapDrawable(asyncDrawable);
-//                Log.d(TAG, "loadThumbnail() >>> execute() " + imageInfo);
                 task.execute(imageInfo);
             }
         }
@@ -470,7 +469,9 @@ public class ImageLoader {
 
                 value = new RecyclingBitmapDrawable(mContext.getResources(), bitmap);
 
-                mImageCache.addBitmapToCache(imageKey, value);
+                if (bitmap != null) {
+                    mImageCache.addBitmapToCache(imageKey, value);
+                }
             } else {
                 bitmap = mImageLoader.getBitmap(imageInfo, mRequestWidth,
                         mRequestHeight, true);

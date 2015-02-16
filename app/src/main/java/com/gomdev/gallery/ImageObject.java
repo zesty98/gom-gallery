@@ -13,6 +13,7 @@ class ImageObject extends GalleryObject {
     private float mNextScale = 1f;
     private float mStartOffsetY = 0f;
     private float mNextStartOffsetY = 0f;
+    private float mAlpha = 1f;
 
     private boolean mPrevVisibility = false;
 
@@ -20,43 +21,43 @@ class ImageObject extends GalleryObject {
         super(name);
     }
 
-    public void setScale(float scale) {
+    void setScale(float scale) {
         mScale = scale;
     }
 
-    public float getScale() {
+    float getScale() {
         return mScale;
     }
 
-    public void setPrevScale(float scale) {
+    void setPrevScale(float scale) {
         mPrevScale = scale;
     }
 
-    public float getPrevScale() {
+    float getPrevScale() {
         return mPrevScale;
     }
 
-    public void setNextScale(float scale) {
+    void setNextScale(float scale) {
         mNextScale = scale;
     }
 
-    public float getNextScale() {
+    float getNextScale() {
         return mNextScale;
     }
 
-    public void setStartOffsetY(float startOffsetY) {
+    void setStartOffsetY(float startOffsetY) {
         mStartOffsetY = startOffsetY;
     }
 
-    public float getStartOffsetY() {
+    float getStartOffsetY() {
         return mStartOffsetY;
     }
 
-    public void setNextStartOffsetY(float nextStartOffsetY) {
+    void setNextStartOffsetY(float nextStartOffsetY) {
         mNextStartOffsetY = nextStartOffsetY;
     }
 
-    public float getNextStartOffsetY() {
+    float getNextStartOffsetY() {
         return mNextStartOffsetY;
     }
 
@@ -67,5 +68,13 @@ class ImageObject extends GalleryObject {
 
     boolean isVisibilityChanged() {
         return (mIsVisible != mPrevVisibility);
+    }
+
+    void setAlpha(float alpha) {
+        mAlpha = alpha;
+    }
+
+    float getAlpha() {
+        return mAlpha;
     }
 }

@@ -6,9 +6,4 @@
     tools:context="com.gomdev.gallery.MainActivity"
     tools:ignore="MergeRootFrame">
 
-    <com.gomdev.gallery.GallerySurfaceView
-        android:id="@+id/surfaceview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
 </FrameLayout>

@@ -1,6 +1,7 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 
@@ -13,31 +14,32 @@ class GalleryScaleGestureDetector implements GridInfoChangeListener {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final Context mContext;
-    private final ImageListRenderer mRenderer;
+    private final GridInfo mGridInfo;
 
     private GallerySurfaceView mSurfaceView = null;
+    private ImageListRenderer mRenderer = null;
 
-    private GridInfo mGridInfo = null;
     private ScaleGestureDetector mScaleGestureDetector = null;
 
     private int mNumOfColumns;
     private int mMinNumOfColumns;
     private int mMaxNumOfColumns;
 
-    GalleryScaleGestureDetector(Context context, ImageListRenderer renderer) {
+    GalleryScaleGestureDetector(Context context, GridInfo gridInfo) {
         mContext = context;
-        mRenderer = renderer;
+        mGridInfo = gridInfo;
+
+        setGridInfo(gridInfo);
 
         mScaleGestureDetector = new ScaleGestureDetector(context, mScaleGestureListener);
     }
 
     void setSurfaceView(GallerySurfaceView surfaceView) {
         mSurfaceView = surfaceView;
+        mRenderer = surfaceView.getRenderer();
     }
 
-    void setGridInfo(GridInfo gridInfo) {
-        mGridInfo = gridInfo;
-
+    private void setGridInfo(GridInfo gridInfo) {
         mNumOfColumns = gridInfo.getNumOfColumns();
         mMinNumOfColumns = gridInfo.getMinNumOfColumns();
         mMaxNumOfColumns = gridInfo.getMaxNumOfColumns();
@@ -51,6 +53,10 @@ class GalleryScaleGestureDetector implements GridInfoChangeListener {
 
     @Override
     public void onColumnWidthChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onColumnWidthChanged()");
+        }
+
         mNumOfColumns = mGridInfo.getNumOfColumns();
     }
 

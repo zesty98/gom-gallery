@@ -8,6 +8,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.OverScroller;
@@ -26,11 +27,11 @@ class GalleryGestureDetector implements GridInfoChangeListener {
     private final static float MAX_TRANSLATE_Z_DP = -70f; // dp
 
     private final Context mContext;
-    private final ImageListRenderer mRenderer;
+    private final GridInfo mGridInfo;
 
     private GallerySurfaceView mSurfaceView = null;
+    private ImageListRenderer mRenderer = null;
 
-    private GridInfo mGridInfo = null;
 
     private GestureDetectorCompat mGestureDetector;
 
@@ -65,9 +66,11 @@ class GalleryGestureDetector implements GridInfoChangeListener {
 
     private int mHeight = 0;
 
-    GalleryGestureDetector(Context context, ImageListRenderer renderer) {
+    GalleryGestureDetector(Context context, GridInfo gridInfo) {
         mContext = context;
-        mRenderer = renderer;
+        mGridInfo = gridInfo;
+
+        setGridInfo(gridInfo);
 
         mGestureDetector = new GestureDetectorCompat(context, mGestureListener);
 
@@ -76,13 +79,7 @@ class GalleryGestureDetector implements GridInfoChangeListener {
         mMaxTranslateZ = GLESUtils.getPixelFromDpi(mContext, MAX_TRANSLATE_Z_DP);
     }
 
-    void setSurfaceView(GallerySurfaceView surfaceView) {
-        mSurfaceView = surfaceView;
-    }
-
-    void setGridInfo(GridInfo gridInfo) {
-        mGridInfo = gridInfo;
-
+    private void setGridInfo(GridInfo gridInfo) {
         mColumnWidth = mGridInfo.getColumnWidth();
         mNumOfColumns = mGridInfo.getNumOfColumns();
         mSpacing = mGridInfo.getSpacing();
@@ -97,6 +94,11 @@ class GalleryGestureDetector implements GridInfoChangeListener {
         mMaxNumOfColumns = gridInfo.getMaxNumOfColumns();
 
         gridInfo.addListener(this);
+    }
+
+    void setSurfaceView(GallerySurfaceView surfaceView) {
+        mSurfaceView = surfaceView;
+        mRenderer = surfaceView.getRenderer();
     }
 
     void surfaceChanged(int width, int height) {
@@ -127,8 +129,16 @@ class GalleryGestureDetector implements GridInfoChangeListener {
         }
     }
 
+    RectF getCurrentViewport() {
+        return mCurrentViewport;
+    }
+
     @Override
     public void onColumnWidthChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onColumnWidthChanged()");
+        }
+
         mColumnWidth = mGridInfo.getColumnWidth();
         mNumOfColumns = mGridInfo.getNumOfColumns();
     }
@@ -334,6 +344,9 @@ class GalleryGestureDetector implements GridInfoChangeListener {
             mGridInfo.setImageIndexingInfo(imageIndexingInfo);
 
             mRenderer.cancelLoading();
+
+            Log.d(TAG, "onSingleTapUp() imageIndexingInfo " + imageIndexingInfo);
+//            mRenderer.onImageSelected(imageIndexingInfo);
 
             mContext.startActivity(intent);
 

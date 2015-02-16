@@ -3,7 +3,6 @@ package com.gomdev.gallery;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
-import android.util.AttributeSet;
 import android.view.MotionEvent;
 
 /**
@@ -15,27 +14,21 @@ public class GallerySurfaceView extends GLSurfaceView {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final Context mContext;
+    private final GridInfo mGridInfo;
 
     private ImageListRenderer mRenderer = null;
 
-    public GallerySurfaceView(Context context) {
+    public GallerySurfaceView(Context context, GridInfo gridInfo) {
         super(context);
 
         mContext = context;
-
-        init();
-    }
-
-    public GallerySurfaceView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-
-        mContext = context;
+        mGridInfo = gridInfo;
 
         init();
     }
 
     private void init() {
-        mRenderer = new ImageListRenderer(mContext);
+        mRenderer = new ImageListRenderer(mContext, mGridInfo);
         mRenderer.setSurfaceView(this);
 
         setEGLContextClientVersion(2);
@@ -81,7 +74,7 @@ public class GallerySurfaceView extends GLSurfaceView {
         return retVal || super.onTouchEvent(event);
     }
 
-    void setGridInfo(GridInfo gridInfo) {
-        mRenderer.setGridInfo(gridInfo);
+    ImageListRenderer getRenderer() {
+        return mRenderer;
     }
 }

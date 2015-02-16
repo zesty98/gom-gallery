@@ -1,7 +1,5 @@
 package com.gomdev.gallery;
 
-import android.util.Log;
-
 import com.gomdev.gles.GLESNode;
 
 /**

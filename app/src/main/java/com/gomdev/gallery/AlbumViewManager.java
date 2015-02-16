@@ -14,8 +14,6 @@ import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESNodeListener;
 import com.gomdev.gles.GLESObject;
 import com.gomdev.gles.GLESObjectListener;
-import com.gomdev.gles.GLESRenderer;
-import com.gomdev.gles.GLESSceneManager;
 import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESShaderConstant;
 import com.gomdev.gles.GLESTexture;
@@ -30,17 +28,16 @@ import java.nio.FloatBuffer;
  * Created by gomdev on 14. 12. 31..
  */
 class AlbumViewManager implements GridInfoChangeListener {
-    static final String CLASS = "ObjectManager";
+    static final String CLASS = "AlbumViewManager";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final Context mContext;
-    private final ImageListRenderer mRenderer;
+    private final GridInfo mGridInfo;
 
-    private GLESRenderer mGLESRenderer = null;
     private GallerySurfaceView mSurfaceView = null;
-    private GLESSceneManager mSM = null;
-    private GLESNode mRoot = null;
+    private ImageListRenderer mRenderer = null;
+
     private GLESNode mImageNode = null;
 
     private GLESGLState mGLState = null;
@@ -57,7 +54,6 @@ class AlbumViewManager implements GridInfoChangeListener {
     private ImageInfo mSelectedImageInfo = null;
     private GLESAnimator mSelectionAnimator = null;
 
-    private GridInfo mGridInfo = null;
     private BucketInfo mBucketInfo = null;
     private int mSpacing;
     private int mNumOfColumns;
@@ -71,21 +67,22 @@ class AlbumViewManager implements GridInfoChangeListener {
 
     private boolean mIsSurfaceChanged = false;
 
-    AlbumViewManager(Context context, ImageListRenderer renderer) {
+    AlbumViewManager(Context context, GridInfo gridInfo) {
         if (DEBUG) {
             Log.d(TAG, "ObjectManager()");
         }
 
         mContext = context;
-        mRenderer = renderer;
+        mGridInfo = gridInfo;
+
+        setGridInfo(gridInfo);
 
         init();
     }
 
     private void init() {
-        mGLESRenderer = GLESRenderer.createRenderer();
-
-        mGalleryObjects = new GalleryObjects(mContext, mRenderer);
+        mBucketInfo = mGridInfo.getBucketInfo();
+        mGalleryObjects = new GalleryObjects(mContext, mGridInfo, mBucketInfo);
 
         GLESGLState glState = new GLESGLState();
         glState.setCullFaceState(true);
@@ -102,15 +99,24 @@ class AlbumViewManager implements GridInfoChangeListener {
 
         mGalleryObjects.setDateLabelGLState(mGLState);
 
-        mScrollbar = new Scrollbar(mContext);
+        mScrollbar = new Scrollbar(mContext, mGridInfo);
         mScrollbar.setColor(0.3f, 0.3f, 0.3f, 0.7f);
 
         mSelectionAnimator = new GLESAnimator(new SelectionAnimatorCallback());
         mSelectionAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
         mSelectionAnimator.setDuration(GalleryConfig.SELECTION_ANIMATION_START_OFFSET, GalleryConfig.SELECTION_ANIMATION_END_OFFSET);
 
-
         mIsSurfaceChanged = false;
+    }
+
+    private void setGridInfo(GridInfo gridInfo) {
+        mDateLabelHeight = gridInfo.getDateLabelHeight();
+        mSpacing = gridInfo.getSpacing();
+        mNumOfDateInfos = gridInfo.getNumOfDateInfos();
+        mColumnWidth = mGridInfo.getColumnWidth();
+        mNumOfColumns = mGridInfo.getNumOfColumns();
+
+        gridInfo.addListener(this);
     }
 
     // rendering
@@ -127,12 +133,6 @@ class AlbumViewManager implements GridInfoChangeListener {
         mGalleryObjects.checkVisibility(isOnScrolling);
         mGalleryObjects.update(isOnScrolling);
         mScrollbar.update(isOnScrolling);
-
-        mGLESRenderer.updateScene(mSM);
-    }
-
-    void drawFrame() {
-        mGLESRenderer.drawScene(mSM);
     }
 
     // onSurfaceChanged
@@ -145,7 +145,6 @@ class AlbumViewManager implements GridInfoChangeListener {
         mWidth = width;
         mHeight = height;
 
-        mGLESRenderer.reset();
 
         mGalleryObjects.onSurfaceChanged(width, height);
         mScrollbar.onSurfaceChanged(width, height);
@@ -162,6 +161,7 @@ class AlbumViewManager implements GridInfoChangeListener {
         mScrollbar.setupObject(camera);
 
         mDetailObject.setCamera(camera);
+        mDetailObject.setShader(mTextureShader);
 
         GLESVertexInfo vertexInfo = new GLESVertexInfo();
 
@@ -177,6 +177,7 @@ class AlbumViewManager implements GridInfoChangeListener {
         mDetailObject.setVertexInfo(vertexInfo, false, false);
 
         mBGObject.setCamera(camera);
+        mBGObject.setShader(mColorShader);
 
         vertexInfo = GalleryUtils.createColorVertexInfo(mColorShader,
                 -mWidth * 0.5f, mHeight * 0.5f,
@@ -195,6 +196,8 @@ class AlbumViewManager implements GridInfoChangeListener {
         mIsSurfaceChanged = false;
 
         createShader();
+
+        mGalleryObjects.onSurfaceCreated();
     }
 
     private boolean createShader() {
@@ -221,38 +224,34 @@ class AlbumViewManager implements GridInfoChangeListener {
         return true;
     }
 
-    void createScene() {
+    void createScene(GLESNode node) {
         if (DEBUG) {
             Log.d(TAG, "createScene()");
         }
 
-        mSM = GLESSceneManager.createSceneManager();
-        mRoot = mSM.createRootNode("root");
-
-        mImageNode = mSM.createNode("imageNode");
+        mImageNode = new GLESNode("imageNode");
         mImageNode.setListener(mImageNodeListener);
-        mRoot.addChild(mImageNode);
+        node.addChild(mImageNode);
 
         mGalleryObjects.createObjects(mImageNode);
 
-        mScrollbar.createObject(mRoot);
+        mScrollbar.createObject(node);
 
         {
             mBGObject = new ImageObject("BG");
-            mRoot.addChild(mBGObject);
+            node.addChild(mBGObject);
 
             mBGObject.setGLState(mGLState);
-            mBGObject.setShader(mColorShader);
             mBGObject.setListener(mBGObjectListener);
             mBGObject.hide();
         }
 
         {
             mDetailObject = new ImageObject("selectedObject");
-            mRoot.addChild(mDetailObject);
+            node.addChild(mDetailObject);
 
             mDetailObject.setGLState(mGLState);
-            mDetailObject.setShader(mTextureShader);
+
             mDetailObject.setListener(mSelectedImageObjectListener);
             mDetailObject.hide();
         }
@@ -352,7 +351,6 @@ class AlbumViewManager implements GridInfoChangeListener {
 
         mDetailObject.setTexture(mSelectedImageObject.getTexture());
 
-        Log.d(TAG, "onImageSelected() >>> start()");
         mSelectionAnimator.setValues(0f, 1f);
         mSelectionAnimator.cancel();
         mSelectionAnimator.start();
@@ -368,33 +366,15 @@ class AlbumViewManager implements GridInfoChangeListener {
         }
 
         mSurfaceView = surfaceView;
+        mRenderer = surfaceView.getRenderer();
 
         mGalleryObjects.setSurfaceView(surfaceView);
         mScrollbar.setSurfaceView(surfaceView);
     }
 
-    void setGridInfo(GridInfo gridInfo) {
-        mGridInfo = gridInfo;
 
-        mBucketInfo = gridInfo.getBucketInfo();
-        mDateLabelHeight = gridInfo.getDateLabelHeight();
-        mSpacing = gridInfo.getSpacing();
-        mNumOfDateInfos = gridInfo.getNumOfDateInfos();
-        mColumnWidth = mGridInfo.getColumnWidth();
-        mNumOfColumns = mGridInfo.getNumOfColumns();
-
-        mGalleryObjects.setGridInfo(mGridInfo);
-        mScrollbar.setGridInfo(gridInfo);
-
-        gridInfo.addListener(this);
-    }
-
-    void setDummyImageTexture(GLESTexture dummyTexture) {
-        mGalleryObjects.setDummyImageTexture(dummyTexture);
-    }
-
-    void setDummyDateLabelTexture(GLESTexture dummyTexture) {
-        mGalleryObjects.setDummyDateLabelTexture(dummyTexture);
+    void setDummyTexture(GLESTexture dummyDateLabelTexture, GLESTexture dummyImageTexture) {
+        mGalleryObjects.setDummyTexture(dummyDateLabelTexture, dummyImageTexture);
     }
 
     int getDateLabelIndex(float y) {
@@ -471,6 +451,9 @@ class AlbumViewManager implements GridInfoChangeListener {
         GalleryObject dateLabelObject = mGalleryObjects.getObject(selectedDateLabelIndex);
         float imageStartOffset = dateLabelObject.getTop() - mDateLabelHeight - mSpacing;
         float yDistFromDateLabel = imageStartOffset - yPos;
+        if (yDistFromDateLabel < 0) {
+            yDistFromDateLabel = 0f;
+        }
 
         int row = (int) (yDistFromDateLabel / (mColumnWidth + mSpacing));
         int column = (int) (x / (mColumnWidth + mSpacing));

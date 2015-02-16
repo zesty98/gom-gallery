@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.opengl.GLES20;
+import android.util.Log;
 
 import com.gomdev.gles.GLESAnimator;
 import com.gomdev.gles.GLESAnimatorCallback;
@@ -27,6 +28,7 @@ class Scrollbar implements GridInfoChangeListener {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final Context mContext;
+    private final GridInfo mGridInfo;
 
     private GallerySurfaceView mSurfaceView = null;
     private GLESObject mScrollbarObject = null;
@@ -34,8 +36,6 @@ class Scrollbar implements GridInfoChangeListener {
     private GLESGLState mGLState = null;
 
     private GLESAnimator mAnimator = null;
-
-    private GridInfo mGridInfo;
 
     private int mWidth = 0;
     private int mHeight = 0;
@@ -62,10 +62,22 @@ class Scrollbar implements GridInfoChangeListener {
 
     private boolean mIsVisible = true;
 
-    Scrollbar(Context context) {
+    Scrollbar(Context context, GridInfo gridInfo) {
         mContext = context;
+        mGridInfo = gridInfo;
+
+        setGridInfo(gridInfo);
 
         init();
+    }
+
+    private void setGridInfo(GridInfo gridInfo) {
+        mSpacing = gridInfo.getSpacing();
+        mNumOfColumns = gridInfo.getNumOfColumns();
+        mColumnWidth = gridInfo.getColumnWidth();
+        mActionBarHeight = gridInfo.getActionBarHeight();
+
+        gridInfo.addListener(this);
     }
 
     private void init() {
@@ -144,6 +156,10 @@ class Scrollbar implements GridInfoChangeListener {
 
     @Override
     public void onColumnWidthChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onColumnWidthChanged()");
+        }
+
         float scrollableHeight = mGridInfo.getScrollableHeight();
         if (scrollableHeight < mHeight) {
             mIsVisible = false;
@@ -204,16 +220,6 @@ class Scrollbar implements GridInfoChangeListener {
         mAlpha = a;
     }
 
-    void setGridInfo(GridInfo gridInfo) {
-        mGridInfo = gridInfo;
-
-        mSpacing = gridInfo.getSpacing();
-        mNumOfColumns = gridInfo.getNumOfColumns();
-        mColumnWidth = gridInfo.getColumnWidth();
-        mActionBarHeight = gridInfo.getActionBarHeight();
-
-        gridInfo.addListener(this);
-    }
 
     GLESObject createObject(GLESNode parent) {
         mScrollbarObject = new GLESObject("scrollbar");
@@ -221,13 +227,14 @@ class Scrollbar implements GridInfoChangeListener {
 
         mScrollbarObject.setListener(mScrollbarListener);
         mScrollbarObject.setGLState(mGLState);
-        mScrollbarObject.setShader(mColorShader);
+
 
         return mScrollbarObject;
     }
 
     void setupObject(GLESCamera camera) {
         mScrollbarObject.setCamera(camera);
+        mScrollbarObject.setShader(mColorShader);
 
         GLESVertexInfo vertexInfo = GalleryUtils.createColorVertexInfo(mColorShader,
                 mScrollbarRegionLeft, mScrollbarRegionTop,

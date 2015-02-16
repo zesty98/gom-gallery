@@ -31,7 +31,7 @@ class ImageManager {
     private int mNumOfImages = 0;
     private List<BucketInfo> mBucketInfos = new ArrayList<>();
     private BucketInfo mCurrentBucketInfo = null;
-    private ObjectManager mObjectManager = null;
+    private AlbumViewManager mAlbumViewManager = null;
 
     private int mBucketIndex = 0;
 
@@ -42,8 +42,8 @@ class ImageManager {
         mNumOfImages = 0;
     }
 
-    void setObjectManager(ObjectManager objectManager) {
-        mObjectManager = objectManager;
+    void setObjectManager(AlbumViewManager albumViewManager) {
+        mAlbumViewManager = albumViewManager;
     }
 
     void addBucketInfo(BucketInfo bucketInfo) {
@@ -141,11 +141,11 @@ class ImageManager {
 
         dateLabelInfo.deleteImageInfo(imageIndexingInfo.mImageIndex);
 
-        mObjectManager.deleteImage(imageIndexingInfo);
+        mAlbumViewManager.deleteImage(imageIndexingInfo);
 
         if (dateLabelInfo.getNumOfImages() == 0) {
             mCurrentBucketInfo.deleteDateLabel(imageIndexingInfo.mDateLabelIndex);
-            mObjectManager.deleteDateLabel(imageIndexingInfo.mDateLabelIndex);
+            mAlbumViewManager.deleteDateLabel(imageIndexingInfo.mDateLabelIndex);
 
             if (mCurrentBucketInfo.getNumOfDateInfos() == 0) {
                 delete(imageIndexingInfo.mBucketIndex);

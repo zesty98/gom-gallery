@@ -119,6 +119,9 @@ class ImageCache {
     @TargetApi(Build.VERSION_CODES.KITKAT)
     private static int getBitmapSize(BitmapDrawable value) {
         Bitmap bitmap = value.getBitmap();
+        if (bitmap == null) {
+            Log.d(TAG, "");
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             return bitmap.getAllocationByteCount();
         }
