@@ -3,27 +3,19 @@ package com.gomdev.gallery;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.RectF;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.animation.AccelerateDecelerateInterpolator;
 
-import com.gomdev.gles.GLESAnimator;
-import com.gomdev.gles.GLESAnimatorCallback;
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESContext;
 import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESRect;
 import com.gomdev.gles.GLESRenderer;
 import com.gomdev.gles.GLESSceneManager;
-import com.gomdev.gles.GLESTexture;
-import com.gomdev.gles.GLESUtils;
-import com.gomdev.gles.GLESVector3;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -40,32 +32,14 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     private final GridInfo mGridInfo;
 
     private GallerySurfaceView mSurfaceView = null;
+    private GalleryContext mGalleryContext = null;
 
     private GLESRenderer mGLESRenderer = null;
     private GLESSceneManager mSM = null;
     private GLESNode mRoot = null;
 
     private AlbumViewManager mAlbumViewManager = null;
-
-    private GalleryGestureDetector mGalleryGestureDetector = null;
-    private GalleryScaleGestureDetector mGalleryScaleGestureDetector = null;
-
-    private int mSpacing = 0;
-    private int mDefaultColumnWidth = 0;
-    private int mColumnWidth = 0;
-    private int mPrevColumnWidth = 0;
-    private int mNumOfColumns = 0;
-    private int mPrevNumOfColumns = 0;
-
-    private ImageObject mCenterObject = null;
-    private float mFocusY = 0f;
-    private boolean mIsOnAnimation = false;
-    private boolean mIsOnScale = false;
-
-    private GLESAnimator mScaleAnimator = null;
-    private float mBottom = 0f;
-    private float mPrevBottom = 0f;
-    private float mNextBottom = 0f;
+    private DetailViewManager mDetailViewManager = null;
 
     private boolean mIsSurfaceChanged = false;
 
@@ -79,39 +53,33 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
         GLESContext.getInstance().setContext(context);
         ImageManager imageManager = ImageManager.getInstance();
+        mGalleryContext = GalleryContext.getInstance();
 
         mGLESRenderer = GLESRenderer.createRenderer();
         mSM = GLESSceneManager.createSceneManager();
-
-        mAlbumViewManager = new AlbumViewManager(context, gridInfo);
-        imageManager.setObjectManager(mAlbumViewManager);
-
         mRoot = mSM.createRootNode("root");
 
         GLESNode albumViewNode = new GLESNode("albumViewNode");
         mRoot.addChild(albumViewNode);
 
+        mAlbumViewManager = new AlbumViewManager(context, gridInfo);
         mAlbumViewManager.createScene(albumViewNode);
 
+        GLESNode detailViewNode = new GLESNode("detailViewNode");
+        mRoot.addChild(detailViewNode);
+
+        mDetailViewManager = new DetailViewManager(context, gridInfo);
+        mDetailViewManager.createScene(detailViewNode);
+
+        imageManager.setObjectManager(mAlbumViewManager);
+
         setGridInfo(gridInfo);
-
-        mGalleryGestureDetector = new GalleryGestureDetector(mContext, gridInfo);
-        mGalleryScaleGestureDetector = new GalleryScaleGestureDetector(mContext, gridInfo);
-
-        mScaleAnimator = new GLESAnimator(new ScaleAnimatorCallback());
-        mScaleAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
-        mScaleAnimator.setDuration(GalleryConfig.IMAGE_ANIMATION_START_OFFSET, GalleryConfig.IMAGE_ANIMATION_END_OFFSET);
     }
 
     private void setGridInfo(GridInfo gridInfo) {
         if (DEBUG) {
             Log.d(TAG, "setGridInfo()");
         }
-
-        mSpacing = gridInfo.getSpacing();
-        mDefaultColumnWidth = gridInfo.getDefaultColumnWidth();
-        mColumnWidth = mGridInfo.getColumnWidth();
-        mNumOfColumns = mGridInfo.getNumOfColumns();
 
         mGridInfo.addListener(this);
     }
@@ -130,33 +98,16 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         synchronized (GalleryContext.sLockObject) {
-            udpateGestureDetector();
-
-            boolean isOnScrolling = mGalleryGestureDetector.isOnScrolling();
-            if (mIsOnAnimation == true) {
-                mGalleryGestureDetector.resetOnScrolling();
-            }
-
-            mAlbumViewManager.update(isOnScrolling);
+            mAlbumViewManager.update();
 
             mGLESRenderer.updateScene(mSM);
             mGLESRenderer.drawScene(mSM);
 
-            if (mScaleAnimator.doAnimation() == true) {
-                mSurfaceView.requestRender();
-            }
+            mAlbumViewManager.updateAnimation();
         }
     }
 
-    private void udpateGestureDetector() {
-        if (mCenterObject != null && mIsOnAnimation == true) {
-            float columnWidth = mDefaultColumnWidth * mCenterObject.getScale();
-            float top = mCenterObject.getTop() + mFocusY - columnWidth * 0.5f + mCenterObject.getStartOffsetY();
-            mGalleryGestureDetector.adjustViewport(top, mBottom);
-        }
 
-        mGalleryGestureDetector.update();
-    }
 
     // onSurfaceChanged
 
@@ -172,7 +123,6 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         mIsSurfaceChanged = false;
 
         mGridInfo.setScreenSize(width, height);
-        mGalleryGestureDetector.surfaceChanged(width, height);
 
         mAlbumViewManager.onSurfaceChanged(width, height);
 
@@ -214,57 +164,20 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         GLES20.glClearColor(1f, 1f, 1f, 1f);
 
         mAlbumViewManager.onSurfaceCreated();
-
-        GLESTexture dummyImageTexture = createDummyTexture(Color.LTGRAY);
-        GLESTexture dummyDateLabelTexture = createDummyTexture(Color.WHITE);
-        mAlbumViewManager.setDummyTexture(dummyDateLabelTexture, dummyImageTexture);
-    }
-
-    private GLESTexture createDummyTexture(int color) {
-        Bitmap bitmap = GLESUtils.makeBitmap(16, 16, Bitmap.Config.ARGB_8888, color);
-
-        GLESTexture dummyTexture = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, 16, 16)
-                .load(bitmap);
-
-        return dummyTexture;
     }
 
     // touch
 
     boolean onTouchEvent(MotionEvent event) {
-        if (mIsOnAnimation == true) {
-            return true;
-        }
-
-        boolean retVal = mGalleryScaleGestureDetector.onTouchEvent(event);
-        if (mIsOnScale == false) {
-            retVal = mGalleryGestureDetector.onTouchEvent(event) || retVal;
-        }
-
+        boolean retVal = mAlbumViewManager.onTouchEvent(event);
         return retVal;
     }
 
     // Listener
 
-    void resize(float focusX, float focusY) {
-        if (DEBUG) {
-            Log.d(TAG, "resize()");
-        }
-
-        mFocusY = focusY;
-        ImageIndexingInfo imageIndexingInfo = mAlbumViewManager.getNearestImageIndex(focusX, focusY);
-        Log.d(TAG, "resize() mCenterObject indexing info " + imageIndexingInfo);
-        mCenterObject = mAlbumViewManager.getImageObject(imageIndexingInfo);
-
-        mGridInfo.setImageIndexingInfo(imageIndexingInfo);
-
-        onAnimationStarted();
-    }
-
     void onImageSelected(ImageIndexingInfo imageIndexingInfo) {
-        RectF viewport = mGalleryGestureDetector.getCurrentViewport();
-
-        mAlbumViewManager.onImageSelected(imageIndexingInfo, viewport);
+//        ImageObject selectedObject = mAlbumViewManager.getImageObject(imageIndexingInfo);
+//        mDetailViewManager.onImageSelected(selectedObject);
     }
 
     @Override
@@ -272,27 +185,6 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         if (DEBUG) {
             Log.d(TAG, "onColumnWidthChanged()");
         }
-
-        mPrevColumnWidth = mColumnWidth;
-        mColumnWidth = mGridInfo.getColumnWidth();
-
-        mPrevNumOfColumns = mNumOfColumns;
-        mNumOfColumns = mGridInfo.getNumOfColumns();
-
-        BucketInfo bucketInfo = mGridInfo.getBucketInfo();
-        DateLabelInfo lastDateLabelInfo = bucketInfo.getLast();
-        int lastDateLabelIndex = lastDateLabelInfo.getIndex();
-        DateLabelObject object = mAlbumViewManager.getDateLabelObject(lastDateLabelIndex);
-
-        int numOfImages = lastDateLabelInfo.getNumOfImages();
-        int prevNumOfRows = (int) Math.ceil((float) (numOfImages) / mPrevNumOfColumns);
-        mPrevBottom = object.getPrevTop() - mGridInfo.getDateLabelHeight() - mSpacing - (mPrevColumnWidth + mSpacing) * prevNumOfRows;
-        mBottom = mPrevBottom;
-        int numOfRows = (int) Math.ceil((float) (numOfImages) / mNumOfColumns);
-        mNextBottom = object.getNextTop() - mGridInfo.getDateLabelHeight() - mSpacing - (mColumnWidth + mSpacing) * numOfRows;
-
-        mScaleAnimator.setValues(0f, 1f);
-        mScaleAnimator.start();
     }
 
     @Override
@@ -309,23 +201,6 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         }
     }
 
-    void onAnimationStarted() {
-        mIsOnAnimation = true;
-    }
-
-    void onAnimationFinished() {
-        mIsOnAnimation = false;
-        mAlbumViewManager.onAnimationFinished();
-    }
-
-    void onScaleBegin() {
-        mIsOnScale = true;
-    }
-
-    void onScaleEnd() {
-        mIsOnScale = false;
-    }
-
     // resume
 
     void onResume() {
@@ -333,14 +208,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
             Log.d(TAG, "onResume()");
         }
 
-        SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
-        int bucketIndex = pref.getInt(GalleryConfig.PREF_BUCKET_INDEX, 0);
-        int dateLabelIndex = pref.getInt(GalleryConfig.PREF_DATE_LABEL_INDEX, 0);
-        int imageIndex = pref.getInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
-
-        ImageIndexingInfo imageIndexingInfo = new ImageIndexingInfo(bucketIndex, dateLabelIndex, imageIndex);
-        mCenterObject = mAlbumViewManager.getImageObject(imageIndexingInfo);
-        mGridInfo.setImageIndexingInfo(imageIndexingInfo);
+        mAlbumViewManager.onResume();
     }
 
     // pause
@@ -350,6 +218,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
             Log.d(TAG, "onPause()");
         }
 
+        mAlbumViewManager.onPause();
     }
 
     // set / get
@@ -360,43 +229,6 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
         mSurfaceView = surfaceView;
         mAlbumViewManager.setSurfaceView(surfaceView);
-        mGalleryGestureDetector.setSurfaceView(surfaceView);
-        mGalleryScaleGestureDetector.setSurfaceView(surfaceView);
-    }
 
-
-    ImageIndexingInfo getSelectedImageIndex(float x, float y) {
-        return mAlbumViewManager.getSelectedImageIndex(x, y);
-    }
-
-    float getNextTranslateY() {
-        float top = mCenterObject.getNextTop() - (mColumnWidth * 0.5f) + mFocusY + mCenterObject.getNextStartOffsetY();
-        float translateY = mGalleryGestureDetector.getTranslateY(top, mNextBottom);
-        return translateY;
-    }
-
-    void cancelLoading() {
-        mAlbumViewManager.cancelLoading();
-    }
-
-    class ScaleAnimatorCallback implements GLESAnimatorCallback {
-        ScaleAnimatorCallback() {
-        }
-
-        @Override
-        public void onAnimation(GLESVector3 current) {
-            mBottom = mPrevBottom + (mNextBottom - mPrevBottom) * current.getX();
-            mAlbumViewManager.onAnimation(current.getX());
-        }
-
-        @Override
-        public void onCancel() {
-
-        }
-
-        @Override
-        public void onFinished() {
-            onAnimationFinished();
-        }
     }
 }

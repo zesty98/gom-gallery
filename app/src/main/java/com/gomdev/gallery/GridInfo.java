@@ -17,8 +17,6 @@ class GridInfo {
     private final Context mContext;
     private final BucketInfo mBucketInfo;
 
-    private ImageIndexingInfo mImageIndexingInfo = new ImageIndexingInfo(0, 0, 0);
-
     private final int mActionBarHeight;
     private final int mDateLabelHeight;
     private final int mSpacing;
@@ -171,14 +169,6 @@ class GridInfo {
 
     int getScrollableHeight() {
         return mScrollableHeight;
-    }
-
-    void setImageIndexingInfo(ImageIndexingInfo indexingInfo) {
-        mImageIndexingInfo = indexingInfo;
-    }
-
-    ImageIndexingInfo getImageIndexingInfo() {
-        return mImageIndexingInfo;
     }
 
     void deleteImageInfo() {

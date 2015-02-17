@@ -30,8 +30,9 @@ class GalleryGestureDetector implements GridInfoChangeListener {
     private final GridInfo mGridInfo;
 
     private GallerySurfaceView mSurfaceView = null;
+    private GalleryContext mGalleryContext = null;
     private ImageListRenderer mRenderer = null;
-
+    private AlbumViewManager mAlbumViewManager = null;
 
     private GestureDetectorCompat mGestureDetector;
 
@@ -72,6 +73,7 @@ class GalleryGestureDetector implements GridInfoChangeListener {
 
         setGridInfo(gridInfo);
 
+        mGalleryContext = GalleryContext.getInstance();
         mGestureDetector = new GestureDetectorCompat(context, mGestureListener);
 
         mScroller = new OverScroller(context);
@@ -99,6 +101,10 @@ class GalleryGestureDetector implements GridInfoChangeListener {
     void setSurfaceView(GallerySurfaceView surfaceView) {
         mSurfaceView = surfaceView;
         mRenderer = surfaceView.getRenderer();
+    }
+
+    void setAlbumViewManager(AlbumViewManager manager) {
+        mAlbumViewManager = manager;
     }
 
     void surfaceChanged(int width, int height) {
@@ -164,7 +170,7 @@ class GalleryGestureDetector implements GridInfoChangeListener {
     }
 
     private void adjustViewport() {
-        ImageIndexingInfo indexingInfo = mGridInfo.getImageIndexingInfo();
+        ImageIndexingInfo indexingInfo = mGalleryContext.getImageIndexingInfo();
         float distFromTop = getDistanceOfSelectedImage(indexingInfo) - mHeight * 0.5f;
 
         float left = mSurfaceBufferLeft;
@@ -315,13 +321,12 @@ class GalleryGestureDetector implements GridInfoChangeListener {
             return true;
         }
 
-
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
             float x = e.getX();
             float y = e.getY();
 
-            ImageIndexingInfo imageIndexingInfo = mRenderer.getSelectedImageIndex(x, y);
+            ImageIndexingInfo imageIndexingInfo = mAlbumViewManager.getSelectedImageIndex(x, y);
             if (imageIndexingInfo.mImageIndex == -1) {
                 return false;
             }
@@ -341,12 +346,14 @@ class GalleryGestureDetector implements GridInfoChangeListener {
 
             editor.commit();
 
-            mGridInfo.setImageIndexingInfo(imageIndexingInfo);
 
-            mRenderer.cancelLoading();
+
+            mAlbumViewManager.cancelLoading();
 
             Log.d(TAG, "onSingleTapUp() imageIndexingInfo " + imageIndexingInfo);
-//            mRenderer.onImageSelected(imageIndexingInfo);
+            mGalleryContext.setImageIndexingInfo(imageIndexingInfo);
+            mGalleryContext.setCurrentViewport(mCurrentViewport);
+            mRenderer.onImageSelected(imageIndexingInfo);
 
             mContext.startActivity(intent);
 
@@ -378,7 +385,7 @@ class GalleryGestureDetector implements GridInfoChangeListener {
 
             if (numOfColumns != mNumOfColumns) {
                 synchronized (GalleryContext.sLockObject) {
-                    mRenderer.resize(x, y);
+                    mAlbumViewManager.resize(x, y);
                     mGridInfo.resize(numOfColumns);
                 }
             }
@@ -395,7 +402,6 @@ class GalleryGestureDetector implements GridInfoChangeListener {
             float viewportOffsetY = -distanceY;
             setViewportBottomLeft(mCurrentViewport.left,
                     (mCurrentViewport.bottom + viewportOffsetY), true);
-
 
             return true;
         }

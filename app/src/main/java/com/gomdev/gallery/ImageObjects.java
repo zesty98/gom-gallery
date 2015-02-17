@@ -35,7 +35,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     private final DateLabelInfo mDateLabelInfo;
 
     private GallerySurfaceView mSurfaceView = null;
-    private ImageListRenderer mRenderer = null;
+    private AlbumViewManager mAlbumViewManager = null;
     private ImageLoader mImageLoader = null;
     private GalleryNode mParentNode = null;
     private GLESCamera mCamera = null;
@@ -374,7 +374,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         float viewportTop = mHeight * 0.5f - mGridInfo.getTranslateY();
         float viewportBottom = viewportTop - mHeight;
 
-        float nextTranslateY = mRenderer.getNextTranslateY();
+        float nextTranslateY = mAlbumViewManager.getNextTranslateY();
         float nextViewportTop = mHeight * 0.5f - nextTranslateY;
         float nextViewportBottom = nextViewportTop - mHeight;
 
@@ -444,7 +444,10 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         }
 
         mSurfaceView = surfaceView;
-        mRenderer = mSurfaceView.getRenderer();
+    }
+
+    void setAlbumViewManager(AlbumViewManager manager) {
+        mAlbumViewManager = manager;
     }
 
 

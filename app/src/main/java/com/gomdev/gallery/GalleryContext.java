@@ -1,6 +1,7 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
+import android.graphics.RectF;
 
 class GalleryContext {
     static final Object sLockObject = new Object();
@@ -10,6 +11,9 @@ class GalleryContext {
     private int mGridColumnWidth;
     private int mActionBarHeight = 0;
     private int mVersionCode = 100;
+
+    private ImageIndexingInfo mImageIndexingInfo = new ImageIndexingInfo(0, 0, 0);
+    private RectF mCurrentViewport = null;
 
     static GalleryContext newInstance(Context context) {
         sGalleryContext = new GalleryContext();
@@ -56,5 +60,21 @@ class GalleryContext {
 
     void setVersionCode(int version) {
         mVersionCode = version;
+    }
+
+    void setImageIndexingInfo(ImageIndexingInfo indexingInfo) {
+        mImageIndexingInfo = indexingInfo;
+    }
+
+    ImageIndexingInfo getImageIndexingInfo() {
+        return mImageIndexingInfo;
+    }
+
+    void setCurrentViewport(RectF viewport) {
+        mCurrentViewport = viewport;
+    }
+
+    RectF getCurrentViewport() {
+        return mCurrentViewport;
     }
 }

@@ -45,7 +45,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     private final ReusableBitmaps mReusableBitmaps;
 
     private GallerySurfaceView mSurfaceView = null;
-    private ImageListRenderer mRenderer = null;
+    private AlbumViewManager mAlbumViewManager = null;
 
     private List<DateLabelObject> mDateLabelObjects = new ArrayList<>();
 
@@ -409,7 +409,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         float viewportTop = mHeight * 0.5f - mGridInfo.getTranslateY();
         float viewportBottom = viewportTop - mHeight;
 
-        float nextTranslateY = mRenderer.getNextTranslateY();
+        float nextTranslateY = mAlbumViewManager.getNextTranslateY();
         float nextViewportTop = mHeight * 0.5f - nextTranslateY;
         float nextViewportBottom = nextViewportTop - mHeight;
 
@@ -508,11 +508,16 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             mTextureMappingInfos.add(textureMappingInfo);
 
             ImageObjects imageObjects = new ImageObjects(mContext, mGridInfo, dateLabelInfo);
+            imageObjects.setAlbumViewManager(mAlbumViewManager);
             imageObjects.setGLState(mImageGLState);
             imageObjects.createObjects(node);
 
             object.setImageObjects(imageObjects);
         }
+    }
+
+    void setAlbumViewManager(AlbumViewManager manager) {
+        mAlbumViewManager = manager;
     }
 
     void setSurfaceView(GallerySurfaceView surfaceView) {
@@ -521,7 +526,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         }
 
         mSurfaceView = surfaceView;
-        mRenderer = mSurfaceView.getRenderer();
     }
 
     void setDateLabelGLState(GLESGLState state) {
@@ -720,10 +724,10 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
                 bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             }
 
-//            bitmap = GLESUtils.drawTextToBitmap(x, y,
-//                    mDateLabelInfo.getDate(), textPaint, bitmap);
             bitmap = GLESUtils.drawTextToBitmap(x, y,
-                    "" + mDateLabelInfo.getIndex(), textPaint, bitmap);
+                    mDateLabelInfo.getDate(), textPaint, bitmap);
+//            bitmap = GLESUtils.drawTextToBitmap(x, y,
+//                    "" + mDateLabelInfo.getIndex(), textPaint, bitmap);
 
             BitmapDrawable drawable = new BitmapDrawable(mContext.getResources(), bitmap);
 
