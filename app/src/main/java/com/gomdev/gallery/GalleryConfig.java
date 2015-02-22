@@ -32,7 +32,7 @@ public class GalleryConfig {
     static final long DATE_LABEL_ANIMATION_START_OFFSET = IMAGE_ANIMATION_END_OFFSET;
     static final long DATE_LABEL_ANIMATION_END_OFFSET = IMAGE_ANIMATION_END_OFFSET + 200L;
     static final long SELECTION_ANIMATION_START_OFFSET = 0L;
-    static final long SELECTION_ANIMATION_END_OFFSET = 3500L;
+    static final long SELECTION_ANIMATION_END_OFFSET = 300L;
 
     static final long SCROLLBAR_ANIMATION_DURATION = 300L;
 }

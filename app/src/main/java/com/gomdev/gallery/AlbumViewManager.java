@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.RectF;
 import android.opengl.GLES20;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -16,22 +15,16 @@ import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
 import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESNodeListener;
-import com.gomdev.gles.GLESObject;
-import com.gomdev.gles.GLESObjectListener;
 import com.gomdev.gles.GLESShader;
-import com.gomdev.gles.GLESShaderConstant;
 import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVector3;
-import com.gomdev.gles.GLESVertexInfo;
-
-import java.nio.FloatBuffer;
 
 /**
  * Created by gomdev on 14. 12. 31..
  */
-class AlbumViewManager implements GridInfoChangeListener {
+class AlbumViewManager implements GridInfoChangeListener, ViewManager {
     static final String CLASS = "AlbumViewManager";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -44,6 +37,10 @@ class AlbumViewManager implements GridInfoChangeListener {
     private GalleryObjects mGalleryObjects = null;
     private Scrollbar mScrollbar = null;
     private GalleryContext mGalleryContext = null;
+
+    private GLESShader mTextureShader = null;
+    private GLESShader mTextureAlphaShader = null;
+    private GLESShader mColorShader = null;
 
     private GLESAnimator mScaleAnimator = null;
     private boolean mIsOnAnimation = false;
@@ -135,24 +132,11 @@ class AlbumViewManager implements GridInfoChangeListener {
         gridInfo.addListener(this);
     }
 
-    // initialization
-    void createScene(GLESNode node) {
-        if (DEBUG) {
-            Log.d(TAG, "createScene()");
-        }
-
-        GLESNode imageNode = new GLESNode("imageNode");
-        imageNode.setListener(mImageNodeListener);
-        node.addChild(imageNode);
-
-        mGalleryObjects.createObjects(imageNode);
-
-        mScrollbar.createObject(node);
-    }
 
     // rendering
 
-    void update() {
+    @Override
+    public void update() {
         udpateGestureDetector();
 
         boolean isOnScrolling = mGalleryGestureDetector.isOnScrolling();
@@ -179,7 +163,8 @@ class AlbumViewManager implements GridInfoChangeListener {
         mGalleryGestureDetector.update();
     }
 
-    void updateAnimation() {
+    @Override
+    public void updateAnimation() {
         if (mScaleAnimator.doAnimation() == true) {
             mSurfaceView.requestRender();
         }
@@ -220,7 +205,9 @@ class AlbumViewManager implements GridInfoChangeListener {
 
         mIsSurfaceChanged = false;
 
-        createShader();
+        mGalleryObjects.setDateLabelShader(mTextureAlphaShader);
+        mGalleryObjects.setImageShader(mTextureShader);
+        mScrollbar.setShader(mColorShader);
 
         mGalleryObjects.onSurfaceCreated();
 
@@ -239,68 +226,45 @@ class AlbumViewManager implements GridInfoChangeListener {
         return dummyTexture;
     }
 
-    private boolean createShader() {
-        GLESShader textureShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_20_fs);
-        if (textureShader == null) {
-            return false;
+    // initialization
+    void createScene(GLESNode node) {
+        if (DEBUG) {
+            Log.d(TAG, "createScene()");
         }
 
-        mGalleryObjects.setImageShader(textureShader);
+        GLESNode imageNode = new GLESNode("imageNode");
+        imageNode.setListener(mImageNodeListener);
+        node.addChild(imageNode);
 
-        GLESShader textureAlphaShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_alpha_20_fs);
-        if (textureAlphaShader == null) {
-            return false;
-        }
-        mGalleryObjects.setDateLabelShader(textureAlphaShader);
+        mGalleryObjects.createObjects(imageNode);
 
-        GLESShader colorShader = createColorShader(R.raw.color_20_vs, R.raw.color_alpha_20_fs);
-        if (colorShader == null) {
-            return false;
-        }
-
-        mScrollbar.setShader(colorShader);
-
-        return true;
+        mScrollbar.createObject(node);
     }
 
-    private GLESShader createTextureShader(int vsResID, int fsResID) {
-        GLESShader textureShader = new GLESShader(mContext);
-
-        String vsSource = GLESUtils.getStringFromReosurce(mContext, vsResID);
-        String fsSource = GLESUtils.getStringFromReosurce(mContext, fsResID);
-
-        textureShader.setShaderSource(vsSource, fsSource);
-        if (textureShader.load() == false) {
-            return null;
-        }
-
-        String attribName = GLESShaderConstant.ATTRIB_POSITION;
-        textureShader.setPositionAttribIndex(attribName);
-
-        attribName = GLESShaderConstant.ATTRIB_TEXCOORD;
-        textureShader.setTexCoordAttribIndex(attribName);
-
-        return textureShader;
+    void setTextureAlphaShader(GLESShader shader) {
+        mTextureAlphaShader = shader;
     }
 
-    private GLESShader createColorShader(int vsResID, int fsResID) {
-        GLESShader colorShader = new GLESShader(mContext);
+    void setTextureShader(GLESShader shader) {
+        mTextureShader = shader;
+    }
 
-        String vsSource = GLESUtils.getStringFromReosurce(mContext, vsResID);
-        String fsSource = GLESUtils.getStringFromReosurce(mContext, fsResID);
+    void setColorShader(GLESShader shader) {
+        mColorShader = shader;
+    }
 
-        colorShader.setShaderSource(vsSource, fsSource);
-        if (colorShader.load() == false) {
-            return null;
+    void setSurfaceView(GallerySurfaceView surfaceView) {
+        if (DEBUG) {
+            Log.d(TAG, "setSurfaceView()");
         }
 
-        String attribName = GLESShaderConstant.ATTRIB_POSITION;
-        colorShader.setPositionAttribIndex(attribName);
+        mSurfaceView = surfaceView;
 
-        attribName = GLESShaderConstant.ATTRIB_COLOR;
-        colorShader.setColorAttribIndex(attribName);
+        mGalleryObjects.setSurfaceView(surfaceView);
+        mScrollbar.setSurfaceView(surfaceView);
 
-        return colorShader;
+        mGalleryScaleGestureDetector.setSurfaceView(surfaceView);
+        mGalleryGestureDetector.setSurfaceView(surfaceView);
     }
 
     // resume / pause
@@ -328,7 +292,8 @@ class AlbumViewManager implements GridInfoChangeListener {
 
     // touch
 
-    boolean onTouchEvent(MotionEvent event) {
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
         if (mIsOnAnimation == true) {
             return true;
         }
@@ -427,25 +392,8 @@ class AlbumViewManager implements GridInfoChangeListener {
         mNumOfDateInfos = mGridInfo.getNumOfDateInfos();
     }
 
-
-
-
-
     // set / get
 
-    void setSurfaceView(GallerySurfaceView surfaceView) {
-        if (DEBUG) {
-            Log.d(TAG, "setSurfaceView()");
-        }
-
-        mSurfaceView = surfaceView;
-
-        mGalleryObjects.setSurfaceView(surfaceView);
-        mScrollbar.setSurfaceView(surfaceView);
-
-        mGalleryScaleGestureDetector.setSurfaceView(surfaceView);
-        mGalleryGestureDetector.setSurfaceView(surfaceView);
-    }
 
     int getDateLabelIndex(float y) {
         float translateY = mGridInfo.getTranslateY();

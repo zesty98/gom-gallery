@@ -327,10 +327,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             DateLabelObject object = mDateLabelObjects.get(i);
             object.setShader(mDateLabelShader);
 
-            GLESVertexInfo vertexInfo = new GLESVertexInfo();
-            vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
-            vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
-            object.setVertexInfo(vertexInfo, false, false);
+
 
             ImageObjects imageObjects = object.getImageObjects();
             imageObjects.onSurfaceCreated();
@@ -502,6 +499,11 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setGLState(mDateLabelGLState);
             object.setListener(mObjectListener);
             object.setIndex(i);
+
+            GLESVertexInfo vertexInfo = new GLESVertexInfo();
+            vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
+            vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
+            object.setVertexInfo(vertexInfo, false, false);
 
             DateLabelInfo dateLabelInfo = mBucketInfo.get(i);
             TextureMappingInfo textureMappingInfo = new TextureMappingInfo(object, dateLabelInfo);

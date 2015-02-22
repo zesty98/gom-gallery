@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.RectF;
 import android.opengl.GLES20;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
 import com.gomdev.gles.GLESAnimator;
@@ -14,7 +15,6 @@ import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESObject;
 import com.gomdev.gles.GLESObjectListener;
 import com.gomdev.gles.GLESShader;
-import com.gomdev.gles.GLESShaderConstant;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVector3;
@@ -25,7 +25,7 @@ import java.nio.FloatBuffer;
 /**
  * Created by gomdev on 15. 2. 17..
  */
-public class DetailViewManager implements GridInfoChangeListener {
+public class DetailViewManager implements GridInfoChangeListener, ViewManager {
     static final String CLASS = "DetailViewManager";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -34,6 +34,7 @@ public class DetailViewManager implements GridInfoChangeListener {
     private final GridInfo mGridInfo;
 
     private GallerySurfaceView mSurfaceView = null;
+    private ImageListRenderer mRenderer = null;
 
     private GalleryContext mGalleryContext = null;
 
@@ -43,6 +44,10 @@ public class DetailViewManager implements GridInfoChangeListener {
     private ImageInfo mSelectedImageInfo = null;
     private GLESAnimator mSelectionAnimator = null;
 
+    private boolean mIsFinishing = false;
+
+    private float mNormalizedValue = 0f;
+
     private GLESShader mTextureShader = null;
     private GLESShader mColorShader = null;
 
@@ -51,8 +56,8 @@ public class DetailViewManager implements GridInfoChangeListener {
 
     private int mColumnWidth = 0;
 
-    private float mTranslateX = 0f;
-    private float mTranslateY = 0f;
+    private float mSrcX = 0f;
+    private float mSrcY = 0f;
     private float mDstX = 0f;
     private float mDstY = 0f;
 
@@ -78,7 +83,13 @@ public class DetailViewManager implements GridInfoChangeListener {
 
     // rendering
 
-    void update() {
+    @Override
+    public void update() {
+
+    }
+
+    @Override
+    public void updateAnimation() {
         if (mSelectionAnimator.doAnimation() == true) {
             mSurfaceView.requestRender();
         }
@@ -102,68 +113,11 @@ public class DetailViewManager implements GridInfoChangeListener {
             Log.d(TAG, "onSurfaceCreated()");
         }
 
-        createShader();
-    }
-
-    private boolean createShader() {
-        mTextureShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_20_fs);
-        if (mTextureShader == null) {
-            return false;
-        }
-
         mDetailObject.setShader(mTextureShader);
-
-        mColorShader = createColorShader(R.raw.color_20_vs, R.raw.color_alpha_20_fs);
-        if (mColorShader == null) {
-            return false;
-        }
-
         mBGObject.setShader(mColorShader);
-
-        return true;
     }
 
-    private GLESShader createTextureShader(int vsResID, int fsResID) {
-        GLESShader textureShader = new GLESShader(mContext);
-
-        String vsSource = GLESUtils.getStringFromReosurce(mContext, vsResID);
-        String fsSource = GLESUtils.getStringFromReosurce(mContext, fsResID);
-
-        textureShader.setShaderSource(vsSource, fsSource);
-        if (textureShader.load() == false) {
-            return null;
-        }
-
-        String attribName = GLESShaderConstant.ATTRIB_POSITION;
-        textureShader.setPositionAttribIndex(attribName);
-
-        attribName = GLESShaderConstant.ATTRIB_TEXCOORD;
-        textureShader.setTexCoordAttribIndex(attribName);
-
-        return textureShader;
-    }
-
-    private GLESShader createColorShader(int vsResID, int fsResID) {
-        GLESShader colorShader = new GLESShader(mContext);
-
-        String vsSource = GLESUtils.getStringFromReosurce(mContext, vsResID);
-        String fsSource = GLESUtils.getStringFromReosurce(mContext, fsResID);
-
-        colorShader.setShaderSource(vsSource, fsSource);
-        if (colorShader.load() == false) {
-            return null;
-        }
-
-        String attribName = GLESShaderConstant.ATTRIB_POSITION;
-        colorShader.setPositionAttribIndex(attribName);
-
-        attribName = GLESShaderConstant.ATTRIB_COLOR;
-        colorShader.setColorAttribIndex(attribName);
-
-        return colorShader;
-    }
-
-    void setupObject(GLESCamera camera) {
+    void setupObjects(GLESCamera camera) {
         mDetailObject.setCamera(camera);
 
         GLESVertexInfo vertexInfo = new GLESVertexInfo();
@@ -190,6 +144,37 @@ public class DetailViewManager implements GridInfoChangeListener {
 
     }
 
+    void onResume() {
+        if (DEBUG) {
+            Log.d(TAG, "onResume()");
+        }
+    }
+
+    void onPause() {
+        if (DEBUG) {
+            Log.d(TAG, "onPause()");
+        }
+    }
+
+    // touch
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return true;
+    }
+
+    // show / hide
+    void show() {
+        mBGObject.show();
+        mDetailObject.show();
+    }
+
+    void hide() {
+        mBGObject.hide();
+        mDetailObject.hide();
+    }
+
+
     // initialization
 
     void createScene(GLESNode node) {
@@ -215,13 +200,26 @@ public class DetailViewManager implements GridInfoChangeListener {
         mDetailObject.hide();
     }
 
+    public void setColorShader(GLESShader colorShader) {
+        mColorShader = colorShader;
+    }
+
+    public void setTextureShader(GLESShader textureShader) {
+        mTextureShader = textureShader;
+    }
+
+    void setSurfaceView(GallerySurfaceView surfaceView) {
+        mSurfaceView = surfaceView;
+        mRenderer = mSurfaceView.getRenderer();
+    }
+
     // touch
 
     // listener / callback
 
     @Override
     public void onColumnWidthChanged() {
-
+        mColumnWidth = mGridInfo.getColumnWidth();
     }
 
     @Override
@@ -240,15 +238,13 @@ public class DetailViewManager implements GridInfoChangeListener {
         RectF viewport = mGalleryContext.getCurrentViewport();
         ImageIndexingInfo imageIndexingInfo = mGalleryContext.getImageIndexingInfo();
 
-        mDstX = viewport.centerX();
-        mDstY = viewport.centerY();
+        mDstX = 0f;
+        mDstY = 0f;
+
+        mSrcX = mSelectedImageObject.getTranslateX();
+        mSrcY = mHeight * 0.5f - (viewport.bottom - mSelectedImageObject.getTranslateY());
 
         mSelectedImageInfo = ImageManager.getInstance().getImageInfo(imageIndexingInfo);
-
-        mTranslateX = mSelectedImageObject.getTranslateX();
-        mTranslateY = mSelectedImageObject.getTranslateY();
-
-        mSelectedImageObject.hide();
 
         mDetailObject.setTexture(mSelectedImageObject.getTexture());
 
@@ -259,11 +255,22 @@ public class DetailViewManager implements GridInfoChangeListener {
         mSurfaceView.requestRender();
     }
 
-    // set / get
+    void finish() {
+        if (mSelectionAnimator.isFinished() == false) {
+            mSelectionAnimator.cancel();
+            mSelectionAnimator.setValues(mNormalizedValue, 0f);
+        } else {
+            mSelectionAnimator.setValues(1f, 0f);
+        }
 
-    void setSurfaceView(GallerySurfaceView surfaceView) {
-        mSurfaceView = surfaceView;
+        mSelectionAnimator.start();
+
+        mIsFinishing = true;
+
+        mSurfaceView.requestRender();
     }
+
+    // set / get
 
     private GLESObjectListener mSelectedImageObjectListener = new GLESObjectListener() {
         @Override
@@ -304,7 +311,6 @@ public class DetailViewManager implements GridInfoChangeListener {
     };
 
 
-
     class SelectionAnimatorCallback implements GLESAnimatorCallback {
         SelectionAnimatorCallback() {
         }
@@ -312,17 +318,20 @@ public class DetailViewManager implements GridInfoChangeListener {
         @Override
         public void onAnimation(GLESVector3 current) {
             float normalizedValue = current.getX();
+            mNormalizedValue = normalizedValue;
 
             updateDetailViewObject(normalizedValue);
 
             updateBGObject(normalizedValue);
+
+            show();
         }
 
         private void updateDetailViewObject(float normalizedValue) {
             mDetailObject.show();
 
-            float x = mTranslateX + (mDstX - mTranslateX) * normalizedValue;
-            float y = mTranslateY + (mDstY - mTranslateY) * normalizedValue;
+            float x = mSrcX + (mDstX - mSrcX) * normalizedValue;
+            float y = mSrcY + (mDstY - mSrcY) * normalizedValue;
 
             float fromScale = (float) mColumnWidth / mWidth;
             float scale = fromScale + (1f - fromScale) * normalizedValue;
@@ -373,7 +382,6 @@ public class DetailViewManager implements GridInfoChangeListener {
             positionBuffer.put(9, currentRight);
             positionBuffer.put(10, currentTop);
 
-
             FloatBuffer srcTexBuffer = (FloatBuffer) mSelectedImageObject.getVertexInfo().getBuffer(mTextureShader.getTexCoordAttribIndex());
 
             float minS = srcTexBuffer.get(0);
@@ -415,7 +423,10 @@ public class DetailViewManager implements GridInfoChangeListener {
 
         @Override
         public void onFinished() {
-//            mDetailObject.hide();
+            if (mIsFinishing == true) {
+                mIsFinishing = false;
+                mRenderer.onFinished();
+            }
         }
     }
 }

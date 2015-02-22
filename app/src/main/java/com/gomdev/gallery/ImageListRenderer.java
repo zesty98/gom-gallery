@@ -2,8 +2,6 @@ package com.gomdev.gallery;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.graphics.RectF;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
@@ -16,6 +14,9 @@ import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESRect;
 import com.gomdev.gles.GLESRenderer;
 import com.gomdev.gles.GLESSceneManager;
+import com.gomdev.gles.GLESShader;
+import com.gomdev.gles.GLESShaderConstant;
+import com.gomdev.gles.GLESUtils;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -38,8 +39,13 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     private GLESSceneManager mSM = null;
     private GLESNode mRoot = null;
 
+    private ViewManager mViewManager = null;
     private AlbumViewManager mAlbumViewManager = null;
     private DetailViewManager mDetailViewManager = null;
+
+    private GLESShader mTextureShader = null;
+    private GLESShader mTextureAlphaShader = null;
+    private GLESShader mColorShader = null;
 
     private boolean mIsSurfaceChanged = false;
 
@@ -73,6 +79,8 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
         imageManager.setObjectManager(mAlbumViewManager);
 
+        mViewManager = mAlbumViewManager;
+
         setGridInfo(gridInfo);
     }
 
@@ -98,15 +106,14 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         synchronized (GalleryContext.sLockObject) {
-            mAlbumViewManager.update();
+            mViewManager.update();
 
             mGLESRenderer.updateScene(mSM);
             mGLESRenderer.drawScene(mSM);
 
-            mAlbumViewManager.updateAnimation();
+            mViewManager.updateAnimation();
         }
     }
-
 
 
     // onSurfaceChanged
@@ -128,6 +135,11 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
         GLESCamera camera = setupCamera(width, height);
         mAlbumViewManager.setupObjects(camera);
+
+        mDetailViewManager.onSurfaceChanged(width, height);
+
+        camera = setupCamera(width, height);
+        mDetailViewManager.setupObjects(camera);
 
         mIsSurfaceChanged = true;
     }
@@ -163,21 +175,93 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
         GLES20.glClearColor(1f, 1f, 1f, 1f);
 
+        createShader();
+
         mAlbumViewManager.onSurfaceCreated();
+        mDetailViewManager.onSurfaceCreated();
+    }
+
+    private boolean createShader() {
+        mTextureShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_20_fs);
+        if (mTextureShader == null) {
+            return false;
+        }
+
+        mAlbumViewManager.setTextureShader(mTextureShader);
+        mDetailViewManager.setTextureShader(mTextureShader);
+
+        mTextureAlphaShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_alpha_20_fs);
+        if (mTextureAlphaShader == null) {
+            return false;
+        }
+
+        mAlbumViewManager.setTextureAlphaShader(mTextureAlphaShader);
+
+        mColorShader = createColorShader(R.raw.color_20_vs, R.raw.color_alpha_20_fs);
+        if (mColorShader == null) {
+            return false;
+        }
+
+        mAlbumViewManager.setColorShader(mColorShader);
+        mDetailViewManager.setColorShader(mColorShader);
+
+        return true;
+    }
+
+    private GLESShader createTextureShader(int vsResID, int fsResID) {
+        GLESShader textureShader = new GLESShader(mContext);
+
+        String vsSource = GLESUtils.getStringFromReosurce(mContext, vsResID);
+        String fsSource = GLESUtils.getStringFromReosurce(mContext, fsResID);
+
+        textureShader.setShaderSource(vsSource, fsSource);
+        if (textureShader.load() == false) {
+            return null;
+        }
+
+        String attribName = GLESShaderConstant.ATTRIB_POSITION;
+        textureShader.setPositionAttribIndex(attribName);
+
+        attribName = GLESShaderConstant.ATTRIB_TEXCOORD;
+        textureShader.setTexCoordAttribIndex(attribName);
+
+        return textureShader;
+    }
+
+    private GLESShader createColorShader(int vsResID, int fsResID) {
+        GLESShader colorShader = new GLESShader(mContext);
+
+        String vsSource = GLESUtils.getStringFromReosurce(mContext, vsResID);
+        String fsSource = GLESUtils.getStringFromReosurce(mContext, fsResID);
+
+        colorShader.setShaderSource(vsSource, fsSource);
+        if (colorShader.load() == false) {
+            return null;
+        }
+
+        String attribName = GLESShaderConstant.ATTRIB_POSITION;
+        colorShader.setPositionAttribIndex(attribName);
+
+        attribName = GLESShaderConstant.ATTRIB_COLOR;
+        colorShader.setColorAttribIndex(attribName);
+
+        return colorShader;
     }
 
     // touch
 
     boolean onTouchEvent(MotionEvent event) {
-        boolean retVal = mAlbumViewManager.onTouchEvent(event);
+        boolean retVal = mViewManager.onTouchEvent(event);
         return retVal;
     }
 
     // Listener
 
     void onImageSelected(ImageIndexingInfo imageIndexingInfo) {
-//        ImageObject selectedObject = mAlbumViewManager.getImageObject(imageIndexingInfo);
-//        mDetailViewManager.onImageSelected(selectedObject);
+        ImageObject selectedObject = mAlbumViewManager.getImageObject(imageIndexingInfo);
+        mDetailViewManager.onImageSelected(selectedObject);
+
+        mViewManager = mDetailViewManager;
     }
 
     @Override
@@ -209,6 +293,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         }
 
         mAlbumViewManager.onResume();
+        mDetailViewManager.onResume();
     }
 
     // pause
@@ -219,6 +304,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         }
 
         mAlbumViewManager.onPause();
+        mDetailViewManager.onPause();
     }
 
     // set / get
@@ -229,6 +315,30 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
         mSurfaceView = surfaceView;
         mAlbumViewManager.setSurfaceView(surfaceView);
+        mDetailViewManager.setSurfaceView(surfaceView);
+    }
 
+    void finish() {
+        if (DEBUG) {
+            Log.d(TAG, "finish()");
+        }
+
+        if (mViewManager instanceof AlbumViewManager) {
+            ((ImageListActivity) mContext).onFinished();
+            return;
+        }
+
+        mDetailViewManager.finish();
+        mSurfaceView.requestRender();
+    }
+
+    void onFinished() {
+        if (DEBUG) {
+            Log.d(TAG, "onFinished()");
+        }
+
+        mDetailViewManager.hide();
+
+        mViewManager = mAlbumViewManager;
     }
 }

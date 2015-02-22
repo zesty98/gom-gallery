@@ -95,4 +95,25 @@ public class ImageListActivity extends Activity {
 
         super.onPause();
     }
+
+    @Override
+    public void finish() {
+        if (DEBUG) {
+            Log.d(TAG, "finish()");
+        }
+
+        if (mSurfaceView != null) {
+            mSurfaceView.finish();
+        } else {
+            super.finish();
+        }
+    }
+
+    void onFinished() {
+        if (DEBUG) {
+            Log.d(TAG, "onFinished()");
+        }
+
+        super.finish();
+    }
 }

@@ -78,4 +78,12 @@ public class GallerySurfaceView extends GLSurfaceView {
     ImageListRenderer getRenderer() {
         return mRenderer;
     }
+
+    public void finish() {
+        if (mRenderer != null) {
+            mRenderer.finish();
+        } else {
+            ((ImageListActivity)mContext).onFinished();
+        }
+    }
 }

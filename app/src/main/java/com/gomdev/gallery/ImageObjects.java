@@ -302,11 +302,6 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setTextureMapping(false);
             object.setVisibility(false);
             object.setShader(mTextureShader);
-
-            GLESVertexInfo vertexInfo = new GLESVertexInfo();
-            vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
-            vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
-            object.setVertexInfo(vertexInfo, false, false);
         }
 
         size = mTextureMappingInfos.size();
@@ -429,6 +424,11 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setIndex(i);
             object.setVisibility(false);
             object.setTextureMapping(false);
+
+            GLESVertexInfo vertexInfo = new GLESVertexInfo();
+            vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
+            vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
+            object.setVertexInfo(vertexInfo, false, false);
 
             ImageInfo imageInfo = mDateLabelInfo.get(i);
             TextureMappingInfo textureMappingInfo = new TextureMappingInfo(object, imageInfo);
