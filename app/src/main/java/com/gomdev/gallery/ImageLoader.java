@@ -227,19 +227,31 @@ public class ImageLoader {
         return false;
     }
 
-    void loadBitmap(ImageInfo imageInfo, RecyclingImageView imageView,
-                    int requestWidth, int requestHeight) {
-        if (BitmapWorker.cancelPotentialWork(imageInfo, imageView)) {
-            final BitmapLoaderTask<RecyclingImageView> task = new BitmapLoaderTask(imageView,
-                    requestWidth, requestHeight);
-
+    <T extends BitmapContainer> void loadBitmap(ImageInfo imageInfo, T container,
+                                                int requestWidth, int requestHeight) {
+        if (BitmapWorker.cancelPotentialWork(imageInfo, container) && container != null) {
+            final BitmapLoaderTask<T> task = new BitmapLoaderTask<>(container, requestWidth, requestHeight);
             final AsyncDrawable asyncDrawable =
                     new AsyncDrawable(mContext.getResources(),
                             mLoadingBitmap, task);
-            imageView.setImageDrawable(asyncDrawable);
+            container.setBitmapDrawable(asyncDrawable);
             task.execute(imageInfo);
         }
     }
+
+//    void loadBitmap(ImageInfo imageInfo, RecyclingImageView imageView,
+//                    int requestWidth, int requestHeight) {
+//        if (BitmapWorker.cancelPotentialWork(imageInfo, imageView)) {
+//            final BitmapLoaderTask<RecyclingImageView> task = new BitmapLoaderTask(imageView,
+//                    requestWidth, requestHeight);
+//
+//            final AsyncDrawable asyncDrawable =
+//                    new AsyncDrawable(mContext.getResources(),
+//                            mLoadingBitmap, task);
+//            imageView.setImageDrawable(asyncDrawable);
+//            task.execute(imageInfo);
+//        }
+//    }
 
     Bitmap getThumbnail(ImageInfo imageInfo,
                         boolean forcePortrait) {

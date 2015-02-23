@@ -1,6 +1,7 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.RectF;
 import android.opengl.GLES20;
 import android.util.Log;
@@ -25,10 +26,10 @@ import java.nio.FloatBuffer;
 /**
  * Created by gomdev on 15. 2. 17..
  */
-public class DetailViewManager implements GridInfoChangeListener, ViewManager {
+public class DetailViewManager implements GridInfoChangeListener, ViewManager, ImageLoadingListener {
     static final String CLASS = "DetailViewManager";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
-    static final boolean DEBUG = GalleryConfig.DEBUG;
+    static final boolean DEBUG = true;//GalleryConfig.DEBUG;
 
     private final Context mContext;
     private final GridInfo mGridInfo;
@@ -44,6 +45,9 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
     private ImageInfo mSelectedImageInfo = null;
     private GLESAnimator mSelectionAnimator = null;
 
+    private GalleryTexture mTexture = null;
+    private boolean mIsImageLoaded = false;
+
     private boolean mIsFinishing = false;
 
     private float mNormalizedValue = 0f;
@@ -53,6 +57,9 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
 
     private int mWidth = 0;
     private int mHeight = 0;
+
+    private int mRequestWidth = 0;
+    private int mRequestHeight = 0;
 
     private int mColumnWidth = 0;
 
@@ -85,7 +92,18 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
 
     @Override
     public void update() {
+        if (mIsImageLoaded == true) {
+            mIsImageLoaded = false;
 
+            if (mTexture != null) {
+                final Bitmap bitmap = mTexture.getBitmapDrawable().getBitmap();
+                mTexture.load(bitmap);
+
+                Log.d(TAG, "update() >>> setTexture()");
+
+                mDetailObject.setTexture(mTexture.getTexture());
+            }
+        }
     }
 
     @Override
@@ -104,6 +122,9 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
 
         mWidth = width;
         mHeight = height;
+
+        mRequestWidth = mWidth / 2;
+        mRequestHeight = mHeight / 2;
     }
 
     // onSurfaceCreated
@@ -232,11 +253,30 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
 
     }
 
+    @Override
+    public void onImageLoaded(int position, GalleryTexture texture) {
+        if (DEBUG) {
+            Log.d(TAG, "onImageLoaded()");
+        }
+
+        mIsImageLoaded = true;
+        mSurfaceView.requestRender();
+    }
+
     void onImageSelected(ImageObject selectedImageObject) {
         mSelectedImageObject = selectedImageObject;
 
-        RectF viewport = mGalleryContext.getCurrentViewport();
         ImageIndexingInfo imageIndexingInfo = mGalleryContext.getImageIndexingInfo();
+        mSelectedImageInfo = ImageManager.getInstance().getImageInfo(imageIndexingInfo);
+
+        GLESVertexInfo vertexInfo = selectedImageObject.getVertexInfo();
+        FloatBuffer texCoordBuffer = (FloatBuffer) vertexInfo.getBuffer(mTextureShader.getTexCoordAttribIndex());
+        if (texCoordBuffer == null) {
+            float[] texCoord = GalleryUtils.calcTexCoord(mSelectedImageInfo.getWidth(), mSelectedImageInfo.getHeight());
+            vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);
+        }
+
+        RectF viewport = mGalleryContext.getCurrentViewport();
 
         mDstX = 0f;
         mDstY = 0f;
@@ -244,7 +284,10 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
         mSrcX = mSelectedImageObject.getTranslateX();
         mSrcY = mHeight * 0.5f - (viewport.bottom - mSelectedImageObject.getTranslateY());
 
-        mSelectedImageInfo = ImageManager.getInstance().getImageInfo(imageIndexingInfo);
+        mTexture = new GalleryTexture(mSelectedImageInfo.getWidth(), mSelectedImageInfo.getHeight());
+        mTexture.setImageLoadingListener(this);
+
+        ImageLoader.getInstance().loadBitmap(mSelectedImageInfo, mTexture, mRequestWidth, mRequestHeight);
 
         mDetailObject.setTexture(mSelectedImageObject.getTexture());
 
@@ -309,7 +352,6 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
             GLES20.glUniform1f(location, ((ImageObject) object).getAlpha());
         }
     };
-
 
     class SelectionAnimatorCallback implements GLESAnimatorCallback {
         SelectionAnimatorCallback() {

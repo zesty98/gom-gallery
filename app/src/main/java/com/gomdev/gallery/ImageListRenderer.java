@@ -17,6 +17,7 @@ import com.gomdev.gles.GLESSceneManager;
 import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESShaderConstant;
 import com.gomdev.gles.GLESUtils;
+import com.gomdev.gles.GLESVertexInfo;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -259,6 +260,10 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
     void onImageSelected(ImageIndexingInfo imageIndexingInfo) {
         ImageObject selectedObject = mAlbumViewManager.getImageObject(imageIndexingInfo);
+
+        GLESVertexInfo vertexInfo = selectedObject.getVertexInfo();
+        vertexInfo.getBuffer(mTextureShader.getPositionAttribIndex());
+
         mDetailViewManager.onImageSelected(selectedObject);
 
         mViewManager = mDetailViewManager;
@@ -340,5 +345,6 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         mDetailViewManager.hide();
 
         mViewManager = mAlbumViewManager;
+        mSurfaceView.requestRender();
     }
 }
