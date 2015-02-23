@@ -3,6 +3,7 @@ package com.gomdev.gallery;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.opengl.GLES20;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -29,7 +30,7 @@ import java.nio.FloatBuffer;
 public class DetailViewManager implements GridInfoChangeListener, ViewManager, ImageLoadingListener {
     static final String CLASS = "DetailViewManager";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
-    static final boolean DEBUG = true;//GalleryConfig.DEBUG;
+    static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final Context mContext;
     private final GridInfo mGridInfo;
@@ -46,7 +47,9 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
     private GLESAnimator mSelectionAnimator = null;
 
     private GalleryTexture mTexture = null;
+    private boolean mNeedToMapTexture = false;
     private boolean mIsImageLoaded = false;
+    private Bitmap mBitmap = null;
 
     private boolean mIsFinishing = false;
 
@@ -68,7 +71,16 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
     private float mDstX = 0f;
     private float mDstY = 0f;
 
+    private float mMinS = 0f;
+    private float mMinT = 0f;
+    private float mMaxS = 1f;
+    private float mMaxT = 1f;
+
     DetailViewManager(Context context, GridInfo gridInfo) {
+        if (DEBUG) {
+            Log.d(TAG, "DetailViewManager()");
+        }
+
         mContext = context;
         mGridInfo = gridInfo;
 
@@ -92,14 +104,12 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
 
     @Override
     public void update() {
-        if (mIsImageLoaded == true) {
-            mIsImageLoaded = false;
+        if (mNeedToMapTexture == true) {
+            mNeedToMapTexture = false;
 
             if (mTexture != null) {
                 final Bitmap bitmap = mTexture.getBitmapDrawable().getBitmap();
                 mTexture.load(bitmap);
-
-                Log.d(TAG, "update() >>> setTexture()");
 
                 mDetailObject.setTexture(mTexture.getTexture());
             }
@@ -139,41 +149,42 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
     }
 
     void setupObjects(GLESCamera camera) {
+        if (DEBUG) {
+            Log.d(TAG, "setupObjects()");
+        }
+
         mDetailObject.setCamera(camera);
-
-        GLESVertexInfo vertexInfo = new GLESVertexInfo();
-
-        float[] vertex = GLESUtils.makePositionCoord(-mWidth * 0.5f, mWidth * 0.5f, mWidth, mWidth);
-        vertexInfo.setBuffer(mTextureShader.getPositionAttribIndex(), vertex, 3);
-
-        float[] texCoord = GLESUtils.makeTexCoord(0f, 0f, 1f, 1f);
-        vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);
-
-        vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
-        vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
-
-        mDetailObject.setVertexInfo(vertexInfo, false, false);
 
         mBGObject.setCamera(camera);
         mBGObject.setShader(mColorShader);
 
-        vertexInfo = GalleryUtils.createColorVertexInfo(mColorShader,
+        GLESVertexInfo vertexInfo = GalleryUtils.createColorVertexInfo(mColorShader,
                 -mWidth * 0.5f, mHeight * 0.5f,
                 mWidth, mHeight,
                 0f, 0f, 0f, 1f);
         mBGObject.setVertexInfo(vertexInfo, false, false);
-
     }
 
     void onResume() {
         if (DEBUG) {
             Log.d(TAG, "onResume()");
         }
+
+        if (mDetailObject.getVisibility() == true && mIsImageLoaded == true) {
+            mTexture = new GalleryTexture(mBitmap.getWidth(), mBitmap.getHeight());
+            mTexture.setImageLoadingListener(this);
+            mTexture.setBitmapDrawable(new BitmapDrawable(mContext.getResources(), mBitmap));
+            mNeedToMapTexture = true;
+        }
     }
 
     void onPause() {
         if (DEBUG) {
             Log.d(TAG, "onPause()");
+        }
+
+        if (mDetailObject.getVisibility() == true && mIsImageLoaded == true) {
+            mBitmap = mTexture.getBitmapDrawable().getBitmap();
         }
     }
 
@@ -186,11 +197,21 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
 
     // show / hide
     void show() {
+        if (DEBUG) {
+            if (mDetailObject.getVisibility() == false) {
+                Log.d(TAG, "show()");
+            }
+        }
+
         mBGObject.show();
         mDetailObject.show();
     }
 
     void hide() {
+        if (DEBUG) {
+            Log.d(TAG, "hide()");
+        }
+
         mBGObject.hide();
         mDetailObject.hide();
     }
@@ -199,6 +220,10 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
     // initialization
 
     void createScene(GLESNode node) {
+        if (DEBUG) {
+            Log.d(TAG, "createScene()");
+        }
+
         GLESGLState glState = new GLESGLState();
         glState.setCullFaceState(true);
         glState.setCullFace(GLES20.GL_BACK);
@@ -215,6 +240,11 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
         mDetailObject = new ImageObject("selectedObject");
         node.addChild(mDetailObject);
 
+        GLESVertexInfo vertexInfo = new GLESVertexInfo();
+        vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
+        vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
+        mDetailObject.setVertexInfo(vertexInfo, false, false);
+
         mDetailObject.setGLState(glState);
 
         mDetailObject.setListener(mSelectedImageObjectListener);
@@ -222,14 +252,26 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
     }
 
     public void setColorShader(GLESShader colorShader) {
+        if (DEBUG) {
+            Log.d(TAG, "setColorShader()");
+        }
+
         mColorShader = colorShader;
     }
 
     public void setTextureShader(GLESShader textureShader) {
+        if (DEBUG) {
+            Log.d(TAG, "setTextureShader()");
+        }
+
         mTextureShader = textureShader;
     }
 
     void setSurfaceView(GallerySurfaceView surfaceView) {
+        if (DEBUG) {
+            Log.d(TAG, "setSurfaceView()");
+        }
+
         mSurfaceView = surfaceView;
         mRenderer = mSurfaceView.getRenderer();
     }
@@ -240,17 +282,26 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
 
     @Override
     public void onColumnWidthChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onColumnWidthChanged()");
+        }
+
         mColumnWidth = mGridInfo.getColumnWidth();
     }
 
     @Override
     public void onNumOfImageInfosChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onNumOfImageInfosChanged()");
+        }
 
     }
 
     @Override
     public void onNumOfDateLabelInfosChanged() {
-
+        if (DEBUG) {
+            Log.d(TAG, "onNumOfDateLabelInfosChanged()");
+        }
     }
 
     @Override
@@ -259,22 +310,29 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
             Log.d(TAG, "onImageLoaded()");
         }
 
+        mNeedToMapTexture = true;
         mIsImageLoaded = true;
         mSurfaceView.requestRender();
     }
 
     void onImageSelected(ImageObject selectedImageObject) {
+        if (DEBUG) {
+            Log.d(TAG, "onImageSelected()");
+        }
+
         mSelectedImageObject = selectedImageObject;
 
         ImageIndexingInfo imageIndexingInfo = mGalleryContext.getImageIndexingInfo();
         mSelectedImageInfo = ImageManager.getInstance().getImageInfo(imageIndexingInfo);
 
-        GLESVertexInfo vertexInfo = selectedImageObject.getVertexInfo();
-        FloatBuffer texCoordBuffer = (FloatBuffer) vertexInfo.getBuffer(mTextureShader.getTexCoordAttribIndex());
-        if (texCoordBuffer == null) {
-            float[] texCoord = GalleryUtils.calcTexCoord(mSelectedImageInfo.getWidth(), mSelectedImageInfo.getHeight());
-            vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);
-        }
+        GLESVertexInfo vertexInfo = mDetailObject.getVertexInfo();
+        float[] vertex = GLESUtils.makePositionCoord(-mWidth * 0.5f, mWidth * 0.5f, mWidth, mWidth);
+        vertexInfo.setBuffer(mTextureShader.getPositionAttribIndex(), vertex, 3);
+
+        calcTexCoordInfo();
+
+        float[] texCoord = GLESUtils.makeTexCoord(mMinS, mMinT, mMaxS, mMaxT);
+        vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);
 
         RectF viewport = mGalleryContext.getCurrentViewport();
 
@@ -295,10 +353,42 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
         mSelectionAnimator.cancel();
         mSelectionAnimator.start();
 
+
         mSurfaceView.requestRender();
     }
 
+    private void calcTexCoordInfo() {
+        float imageWidth = 0f;
+        float imageHeight = 0f;
+
+        if (mSelectedImageInfo.getOrientation() == 90 || mSelectedImageInfo.getOrientation() == 270) {
+            imageWidth = mSelectedImageInfo.getHeight();
+            imageHeight = mSelectedImageInfo.getWidth();
+        } else {
+            imageWidth = mSelectedImageInfo.getWidth();
+            imageHeight = mSelectedImageInfo.getHeight();
+        }
+
+        if (imageWidth > imageHeight) {
+            mMinS = ((imageWidth - imageHeight) * 0.5f) / imageWidth;
+            mMaxS = 1f - mMinS;
+
+            mMinT = 0f;
+            mMaxT = 1f;
+        } else {
+            mMinT = ((imageHeight - imageWidth) * 0.5f) / imageHeight;
+            mMaxT = 1f - mMinT;
+
+            mMinS = 0f;
+            mMaxS = 1f;
+        }
+    }
+
     void finish() {
+        if (DEBUG) {
+            Log.d(TAG, "finish()");
+        }
+
         if (mSelectionAnimator.isFinished() == false) {
             mSelectionAnimator.cancel();
             mSelectionAnimator.setValues(mNormalizedValue, 0f);
@@ -424,19 +514,11 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
             positionBuffer.put(9, currentRight);
             positionBuffer.put(10, currentTop);
 
-            FloatBuffer srcTexBuffer = (FloatBuffer) mSelectedImageObject.getVertexInfo().getBuffer(mTextureShader.getTexCoordAttribIndex());
+            float currentMinS = mMinS + (0f - mMinS) * normalizedValue;
+            float currentMinT = mMinT + (0f - mMinT) * normalizedValue;
 
-            float minS = srcTexBuffer.get(0);
-            float minT = srcTexBuffer.get(5);
-
-            float maxS = srcTexBuffer.get(2);
-            float maxT = srcTexBuffer.get(1);
-
-            float currentMinS = minS + (0f - minS) * normalizedValue;
-            float currentMinT = minT + (0f - minT) * normalizedValue;
-
-            float currentMaxS = maxS + (1f - maxS) * normalizedValue;
-            float currentMaxT = maxT + (1f - maxT) * normalizedValue;
+            float currentMaxS = mMaxS + (1f - mMaxS) * normalizedValue;
+            float currentMaxT = mMaxT + (1f - mMaxT) * normalizedValue;
 
             FloatBuffer texBuffer = (FloatBuffer) mDetailObject.getVertexInfo().getBuffer(mTextureShader.getTexCoordAttribIndex());
 
