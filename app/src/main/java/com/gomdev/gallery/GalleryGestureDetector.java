@@ -346,8 +346,6 @@ class GalleryGestureDetector implements GridInfoChangeListener {
 
             editor.commit();
 
-            mAlbumViewManager.cancelLoading();
-
             invalidateViewport();
             Log.d(TAG, "onSingleTapUp() imageIndexingInfo " + imageIndexingInfo);
             mGalleryContext.setImageIndexingInfo(imageIndexingInfo);

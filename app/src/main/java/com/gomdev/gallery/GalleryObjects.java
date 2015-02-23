@@ -328,7 +328,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setShader(mDateLabelShader);
 
 
-
             ImageObjects imageObjects = object.getImageObjects();
             imageObjects.onSurfaceCreated();
         }

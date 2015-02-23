@@ -3,7 +3,6 @@ package com.gomdev.gallery;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
-import android.util.Log;
 import android.view.MotionEvent;
 
 /**
@@ -83,7 +82,7 @@ public class GallerySurfaceView extends GLSurfaceView {
         if (mRenderer != null) {
             mRenderer.finish();
         } else {
-            ((ImageListActivity)mContext).onFinished();
+            ((ImageListActivity) mContext).onFinished();
         }
     }
 }
