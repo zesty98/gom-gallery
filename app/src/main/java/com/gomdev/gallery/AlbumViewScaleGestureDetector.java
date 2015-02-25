@@ -8,8 +8,8 @@ import android.view.ScaleGestureDetector;
 /**
  * Created by gomdev on 14. 12. 29..
  */
-class GalleryScaleGestureDetector implements GridInfoChangeListener {
-    static final String CLASS = "GalleryScaleGestureDetector";
+class AlbumViewScaleGestureDetector implements GridInfoChangeListener {
+    static final String CLASS = "AlbumViewScaleGestureDetector";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
@@ -26,7 +26,7 @@ class GalleryScaleGestureDetector implements GridInfoChangeListener {
     private int mMinNumOfColumns;
     private int mMaxNumOfColumns;
 
-    GalleryScaleGestureDetector(Context context, GridInfo gridInfo) {
+    AlbumViewScaleGestureDetector(Context context, GridInfo gridInfo) {
         mContext = context;
         mGridInfo = gridInfo;
 

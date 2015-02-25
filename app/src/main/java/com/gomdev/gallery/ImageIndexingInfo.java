@@ -12,6 +12,10 @@ class ImageIndexingInfo {
     int mDateLabelIndex = 0;
     int mImageIndex = 0;
 
+    ImageIndexingInfo() {
+
+    }
+
     ImageIndexingInfo(int bucketIndex, int dateLabelIndex, int imageIndex) {
         mBucketIndex = bucketIndex;
         mDateLabelIndex = dateLabelIndex;

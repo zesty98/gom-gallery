@@ -18,8 +18,8 @@ import com.gomdev.gles.GLESUtils;
 /**
  * Created by gomdev on 14. 12. 29..
  */
-class GalleryGestureDetector implements GridInfoChangeListener {
-    static final String CLASS = "GalleryGestureDetector";
+class AlbumViewGestureDetector implements GridInfoChangeListener {
+    static final String CLASS = "AlbumViewGestureDetector";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
@@ -67,7 +67,7 @@ class GalleryGestureDetector implements GridInfoChangeListener {
 
     private int mHeight = 0;
 
-    GalleryGestureDetector(Context context, GridInfo gridInfo) {
+    AlbumViewGestureDetector(Context context, GridInfo gridInfo) {
         mContext = context;
         mGridInfo = gridInfo;
 

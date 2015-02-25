@@ -46,8 +46,8 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
     private boolean mIsOnAnimation = false;
     private boolean mIsOnScale = false;
 
-    private GalleryGestureDetector mGalleryGestureDetector = null;
-    private GalleryScaleGestureDetector mGalleryScaleGestureDetector = null;
+    private AlbumViewGestureDetector mAlbumViewGestureDetector = null;
+    private AlbumViewScaleGestureDetector mAlbumViewScaleGestureDetector = null;
 
     private BucketInfo mBucketInfo = null;
     private int mNumOfDateInfos = 0;
@@ -114,10 +114,10 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         mScaleAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
         mScaleAnimator.setDuration(GalleryConfig.IMAGE_ANIMATION_START_OFFSET, GalleryConfig.IMAGE_ANIMATION_END_OFFSET);
 
-        mGalleryScaleGestureDetector = new GalleryScaleGestureDetector(mContext, mGridInfo);
-        mGalleryScaleGestureDetector.setAlbumViewManager(this);
-        mGalleryGestureDetector = new GalleryGestureDetector(mContext, mGridInfo);
-        mGalleryGestureDetector.setAlbumViewManager(this);
+        mAlbumViewScaleGestureDetector = new AlbumViewScaleGestureDetector(mContext, mGridInfo);
+        mAlbumViewScaleGestureDetector.setAlbumViewManager(this);
+        mAlbumViewGestureDetector = new AlbumViewGestureDetector(mContext, mGridInfo);
+        mAlbumViewGestureDetector.setAlbumViewManager(this);
 
         mIsSurfaceChanged = false;
     }
@@ -139,9 +139,9 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
     public void update() {
         udpateGestureDetector();
 
-        boolean isOnScrolling = mGalleryGestureDetector.isOnScrolling();
+        boolean isOnScrolling = mAlbumViewGestureDetector.isOnScrolling();
         if (mIsOnAnimation == true) {
-            mGalleryGestureDetector.resetOnScrolling();
+            mAlbumViewGestureDetector.resetOnScrolling();
         }
 
         if (isOnScrolling == false) {
@@ -157,10 +157,10 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         if (mCenterObject != null && mIsOnAnimation == true) {
             float columnWidth = mDefaultColumnWidth * mCenterObject.getScale();
             float top = mCenterObject.getTop() + mFocusY - columnWidth * 0.5f + mCenterObject.getStartOffsetY();
-            mGalleryGestureDetector.adjustViewport(top, mBottom);
+            mAlbumViewGestureDetector.adjustViewport(top, mBottom);
         }
 
-        mGalleryGestureDetector.update();
+        mAlbumViewGestureDetector.update();
     }
 
     @Override
@@ -182,7 +182,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
         mGalleryObjects.onSurfaceChanged(width, height);
         mScrollbar.onSurfaceChanged(width, height);
-        mGalleryGestureDetector.surfaceChanged(width, height);
+        mAlbumViewGestureDetector.surfaceChanged(width, height);
 
         mIsSurfaceChanged = true;
     }
@@ -263,8 +263,8 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         mGalleryObjects.setSurfaceView(surfaceView);
         mScrollbar.setSurfaceView(surfaceView);
 
-        mGalleryScaleGestureDetector.setSurfaceView(surfaceView);
-        mGalleryGestureDetector.setSurfaceView(surfaceView);
+        mAlbumViewScaleGestureDetector.setSurfaceView(surfaceView);
+        mAlbumViewGestureDetector.setSurfaceView(surfaceView);
     }
 
     // resume / pause
@@ -298,10 +298,10 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
             return true;
         }
 
-        boolean retVal = mGalleryScaleGestureDetector.onTouchEvent(event);
+        boolean retVal = mAlbumViewScaleGestureDetector.onTouchEvent(event);
 
         if (mIsOnScale == false) {
-            retVal = mGalleryGestureDetector.onTouchEvent(event) || retVal;
+            retVal = mAlbumViewGestureDetector.onTouchEvent(event) || retVal;
         }
 
         return retVal;
@@ -481,7 +481,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
     float getNextTranslateY() {
         float top = mCenterObject.getNextTop() - (mColumnWidth * 0.5f) + mFocusY + mCenterObject.getNextStartOffsetY();
-        float translateY = mGalleryGestureDetector.getTranslateY(top, mNextBottom);
+        float translateY = mAlbumViewGestureDetector.getTranslateY(top, mNextBottom);
         return translateY;
     }
 
