@@ -2,7 +2,6 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.opengl.GLES20;
 import android.util.Log;
@@ -18,7 +17,6 @@ import com.gomdev.gles.GLESNodeListener;
 import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESTransform;
-import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVector3;
 
 /**
@@ -211,19 +209,10 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
         mGalleryObjects.onSurfaceCreated();
 
-        GLESTexture dummyImageTexture = createDummyTexture(Color.LTGRAY);
-        GLESTexture dummyDateLabelTexture = createDummyTexture(Color.WHITE);
+        GLESTexture dummyImageTexture = GalleryUtils.createDummyTexture(Color.DKGRAY);
+        GLESTexture dummyDateLabelTexture = GalleryUtils.createDummyTexture(Color.WHITE);
 
         mGalleryObjects.setDummyTexture(dummyDateLabelTexture, dummyImageTexture);
-    }
-
-    private GLESTexture createDummyTexture(int color) {
-        Bitmap bitmap = GLESUtils.makeBitmap(16, 16, Bitmap.Config.ARGB_8888, color);
-
-        GLESTexture dummyTexture = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, 16, 16)
-                .load(bitmap);
-
-        return dummyTexture;
     }
 
     // initialization
@@ -487,6 +476,10 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
     ImageObject getImageObject(ImageIndexingInfo imageIndexingInfo) {
         return mGalleryObjects.getImageObject(imageIndexingInfo);
+    }
+
+    void adjustViewport(float translateY) {
+        mAlbumViewGestureDetector.adjustViewport(translateY);
     }
 
     DateLabelObject getDateLabelObject(int index) {

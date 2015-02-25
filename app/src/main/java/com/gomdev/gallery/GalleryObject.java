@@ -42,8 +42,8 @@ class GalleryObject extends GLESObject {
         this.setTexture(texture.getTexture());
     }
 
-    void setIndex(int position) {
-        mIndex = position;
+    void setIndex(int index) {
+        mIndex = index;
     }
 
     int getIndex() {

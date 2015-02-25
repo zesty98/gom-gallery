@@ -189,6 +189,13 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
         setViewportBottomLeft(left, top, true);
     }
 
+    void adjustViewport(float translateY) {
+
+        float top = mCurrentViewport.bottom - translateY;
+
+        setViewportBottomLeft(mSurfaceBufferLeft, top, true);
+    }
+
     float getTranslateY(float top, float bottom) {
         int nextScrollableHeight = (int) (mHeight * 0.5f - bottom);
 

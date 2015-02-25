@@ -2,9 +2,13 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.opengl.GLES20;
 import android.util.TypedValue;
 
 import com.gomdev.gles.GLESShader;
+import com.gomdev.gles.GLESTexture;
+import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
 /**
@@ -181,5 +185,14 @@ class GalleryUtils {
         };
 
         return texCoord;
+    }
+
+    static GLESTexture createDummyTexture(int color) {
+        Bitmap bitmap = GLESUtils.makeBitmap(16, 16, Bitmap.Config.ARGB_8888, color);
+
+        GLESTexture dummyTexture = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, 16, 16)
+                .load(bitmap);
+
+        return dummyTexture;
     }
 }

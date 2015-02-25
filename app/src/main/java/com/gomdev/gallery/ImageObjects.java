@@ -230,7 +230,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         if ((texture != null && texture.isTextureLoadingNeeded() == true)) {
             mImageLoader.loadThumbnail(imageInfo, texture);
-            textureMappingInfo.set(texture);
+            textureMappingInfo.setTexture(texture);
             mSurfaceView.requestRender();
         }
     }
@@ -244,7 +244,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         BitmapWorker.cancelWork(texture);
         mWaitingTextures.remove(texture);
 
-        textureMappingInfo.set(null);
+        textureMappingInfo.setTexture(null);
     }
 
     // onSurfaceChanged
@@ -306,7 +306,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         size = mTextureMappingInfos.size();
         for (int i = 0; i < size; i++) {
-            mTextureMappingInfos.get(i).set(null);
+            mTextureMappingInfos.get(i).setTexture(null);
         }
     }
 
@@ -565,7 +565,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
                 mWaitingTextures.remove(texture);
 
-                info.set(null);
+                info.setTexture(null);
             }
         }
     }

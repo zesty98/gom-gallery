@@ -167,8 +167,14 @@ public class ImageLoader {
 
                 ImageInfo imageInfo = new ImageInfo(imageID, orientation);
                 imageInfo.setImagePath(imagePath);
-                imageInfo.setWidth(width);
-                imageInfo.setHeight(height);
+
+                if (orientation == 90 || orientation == 270) {
+                    imageInfo.setWidth(height);
+                    imageInfo.setHeight(width);
+                } else {
+                    imageInfo.setWidth(width);
+                    imageInfo.setHeight(height);
+                }
 
                 int flags = DateUtils.FORMAT_SHOW_YEAR;
                 String date = DateUtils.formatDateTime(mContext, dateTakenInMs, flags);

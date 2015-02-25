@@ -8,10 +8,13 @@ class TextureMappingInfo {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private GalleryObject mObject;
-    private GalleryTexture mTexture;
-    private GalleryInfo mGalleryInfo;
+    private final GalleryObject mObject;
+    private GalleryTexture mTexture = null;
+    private GalleryInfo mGalleryInfo = null;
 
+    TextureMappingInfo(GalleryObject object) {
+        mObject = object;
+    }
 
     TextureMappingInfo(GalleryObject object, GalleryInfo galleryInfo) {
         mObject = object;
@@ -22,15 +25,19 @@ class TextureMappingInfo {
         return mObject;
     }
 
-    GalleryTexture getTexture() {
-        return mTexture;
+    void setGalleryInfo(GalleryInfo info) {
+        mGalleryInfo = info;
     }
 
     GalleryInfo getGalleryInfo() {
         return mGalleryInfo;
     }
 
-    void set(GalleryTexture texture) {
+    void setTexture(GalleryTexture texture) {
         mTexture = texture;
+    }
+
+    GalleryTexture getTexture() {
+        return mTexture;
     }
 }

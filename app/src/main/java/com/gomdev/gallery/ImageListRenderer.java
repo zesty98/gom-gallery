@@ -323,6 +323,14 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         mDetailViewManager.setSurfaceView(surfaceView);
     }
 
+    ImageObject getObjectFromAlbumView(ImageIndexingInfo imageIndexingInfo) {
+        return mAlbumViewManager.getImageObject(imageIndexingInfo);
+    }
+
+    void adjustAlbumView(float translateY) {
+        mAlbumViewManager.adjustViewport(translateY);
+    }
+
     void finish() {
         if (DEBUG) {
             Log.d(TAG, "finish()");
