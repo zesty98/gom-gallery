@@ -8,7 +8,11 @@ import android.opengl.GLES20;
 import android.support.v4.view.MotionEventCompat;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
+import android.view.ViewConfiguration;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
+import android.widget.Scroller;
 
 import com.gomdev.gles.GLESAnimator;
 import com.gomdev.gles.GLESAnimatorCallback;
@@ -38,6 +42,8 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private static final int NUM_OF_DETAIL_OBJECTS = 3;
+    private static final int MIN_FLING_VELOCITY = 400;  // dips
+    private static final int MIN_DISTANCE_FOR_FLING = 25; // dips
 
     private enum FOCUS_DIRECTION {
         LEFT,
@@ -101,8 +107,14 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
     private boolean mIsDown = false;
     private float mDownX = 0f;
     private float mDragDistance = 0f;
-    private GLESAnimator mSwipeAnimator = null;
-    private boolean mIsOnAnimation = false;
+    private boolean mIsOnSelectionAnimation = false;
+    private boolean mIsOnSwipeAnimation = false;
+
+    private Scroller mScroller = null;
+    private VelocityTracker mVelocityTracker = null;
+    private int mMinFlingVelocity = 0;
+    private int mMinDistanceForFling = 0;
+    private int mMaxFlingVelocity = 0;
 
     private FOCUS_DIRECTION mFocusDirection = FOCUS_DIRECTION.NONE;
 
@@ -127,9 +139,13 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
         mSelectionAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
         mSelectionAnimator.setDuration(GalleryConfig.SELECTION_ANIMATION_START_OFFSET, GalleryConfig.SELECTION_ANIMATION_END_OFFSET);
 
-        mSwipeAnimator = new GLESAnimator(mSwipeAnimatorCB);
-        mSwipeAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
-        mSwipeAnimator.setDuration(0L, 1000L);
+        mScroller = new Scroller(context, new DecelerateInterpolator());
+
+        final ViewConfiguration configuration = ViewConfiguration.get(context);
+        final float density = context.getResources().getDisplayMetrics().density;
+        mMinFlingVelocity = (int) (MIN_FLING_VELOCITY * density);
+        mMinDistanceForFling = (int) (MIN_DISTANCE_FOR_FLING * density);
+        mMaxFlingVelocity = configuration.getScaledMaximumFlingVelocity();
 
         clear();
         reset();
@@ -188,8 +204,14 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
             mSurfaceView.requestRender();
         }
 
-        if (mSwipeAnimator.doAnimation() == true) {
+        if (mScroller.isFinished() == false) {
             mSurfaceView.requestRender();
+        } else {
+            if (mIsOnSwipeAnimation == true) {
+                updateIndex();
+                mDragDistance = 0f;
+            }
+            mIsOnSwipeAnimation = false;
         }
     }
 
@@ -336,9 +358,18 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
     public boolean onTouchEvent(MotionEvent event) {
 
         final int action = MotionEventCompat.getActionMasked(event);
+
+        if (action == MotionEvent.ACTION_DOWN) {
+            if (mVelocityTracker == null) {
+                mVelocityTracker = VelocityTracker.obtain();
+            }
+        }
+        mVelocityTracker.addMovement(event);
+
+
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                if (mIsOnAnimation == false) {
+                if (mIsOnSelectionAnimation == false || mIsOnSwipeAnimation == false) {
                     mIsDown = true;
                     mDownX = event.getX();
                     mDragDistance = 0f;
@@ -349,11 +380,17 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
                     handleAnimation();
                     mIsDown = false;
                 }
+
+                if (mVelocityTracker != null) {
+                    mVelocityTracker.clear();
+                    mVelocityTracker = null;
+                }
+
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (mIsDown == true) {
-                    mDragDistance = event.getX() - mDownX;
 
+                    mDragDistance = event.getX() - mDownX;
                     if (mIsFirstImage == true && mDragDistance >= 0) {
                         mDragDistance = 0f;
                     }
@@ -371,29 +408,55 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
 
         mSurfaceView.requestRender();
 
-        return true;//mGestureDetector.onTouchEvent(event);
+        return true;
     }
 
     private void handleAnimation() {
+        mVelocityTracker.computeCurrentVelocity(1000, mMaxFlingVelocity);
+        int initialVelocity = (int) mVelocityTracker.getXVelocity();
+
+        if (Math.abs(initialVelocity) < mMinFlingVelocity) {
+            handleScrollAnimation();
+        } else {
+            handleFlingAnimation(initialVelocity);
+        }
+
+        mIsOnSwipeAnimation = true;
+
+        prePopulate();
+    }
+
+    private void handleScrollAnimation() {
         if (Math.abs(mDragDistance) > mWidth * 0.5f) {
             if (mDragDistance > 0) {
                 mFocusDirection = FOCUS_DIRECTION.LEFT;
-                mSwipeAnimator.setValues(mDragDistance, mWidth);
+                mScroller.startScroll((int) mDragDistance, 0, (int) (mWidth - mDragDistance), 0, 300);
             } else {
                 mFocusDirection = FOCUS_DIRECTION.RIGHT;
-                mSwipeAnimator.setValues(mDragDistance, -mWidth);
+                mScroller.startScroll((int) mDragDistance, 0, (int) (-mWidth - mDragDistance), 0, 300);
             }
         } else {
             mFocusDirection = FOCUS_DIRECTION.NONE;
-            mSwipeAnimator.setValues(mDragDistance, 0f);
+            mScroller.startScroll((int) mDragDistance, 0, (int) -mDragDistance, 0, 300);
         }
+    }
 
-        mSwipeAnimator.setDuration(0L, 300L);
-        mSwipeAnimator.start();
-
-        mIsOnAnimation = true;
-
-        prePopulate();
+    private void handleFlingAnimation(int initialVelocity) {
+        if (Math.abs(mDragDistance) > mMinDistanceForFling) {
+            if (mDragDistance > 0) {
+                mFocusDirection = FOCUS_DIRECTION.LEFT;
+//                mScroller.fling((int) mDragDistance, 0, initialVelocity, 0, mWidth, mWidth, 0, 0);
+                mScroller.startScroll((int) mDragDistance, 0, (int) (mWidth - mDragDistance), 0, 100);
+            } else {
+                mFocusDirection = FOCUS_DIRECTION.RIGHT;
+//                mScroller.fling((int) mDragDistance, 0, initialVelocity, 0, -mWidth, -mWidth, 0, 0);
+                mScroller.startScroll((int) mDragDistance, 0, (int) (-mWidth - mDragDistance), 0, 100);
+            }
+        } else {
+            mFocusDirection = FOCUS_DIRECTION.NONE;
+//            mScroller.fling((int) mDragDistance, 0, initialVelocity, 0, 0, 0, 0, 0);
+            mScroller.startScroll((int) mDragDistance, 0, (int) -mDragDistance, 0, 100);
+        }
     }
 
     // show / hide
@@ -595,7 +658,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
         mSelectionAnimator.cancel();
         mSelectionAnimator.start();
 
-        mIsOnAnimation = true;
+        mIsOnSelectionAnimation = true;
 
         mSurfaceView.requestRender();
     }
@@ -771,7 +834,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
 
         mSelectionAnimator.start();
 
-        mIsOnAnimation = true;
+        mIsOnSelectionAnimation = true;
 
         mIsFinishing = true;
 
@@ -939,7 +1002,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
                 mRenderer.onFinished();
             }
 
-            mIsOnAnimation = false;
+            mIsOnSelectionAnimation = false;
         }
     };
 
@@ -948,31 +1011,12 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
         public void update(GLESNode node) {
             GLESTransform transform = node.getTransform();
             transform.setIdentity();
+
+            if (mScroller.computeScrollOffset() == true) {
+                mDragDistance = mScroller.getCurrX();
+            }
+
             transform.setTranslate(mDragDistance, 0f, 0f);
-        }
-    };
-
-    private final GLESAnimatorCallback mSwipeAnimatorCB = new GLESAnimatorCallback() {
-        @Override
-        public void onAnimation(GLESVector3 current) {
-            mDragDistance = current.getX();
-        }
-
-        @Override
-        public void onCancel() {
-
-        }
-
-        @Override
-        public void onFinished() {
-//            prePopulate();
-            updateIndex();
-//            populate();
-
-            mDragDistance = 0f;
-            mSurfaceView.requestRender();
-
-            mIsOnAnimation = false;
         }
     };
 
