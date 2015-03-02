@@ -1,12 +1,16 @@
 package com.gomdev.gallery;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.RectF;
 import android.opengl.GLES20;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.view.MotionEventCompat;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
@@ -41,7 +45,11 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
+    private static final int SWIPE_FLING_DURATION = 100;
+    private static final int SWIPE_SCROLLING_DURATION = 300;
+
     private static final int NUM_OF_DETAIL_OBJECTS = 3;
+    private static final int NUM_OF_RESERVED_TEXTURE_MAPPING_INFO = 2;
     private static final int MIN_FLING_VELOCITY = 400;  // dips
     private static final int MIN_DISTANCE_FOR_FLING = 25; // dips
 
@@ -53,6 +61,8 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
 
     private final Context mContext;
     private final GridInfo mGridInfo;
+
+    private Handler mHandler = null;
 
     private GallerySurfaceView mSurfaceView = null;
     private ImageListRenderer mRenderer = null;
@@ -66,6 +76,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
 
     private GLESAnimator mSelectionAnimator = null;
     private ImageObject mSelectedImageObject = null;
+    private DateLabelInfo mSelectedDateLabelInfo = null;
 
     private TextureMappingInfo[] mTextureMappingInfos = new TextureMappingInfo[NUM_OF_DETAIL_OBJECTS];
 
@@ -107,19 +118,21 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
     private boolean mIsDown = false;
     private float mDownX = 0f;
     private float mDragDistance = 0f;
+
     private boolean mIsOnSelectionAnimation = false;
     private boolean mIsOnSwipeAnimation = false;
 
     private Scroller mScroller = null;
     private VelocityTracker mVelocityTracker = null;
+    private GestureDetector mGestureDetector = null;
+
     private int mMinFlingVelocity = 0;
     private int mMinDistanceForFling = 0;
     private int mMaxFlingVelocity = 0;
 
     private FOCUS_DIRECTION mFocusDirection = FOCUS_DIRECTION.NONE;
 
-    private TextureMappingInfo mReservedTextureMappingInfo = null;
-    private TextureMappingInfo mReservedTextureMappingInfo2 = null;
+    private TextureMappingInfo[] mReservedTextureMappingInfo = new TextureMappingInfo[2];
     private int mReservedIndex = 3;
 
     DetailViewManager(Context context, GridInfo gridInfo) {
@@ -130,7 +143,13 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
         mContext = context;
         mGridInfo = gridInfo;
 
-        setGridInfo(gridInfo);
+        init();
+    }
+
+    private void init() {
+        setGridInfo(mGridInfo);
+        clear();
+        reset();
 
         mGalleryContext = GalleryContext.getInstance();
         mImageManager = ImageManager.getInstance();
@@ -139,16 +158,14 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
         mSelectionAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
         mSelectionAnimator.setDuration(GalleryConfig.SELECTION_ANIMATION_START_OFFSET, GalleryConfig.SELECTION_ANIMATION_END_OFFSET);
 
-        mScroller = new Scroller(context, new DecelerateInterpolator());
+        mScroller = new Scroller(mContext, new DecelerateInterpolator());
+        mGestureDetector = new GestureDetector(mContext, mGestureListener);
 
-        final ViewConfiguration configuration = ViewConfiguration.get(context);
-        final float density = context.getResources().getDisplayMetrics().density;
+        final ViewConfiguration configuration = ViewConfiguration.get(mContext);
+        final float density = mContext.getResources().getDisplayMetrics().density;
         mMinFlingVelocity = (int) (MIN_FLING_VELOCITY * density);
         mMinDistanceForFling = (int) (MIN_DISTANCE_FOR_FLING * density);
         mMaxFlingVelocity = configuration.getScaledMaximumFlingVelocity();
-
-        clear();
-        reset();
     }
 
     private void setGridInfo(GridInfo gridInfo) {
@@ -184,7 +201,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
 
             TextureMappingInfo textureMappingInfo = null;
             if (index == mReservedIndex) {
-                textureMappingInfo = mReservedTextureMappingInfo;
+                textureMappingInfo = mReservedTextureMappingInfo[0];
             } else {
                 textureMappingInfo = mTextureMappingInfos[index];
             }
@@ -208,10 +225,85 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
             mSurfaceView.requestRender();
         } else {
             if (mIsOnSwipeAnimation == true) {
-                updateIndex();
+                changePosition();
                 mDragDistance = 0f;
+
+                Message msg = mHandler.obtainMessage(ImageListActivity.UPDATE_ACTION_BAR_TITLE);
+                BucketInfo bucketInfo = mImageManager.getBucketInfo(mCurrentImageIndexingInfo.mBucketIndex);
+                mSelectedDateLabelInfo = bucketInfo.get(mCurrentImageIndexingInfo.mDateLabelIndex);
+
+                msg.obj = mSelectedDateLabelInfo.getDate();
+                mHandler.sendMessage(msg);
             }
             mIsOnSwipeAnimation = false;
+        }
+    }
+
+    private void changePosition() {
+        if (mFocusDirection == FOCUS_DIRECTION.LEFT) {
+            mReservedTextureMappingInfo[1] = mTextureMappingInfos[mNextIndex];
+            if (mReservedTextureMappingInfo[1].getTexture() != null) {
+                mReservedTextureMappingInfo[1].getTexture().setIndex(mReservedIndex);
+            }
+
+            mTextureMappingInfos[mNextIndex] = mTextureMappingInfos[mCurrentIndex];
+            mTextureMappingInfos[mNextIndex].getTexture().setIndex(mNextIndex);
+
+            mTextureMappingInfos[mCurrentIndex] = mTextureMappingInfos[mPrevIndex];
+            mTextureMappingInfos[mCurrentIndex].getTexture().setIndex(mCurrentIndex);
+
+            mTextureMappingInfos[mPrevIndex] = mReservedTextureMappingInfo[0];
+            mTextureMappingInfos[mPrevIndex].getTexture().setIndex(mPrevIndex);
+
+            mReservedTextureMappingInfo[0] = mReservedTextureMappingInfo[1];
+            if (mReservedTextureMappingInfo[0].getTexture() != null) {
+                mReservedTextureMappingInfo[0].getTexture().setIndex(mReservedIndex);
+            }
+        } else if (mFocusDirection == FOCUS_DIRECTION.RIGHT) {
+            mReservedTextureMappingInfo[1] = mTextureMappingInfos[mPrevIndex];
+            if (mReservedTextureMappingInfo[1].getTexture() != null) {
+                mReservedTextureMappingInfo[1].getTexture().setIndex(mReservedIndex);
+            }
+
+            mTextureMappingInfos[mPrevIndex] = mTextureMappingInfos[mCurrentIndex];
+            mTextureMappingInfos[mPrevIndex].getTexture().setIndex(mPrevIndex);
+
+            mTextureMappingInfos[mCurrentIndex] = mTextureMappingInfos[mNextIndex];
+            mTextureMappingInfos[mCurrentIndex].getTexture().setIndex(mCurrentIndex);
+
+            mTextureMappingInfos[mNextIndex] = mReservedTextureMappingInfo[0];
+            mTextureMappingInfos[mNextIndex].getTexture().setIndex(mNextIndex);
+
+            mReservedTextureMappingInfo[0] = mReservedTextureMappingInfo[1];
+            if (mReservedTextureMappingInfo[0].getTexture() != null) {
+                mReservedTextureMappingInfo[0].getTexture().setIndex(mReservedIndex);
+            }
+        }
+
+        for (int i = 0; i < NUM_OF_DETAIL_OBJECTS; i++) {
+            TextureMappingInfo textureMappingInfo = mTextureMappingInfos[i];
+            ImageObject object = (ImageObject) textureMappingInfo.getObject();
+
+            if (i == mPrevIndex) {
+                object.setTranslate(-mWidth, 0f);
+            } else if (i == mCurrentIndex) {
+                object.setTranslate(0f, 0f);
+            } else if (i == mNextIndex) {
+                object.setTranslate(mWidth, 0f);
+            } else {
+                object.setTranslate(0f, mHeight);
+            }
+            object.setScale(1.0f);
+        }
+
+        mReservedTextureMappingInfo[0].getObject().setTranslate(0f, mHeight);
+        mReservedTextureMappingInfo[1].getObject().setTranslate(0f, mHeight);
+
+        if (DEBUG) {
+            Log.d(TAG, "changePosition()");
+            Log.d(TAG, "\t mPrevIndex=" + mPrevIndex);
+            Log.d(TAG, "\t mCurrentIndex=" + mCurrentIndex);
+            Log.d(TAG, "\t mNextIndex=" + mNextIndex);
         }
     }
 
@@ -241,8 +333,8 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
         for (int i = 0; i < NUM_OF_DETAIL_OBJECTS; i++) {
             mTextureMappingInfos[i].getObject().setShader(mTextureShader);
         }
-        mReservedTextureMappingInfo.getObject().setShader(mTextureShader);
-        mReservedTextureMappingInfo2.getObject().setShader(mTextureShader);
+        mReservedTextureMappingInfo[0].getObject().setShader(mTextureShader);
+        mReservedTextureMappingInfo[1].getObject().setShader(mTextureShader);
 
         mBGObject.setShader(mColorShader);
     }
@@ -266,24 +358,8 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
             vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);
         }
 
-        {
-            ImageObject object = (ImageObject) mReservedTextureMappingInfo.getObject();
-            object.setCamera(camera);
-
-            GLESVertexInfo vertexInfo = object.getVertexInfo();
-
-            float[] position = GLESUtils.makePositionCoord(-mWidth * 0.5f, mHeight * 0.5f, mWidth, mHeight);
-            vertexInfo.setBuffer(mTextureShader.getPositionAttribIndex(), position, 3);
-
-            float[] texCoord = GLESUtils.makeTexCoord(0f, 0f, 1f, 1f);
-            vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);
-
-            object.setTranslate(0f, mHeight);
-            object.setScale(1.0f);
-        }
-
-        {
-            ImageObject object = (ImageObject) mReservedTextureMappingInfo2.getObject();
+        for (int i = 0; i < NUM_OF_RESERVED_TEXTURE_MAPPING_INFO; i++) {
+            ImageObject object = (ImageObject) mReservedTextureMappingInfo[i].getObject();
             object.setCamera(camera);
 
             GLESVertexInfo vertexInfo = object.getVertexInfo();
@@ -366,7 +442,6 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
         }
         mVelocityTracker.addMovement(event);
 
-
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 if (mIsOnSelectionAnimation == false || mIsOnSwipeAnimation == false) {
@@ -406,6 +481,8 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
                 break;
         }
 
+        mGestureDetector.onTouchEvent(event);
+
         mSurfaceView.requestRender();
 
         return true;
@@ -430,14 +507,14 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
         if (Math.abs(mDragDistance) > mWidth * 0.5f) {
             if (mDragDistance > 0) {
                 mFocusDirection = FOCUS_DIRECTION.LEFT;
-                mScroller.startScroll((int) mDragDistance, 0, (int) (mWidth - mDragDistance), 0, 300);
+                mScroller.startScroll((int) mDragDistance, 0, (int) (mWidth - mDragDistance), 0, SWIPE_SCROLLING_DURATION);
             } else {
                 mFocusDirection = FOCUS_DIRECTION.RIGHT;
-                mScroller.startScroll((int) mDragDistance, 0, (int) (-mWidth - mDragDistance), 0, 300);
+                mScroller.startScroll((int) mDragDistance, 0, (int) (-mWidth - mDragDistance), 0, SWIPE_SCROLLING_DURATION);
             }
         } else {
             mFocusDirection = FOCUS_DIRECTION.NONE;
-            mScroller.startScroll((int) mDragDistance, 0, (int) -mDragDistance, 0, 300);
+            mScroller.startScroll((int) mDragDistance, 0, (int) -mDragDistance, 0, SWIPE_SCROLLING_DURATION);
         }
     }
 
@@ -446,16 +523,44 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
             if (mDragDistance > 0) {
                 mFocusDirection = FOCUS_DIRECTION.LEFT;
 //                mScroller.fling((int) mDragDistance, 0, initialVelocity, 0, mWidth, mWidth, 0, 0);
-                mScroller.startScroll((int) mDragDistance, 0, (int) (mWidth - mDragDistance), 0, 100);
+                mScroller.startScroll((int) mDragDistance, 0, (int) (mWidth - mDragDistance), 0, SWIPE_FLING_DURATION);
             } else {
                 mFocusDirection = FOCUS_DIRECTION.RIGHT;
 //                mScroller.fling((int) mDragDistance, 0, initialVelocity, 0, -mWidth, -mWidth, 0, 0);
-                mScroller.startScroll((int) mDragDistance, 0, (int) (-mWidth - mDragDistance), 0, 100);
+                mScroller.startScroll((int) mDragDistance, 0, (int) (-mWidth - mDragDistance), 0, SWIPE_FLING_DURATION);
             }
         } else {
             mFocusDirection = FOCUS_DIRECTION.NONE;
 //            mScroller.fling((int) mDragDistance, 0, initialVelocity, 0, 0, 0, 0, 0);
-            mScroller.startScroll((int) mDragDistance, 0, (int) -mDragDistance, 0, 100);
+            mScroller.startScroll((int) mDragDistance, 0, (int) -mDragDistance, 0, SWIPE_FLING_DURATION);
+        }
+    }
+
+    private void prePopulate() {
+        if (mFocusDirection == FOCUS_DIRECTION.LEFT) {
+            mCurrentImageIndexingInfo = getPrevImageIndexingInfo(mCurrentImageIndexingInfo);
+            ImageIndexingInfo prev = getPrevImageIndexingInfo(mCurrentImageIndexingInfo);
+            if (prev != null) {
+                loadDetailTexture(mReservedIndex, prev);
+
+                mIsFirstImage = false;
+            } else {
+                mIsFirstImage = true;
+            }
+
+            mIsLastImage = false;
+        } else if (mFocusDirection == FOCUS_DIRECTION.RIGHT) {
+            mCurrentImageIndexingInfo = getNextImageIndexingInfo(mCurrentImageIndexingInfo);
+            ImageIndexingInfo next = getNextImageIndexingInfo(mCurrentImageIndexingInfo);
+            if (next != null) {
+                loadDetailTexture(mReservedIndex, next);
+
+                mIsLastImage = false;
+            } else {
+                mIsLastImage = true;
+            }
+
+            mIsFirstImage = false;
         }
     }
 
@@ -468,12 +573,14 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
         }
 
         mBGObject.show();
+
         for (int i = 0; i < NUM_OF_DETAIL_OBJECTS; i++) {
             mTextureMappingInfos[i].getObject().show();
         }
 
-        mReservedTextureMappingInfo.getObject().show();
-        mReservedTextureMappingInfo2.getObject().show();
+        for (int i = 0; i < NUM_OF_RESERVED_TEXTURE_MAPPING_INFO; i++) {
+            mReservedTextureMappingInfo[i].getObject().show();
+        }
     }
 
     void hide() {
@@ -487,8 +594,9 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
             mTextureMappingInfos[i].getObject().hide();
         }
 
-        mReservedTextureMappingInfo.getObject().hide();
-        mReservedTextureMappingInfo2.getObject().hide();
+        for (int i = 0; i < NUM_OF_RESERVED_TEXTURE_MAPPING_INFO; i++) {
+            mReservedTextureMappingInfo[i].getObject().hide();
+        }
     }
 
 
@@ -536,8 +644,8 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
             mTextureMappingInfos[i] = new TextureMappingInfo(object);
         }
 
-        {
-            ImageObject reservedObject = new ImageObject("reservedObject");
+        for (int i = 0; i < NUM_OF_RESERVED_TEXTURE_MAPPING_INFO; i++) {
+            ImageObject reservedObject = new ImageObject("reservedObject_" + i);
             mViewPagerNode.addChild(reservedObject);
 
             GLESVertexInfo vertexInfo = new GLESVertexInfo();
@@ -550,24 +658,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
             reservedObject.setIndex(mReservedIndex);
             reservedObject.hide();
 
-            mReservedTextureMappingInfo = new TextureMappingInfo(reservedObject);
-        }
-
-        {
-            ImageObject reservedObject = new ImageObject("reservedObject");
-            mViewPagerNode.addChild(reservedObject);
-
-            GLESVertexInfo vertexInfo = new GLESVertexInfo();
-            vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
-            vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
-            reservedObject.setVertexInfo(vertexInfo, false, false);
-
-            reservedObject.setGLState(glState);
-            reservedObject.setListener(mDetailImageObjectListener);
-            reservedObject.setIndex(mReservedIndex);
-            reservedObject.hide();
-
-            mReservedTextureMappingInfo2 = new TextureMappingInfo(reservedObject);
+            mReservedTextureMappingInfo[i] = new TextureMappingInfo(reservedObject);
         }
     }
 
@@ -643,8 +734,9 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
         reset();
 
         mSelectedImageObject = selectedImageObject;
-
         mCurrentImageIndexingInfo = mGalleryContext.getImageIndexingInfo();
+        BucketInfo bucketInfo = mImageManager.getBucketInfo(mCurrentImageIndexingInfo.mBucketIndex);
+        mSelectedDateLabelInfo = bucketInfo.get(mCurrentImageIndexingInfo.mDateLabelIndex);
 
         setupSelectionStartingAnimationInfo();
 
@@ -741,7 +833,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
 
         TextureMappingInfo textureMappingInfo = null;
         if (index == mReservedIndex) {
-            textureMappingInfo = mReservedTextureMappingInfo;
+            textureMappingInfo = mReservedTextureMappingInfo[0];
         } else {
             textureMappingInfo = mTextureMappingInfos[index];
         }
@@ -779,10 +871,11 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
 
         TextureMappingInfo textureMappingInfo = null;
         if (index == mReservedIndex) {
-            textureMappingInfo = mReservedTextureMappingInfo;
+            textureMappingInfo = mReservedTextureMappingInfo[0];
         } else {
             textureMappingInfo = mTextureMappingInfos[index];
         }
+
         ImageObject object = (ImageObject) textureMappingInfo.getObject();
         FloatBuffer positionBuffer = (FloatBuffer) object.getVertexInfo().getBuffer(mTextureShader.getPositionAttribIndex());
 
@@ -861,7 +954,11 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
         mRenderer.adjustAlbumView(translateY);
     }
 
-    // set / get
+    void setHandler(Handler handler) {
+        mHandler = handler;
+    }
+
+    // member class
 
     private GLESObjectListener mDetailImageObjectListener = new GLESObjectListener() {
         @Override
@@ -999,6 +1096,12 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
 
             if (mIsFinishing == true) {
                 mIsFinishing = false;
+
+                Message msg = mHandler.obtainMessage(ImageListActivity.UPDATE_ACTION_BAR_TITLE);
+                BucketInfo bucketInfo = mImageManager.getBucketInfo(mCurrentImageIndexingInfo.mBucketIndex);
+                msg.obj = bucketInfo.getName();
+                mHandler.sendMessage(msg);
+
                 mRenderer.onFinished();
             }
 
@@ -1020,100 +1123,24 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager, I
         }
     };
 
-    private void updateIndex() {
-        if (mFocusDirection == FOCUS_DIRECTION.LEFT) {
-            mReservedTextureMappingInfo2 = mTextureMappingInfos[mNextIndex];
-            if (mReservedTextureMappingInfo2.getTexture() != null) {
-                mReservedTextureMappingInfo2.getTexture().setIndex(mReservedIndex);
+    private final GestureDetector.SimpleOnGestureListener mGestureListener = new GestureDetector.SimpleOnGestureListener() {
+        private boolean mIsShown = false;
+
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            if (DEBUG) {
+                Log.d(TAG, "onSingleTabUp()");
             }
 
-            mTextureMappingInfos[mNextIndex] = mTextureMappingInfos[mCurrentIndex];
-            mTextureMappingInfos[mNextIndex].getTexture().setIndex(mNextIndex);
-
-            mTextureMappingInfos[mCurrentIndex] = mTextureMappingInfos[mPrevIndex];
-            mTextureMappingInfos[mCurrentIndex].getTexture().setIndex(mCurrentIndex);
-
-            mTextureMappingInfos[mPrevIndex] = mReservedTextureMappingInfo;
-            mTextureMappingInfos[mPrevIndex].getTexture().setIndex(mPrevIndex);
-
-            mReservedTextureMappingInfo = mReservedTextureMappingInfo2;
-            if (mReservedTextureMappingInfo.getTexture() != null) {
-                mReservedTextureMappingInfo.getTexture().setIndex(mReservedIndex);
-            }
-        } else if (mFocusDirection == FOCUS_DIRECTION.RIGHT) {
-            mReservedTextureMappingInfo2 = mTextureMappingInfos[mPrevIndex];
-            if (mReservedTextureMappingInfo2.getTexture() != null) {
-                mReservedTextureMappingInfo2.getTexture().setIndex(mReservedIndex);
-            }
-
-            mTextureMappingInfos[mPrevIndex] = mTextureMappingInfos[mCurrentIndex];
-            mTextureMappingInfos[mPrevIndex].getTexture().setIndex(mPrevIndex);
-
-            mTextureMappingInfos[mCurrentIndex] = mTextureMappingInfos[mNextIndex];
-            mTextureMappingInfos[mCurrentIndex].getTexture().setIndex(mCurrentIndex);
-
-            mTextureMappingInfos[mNextIndex] = mReservedTextureMappingInfo;
-            mTextureMappingInfos[mNextIndex].getTexture().setIndex(mNextIndex);
-
-            mReservedTextureMappingInfo = mReservedTextureMappingInfo2;
-            if (mReservedTextureMappingInfo.getTexture() != null) {
-                mReservedTextureMappingInfo.getTexture().setIndex(mReservedIndex);
-            }
-
-        }
-
-        for (int i = 0; i < NUM_OF_DETAIL_OBJECTS; i++) {
-            TextureMappingInfo textureMappingInfo = mTextureMappingInfos[i];
-            ImageObject object = (ImageObject) textureMappingInfo.getObject();
-
-            if (i == mPrevIndex) {
-                object.setTranslate(-mWidth, 0f);
-            } else if (i == mCurrentIndex) {
-                object.setTranslate(0f, 0f);
-            } else if (i == mNextIndex) {
-                object.setTranslate(mWidth, 0f);
+            if (mIsShown == true) {
+                mIsShown = false;
+                mHandler.sendEmptyMessage(ImageListActivity.SET_SYSTEM_UI_FLAG_LOW_PROFILE);
             } else {
-                object.setTranslate(0f, mHeight);
+                mIsShown = true;
+                mHandler.sendEmptyMessage(ImageListActivity.SET_SYSTEM_UI_FLAG_VISIBLE);
+                ((Activity)mContext).getActionBar().setTitle(mSelectedDateLabelInfo.getDate());
             }
-            object.setScale(1.0f);
+            return true;
         }
-
-        mReservedTextureMappingInfo.getObject().setTranslate(0f, mHeight);
-        mReservedTextureMappingInfo2.getObject().setTranslate(0f, mHeight);
-
-        if (DEBUG) {
-            Log.d(TAG, "updateIndex()");
-            Log.d(TAG, "\t mPrevIndex=" + mPrevIndex);
-            Log.d(TAG, "\t mCurrentIndex=" + mCurrentIndex);
-            Log.d(TAG, "\t mNextIndex=" + mNextIndex);
-        }
-    }
-
-    private void prePopulate() {
-        if (mFocusDirection == FOCUS_DIRECTION.LEFT) {
-            mCurrentImageIndexingInfo = getPrevImageIndexingInfo(mCurrentImageIndexingInfo);
-            ImageIndexingInfo prev = getPrevImageIndexingInfo(mCurrentImageIndexingInfo);
-            if (prev != null) {
-                loadDetailTexture(mReservedIndex, prev);
-
-                mIsFirstImage = false;
-            } else {
-                mIsFirstImage = true;
-            }
-
-            mIsLastImage = false;
-        } else if (mFocusDirection == FOCUS_DIRECTION.RIGHT) {
-            mCurrentImageIndexingInfo = getNextImageIndexingInfo(mCurrentImageIndexingInfo);
-            ImageIndexingInfo next = getNextImageIndexingInfo(mCurrentImageIndexingInfo);
-            if (next != null) {
-                loadDetailTexture(mReservedIndex, next);
-
-                mIsLastImage = false;
-            } else {
-                mIsLastImage = true;
-            }
-
-            mIsFirstImage = false;
-        }
-    }
+    };
 }

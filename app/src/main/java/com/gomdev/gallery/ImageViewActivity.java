@@ -12,6 +12,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -78,6 +79,10 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
                     new View.OnSystemUiVisibilityChangeListener() {
                         @Override
                         public void onSystemUiVisibilityChange(int vis) {
+                            if (DEBUG) {
+                                Log.d(TAG, "onSystemUiVisibilityChange() " + vis);
+                            }
+
                             if ((vis & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
                                 actionBar.hide();
                             } else {
@@ -98,6 +103,9 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     @Override
     public void onClick(View v) {
+        if (DEBUG) {
+            Log.d(TAG, "onClikc() " + mPager.getSystemUiVisibility());
+        }
         final int vis = mPager.getSystemUiVisibility();
         if ((vis & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
             mPager.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);

@@ -209,7 +209,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
         mGalleryObjects.onSurfaceCreated();
 
-        GLESTexture dummyImageTexture = GalleryUtils.createDummyTexture(Color.DKGRAY);
+        GLESTexture dummyImageTexture = GalleryUtils.createDummyTexture(Color.LTGRAY);
         GLESTexture dummyDateLabelTexture = GalleryUtils.createDummyTexture(Color.WHITE);
 
         mGalleryObjects.setDummyTexture(dummyDateLabelTexture, dummyImageTexture);

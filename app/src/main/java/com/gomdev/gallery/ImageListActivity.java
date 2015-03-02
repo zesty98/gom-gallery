@@ -3,14 +3,23 @@ package com.gomdev.gallery;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 public class ImageListActivity extends Activity {
     static final String CLASS = "ImageListActivity";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
+
+    final static int SET_SYSTEM_UI_FLAG_LOW_PROFILE = 102;
+    final static int SET_SYSTEM_UI_FLAG_VISIBLE = 103;
+    final static int UPDATE_ACTION_BAR_TITLE = 104;
 
     private GallerySurfaceView mSurfaceView = null;
     private ImageManager mImageManager = null;
@@ -34,6 +43,8 @@ public class ImageListActivity extends Activity {
         }
 
         mImageManager = ImageManager.getInstance();
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_INDEX, 0);
         BucketInfo bucketInfo = mImageManager.getBucketInfo(bucketPosition);
@@ -62,6 +73,23 @@ public class ImageListActivity extends Activity {
 
         mSurfaceView = new GallerySurfaceView(this, mGridInfo);
         layout.addView(mSurfaceView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mSurfaceView.setHandler(mHandler);
+
+        mSurfaceView.setOnSystemUiVisibilityChangeListener(
+                new View.OnSystemUiVisibilityChangeListener() {
+                    @Override
+                    public void onSystemUiVisibilityChange(int vis) {
+                        if (DEBUG) {
+                            Log.d(TAG, "onSystemUiVisibilityChange() " + vis);
+                        }
+
+                        if ((vis & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
+                            getActionBar().hide();
+                        } else {
+                            getActionBar().show();
+                        }
+                    }
+                });
 
         SharedPreferences.Editor editor = pref.edit();
         editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, bucketInfo.getIndex());
@@ -116,4 +144,24 @@ public class ImageListActivity extends Activity {
 
         super.finish();
     }
+
+    private Handler mHandler = new Handler(Looper.getMainLooper()) {
+
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case SET_SYSTEM_UI_FLAG_LOW_PROFILE:
+                    mSurfaceView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+                    break;
+                case SET_SYSTEM_UI_FLAG_VISIBLE:
+                    mSurfaceView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+                    break;
+                case UPDATE_ACTION_BAR_TITLE:
+                    getActionBar().setTitle((String)msg.obj);
+                    break;
+                default:
+            }
+            mSurfaceView.requestRender();
+        }
+    };
 }

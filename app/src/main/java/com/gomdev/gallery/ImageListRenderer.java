@@ -5,6 +5,7 @@ import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
+import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 
@@ -33,6 +34,8 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     private final Context mContext;
     private final GridInfo mGridInfo;
 
+    private Handler mHandler = null;
+
     private GallerySurfaceView mSurfaceView = null;
     private GalleryContext mGalleryContext = null;
 
@@ -58,7 +61,11 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         mContext = context;
         mGridInfo = gridInfo;
 
-        GLESContext.getInstance().setContext(context);
+        init();
+    }
+
+    private void init() {
+        GLESContext.getInstance().setContext(mContext);
         ImageManager imageManager = ImageManager.getInstance();
         mGalleryContext = GalleryContext.getInstance();
 
@@ -69,20 +76,20 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         GLESNode albumViewNode = new GLESNode("albumViewNode");
         mRoot.addChild(albumViewNode);
 
-        mAlbumViewManager = new AlbumViewManager(context, gridInfo);
+        mAlbumViewManager = new AlbumViewManager(mContext, mGridInfo);
         mAlbumViewManager.createScene(albumViewNode);
 
         GLESNode detailViewNode = new GLESNode("detailViewNode");
         mRoot.addChild(detailViewNode);
 
-        mDetailViewManager = new DetailViewManager(context, gridInfo);
+        mDetailViewManager = new DetailViewManager(mContext, mGridInfo);
         mDetailViewManager.createScene(detailViewNode);
 
         imageManager.setObjectManager(mAlbumViewManager);
 
         mViewManager = mAlbumViewManager;
 
-        setGridInfo(gridInfo);
+        setGridInfo(mGridInfo);
     }
 
     private void setGridInfo(GridInfo gridInfo) {
@@ -90,7 +97,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
             Log.d(TAG, "setGridInfo()");
         }
 
-        mGridInfo.addListener(this);
+        gridInfo.addListener(this);
     }
 
     // rendering
@@ -267,6 +274,8 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         mDetailViewManager.onImageSelected(selectedObject);
 
         mViewManager = mDetailViewManager;
+
+        mHandler.sendEmptyMessage(ImageListActivity.SET_SYSTEM_UI_FLAG_LOW_PROFILE);
     }
 
     @Override
@@ -354,5 +363,13 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
         mViewManager = mAlbumViewManager;
         mSurfaceView.requestRender();
+
+        mHandler.sendEmptyMessage(ImageListActivity.SET_SYSTEM_UI_FLAG_VISIBLE);
+    }
+
+    void setHandler(Handler handler) {
+        mHandler = handler;
+
+        mDetailViewManager.setHandler(handler);
     }
 }
