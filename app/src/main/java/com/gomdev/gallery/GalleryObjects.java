@@ -633,7 +633,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     @Override
-    public void onImageLoaded(int position, GalleryTexture texture) {
+    public void onImageLoaded(int index, GalleryTexture texture) {
         mWaitingTextures.add(texture);
 
         mSurfaceView.requestRender();
