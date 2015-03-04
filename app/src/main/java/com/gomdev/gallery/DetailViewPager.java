@@ -111,6 +111,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private int mMinDistanceForFling = 0;
     private int mMaxFlingVelocity = 0;
 
+    private boolean mIsAtEdge = false;
+    private int mMaxDragDistanceAtEdge = 0;
+
     DetailViewPager(Context context, GridInfo gridInfo) {
         mContext = context;
         mGridInfo = gridInfo;
@@ -184,6 +187,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         } else {
             if (mIsOnSwipeAnimation == true) {
                 mIsOnScroll = false;
+                mIsAtEdge = false;
                 mDragDistance = 0f;
                 changePosition();
 
@@ -218,6 +222,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 ImageObject object = (ImageObject) mTextureMappingInfos[i].getObject();
                 object.setScale(scale);
                 object.setAlpha(alpha);
+
+                if (mIsAtEdge == true && i != mCurrentIndex) {
+                    object.setAlpha(0f);
+                }
             }
         }
     }
@@ -313,6 +321,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         mRequestWidth = mWidth / 2;
         mRequestHeight = mHeight / 2;
+
+        mMaxDragDistanceAtEdge = mWidth / 4;
     }
 
     // onSurfaceCreated
@@ -570,11 +580,19 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 if (mIsDown == true) {
                     mDragDistance = event.getX() - mDownX;
                     if (mIsFirstImage == true && mDragDistance >= 0) {
-                        mDragDistance = 0f;
+                        if (mDragDistance > mMaxDragDistanceAtEdge) {
+                            mDragDistance = mMaxDragDistanceAtEdge;
+                        }
+
+                        mIsAtEdge = true;
                     }
 
                     if (mIsLastImage == true && mDragDistance <= 0) {
-                        mDragDistance = 0f;
+                        if (mDragDistance < -mMaxDragDistanceAtEdge) {
+                            mDragDistance = -mMaxDragDistanceAtEdge;
+                        }
+
+                        mIsAtEdge = true;
                     }
                 }
                 break;
@@ -592,13 +610,17 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     }
 
     private void handleAnimation() {
-        mVelocityTracker.computeCurrentVelocity(1000, mMaxFlingVelocity);
-        int initialVelocity = (int) mVelocityTracker.getXVelocity();
-
-        if (Math.abs(initialVelocity) < mMinFlingVelocity) {
-            handleScrollAnimation();
+        if (mIsAtEdge == true) {
+            handleEdgeAnimation();
         } else {
-            handleFlingAnimation(initialVelocity);
+            mVelocityTracker.computeCurrentVelocity(1000, mMaxFlingVelocity);
+            int initialVelocity = (int) mVelocityTracker.getXVelocity();
+
+            if (Math.abs(initialVelocity) < mMinFlingVelocity) {
+                handleScrollAnimation();
+            } else {
+                handleFlingAnimation(initialVelocity);
+            }
         }
 
         mIsOnSwipeAnimation = true;
@@ -619,6 +641,11 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             mFocusDirection = FOCUS_DIRECTION.NONE;
             mScroller.startScroll((int) mDragDistance, 0, (int) -mDragDistance, 0, SWIPE_SCROLLING_DURATION);
         }
+    }
+
+    private void handleEdgeAnimation() {
+        mFocusDirection = FOCUS_DIRECTION.NONE;
+        mScroller.startScroll((int) mDragDistance, 0, (int) -mDragDistance, 0, SWIPE_SCROLLING_DURATION);
     }
 
     private void handleFlingAnimation(int initialVelocity) {
