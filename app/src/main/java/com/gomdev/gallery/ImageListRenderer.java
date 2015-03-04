@@ -351,21 +351,27 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
             return;
         }
 
+        mAlbumViewManager.show();
         mDetailViewManager.finish();
         mSurfaceView.requestRender();
     }
 
-    void onFinished() {
+    void onFinished(boolean isDetailViewFinished) {
         if (DEBUG) {
             Log.d(TAG, "onFinished()");
         }
 
-        mDetailViewManager.hide();
+        if (isDetailViewFinished == true) {
+            mDetailViewManager.hide();
 
-        mViewManager = mAlbumViewManager;
-        mSurfaceView.requestRender();
+            mViewManager = mAlbumViewManager;
+            mSurfaceView.requestRender();
 
-        mHandler.sendEmptyMessage(ImageListActivity.SET_SYSTEM_UI_FLAG_VISIBLE);
+            mHandler.sendEmptyMessage(ImageListActivity.SET_SYSTEM_UI_FLAG_VISIBLE);
+        } else {
+            mAlbumViewManager.hide();
+        }
+
     }
 
     void setHandler(Handler handler) {

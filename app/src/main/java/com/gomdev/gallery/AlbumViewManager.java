@@ -35,6 +35,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
     private GalleryObjects mGalleryObjects = null;
     private Scrollbar mScrollbar = null;
     private GalleryContext mGalleryContext = null;
+    private GLESNode mAlbumViewNode = null;
 
     private GLESShader mTextureShader = null;
     private GLESShader mTextureAlphaShader = null;
@@ -221,6 +222,8 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
             Log.d(TAG, "createScene()");
         }
 
+        mAlbumViewNode = node;
+
         GLESNode imageNode = new GLESNode("imageNode");
         imageNode.setListener(mImageNodeListener);
         node.addChild(imageNode);
@@ -228,6 +231,8 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         mGalleryObjects.createObjects(imageNode);
 
         mScrollbar.createObject(node);
+
+        mAlbumViewNode.show();
     }
 
     void setTextureAlphaShader(GLESShader shader) {
@@ -382,6 +387,14 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
     }
 
     // set / get
+
+    void show() {
+        mAlbumViewNode.show();
+    }
+
+    void hide() {
+        mAlbumViewNode.hide();
+    }
 
 
     int getDateLabelIndex(float y) {

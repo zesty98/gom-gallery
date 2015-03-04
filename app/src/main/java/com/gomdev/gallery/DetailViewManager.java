@@ -544,9 +544,10 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
                 msg.obj = bucketInfo.getName();
                 mHandler.sendMessage(msg);
 
-                mRenderer.onFinished();
+                mRenderer.onFinished(true);
             } else {
                 mPager.show();
+                mRenderer.onFinished(false);
             }
 
             mCurrentDetailObject.setListener(mBackupListener);
