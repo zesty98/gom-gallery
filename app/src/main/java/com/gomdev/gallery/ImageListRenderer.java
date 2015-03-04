@@ -196,7 +196,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         }
 
         mAlbumViewManager.setTextureShader(mTextureShader);
-        mDetailViewManager.setTextureShader(mTextureShader);
+
 
         mTextureAlphaShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_alpha_20_fs);
         if (mTextureAlphaShader == null) {
@@ -204,6 +204,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         }
 
         mAlbumViewManager.setTextureAlphaShader(mTextureAlphaShader);
+        mDetailViewManager.setTextureShader(mTextureAlphaShader);
 
         mColorShader = createColorShader(R.raw.color_20_vs, R.raw.color_alpha_20_fs);
         if (mColorShader == null) {

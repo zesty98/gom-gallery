@@ -48,6 +48,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private static final int MIN_FLING_VELOCITY = 400;  // dips
     private static final int MIN_DISTANCE_FOR_FLING = 25; // dips
 
+    private static final float MIN_SCALE = 0.7f;
+    private static final float MAX_SCALE = 1.0f;
+
     private enum FOCUS_DIRECTION {
         LEFT,
         RIGHT,
@@ -193,6 +196,30 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             }
             mIsOnSwipeAnimation = false;
         }
+
+        if (mIsOnScroll == true) {
+            float normalizedValue = Math.abs(mDragDistance / mWidth);
+
+            for (int i = 0; i < NUM_OF_DETAIL_OBJECTS; i++) {
+                float scale = 1f;
+
+                if (i == mPrevIndex) {
+                    scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * normalizedValue;
+                } else if (i == mCurrentIndex) {
+                    scale = MAX_SCALE + (MIN_SCALE - MAX_SCALE) * normalizedValue;
+                } else if (i == mNextIndex) {
+                    scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * normalizedValue;
+                } else {
+                    scale = 1f;
+                }
+
+                float alpha = (float) Math.pow(scale, 3f);
+
+                ImageObject object = (ImageObject) mTextureMappingInfos[i].getObject();
+                object.setScale(scale);
+                object.setAlpha(alpha);
+            }
+        }
     }
 
     private void changePosition() {
@@ -249,12 +276,16 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
             if (i == mPrevIndex) {
                 object.setTranslate(-mWidth, 0f);
+                object.setScale(MIN_SCALE);
             } else if (i == mCurrentIndex) {
                 object.setTranslate(0f, 0f);
+                object.setScale(MAX_SCALE);
             } else if (i == mNextIndex) {
                 object.setTranslate(mWidth, 0f);
+                object.setScale(MIN_SCALE);
             } else {
                 object.setTranslate(0f, mHeight);
+                object.setScale(MIN_SCALE);
             }
             object.setScale(1.0f);
         }
@@ -313,11 +344,28 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
             GLESVertexInfo vertexInfo = object.getVertexInfo();
 
-            float[] position = GLESUtils.makePositionCoord(-mWidth * 0.5f - mWidth + mWidth * i, mHeight * 0.5f, mWidth, mHeight);
+            float x = -mWidth * 0.5f;
+            float y = mHeight * 0.5f;
+
+            float[] position = GLESUtils.makePositionCoord(x, y, mWidth, mHeight);
             vertexInfo.setBuffer(mTextureShader.getPositionAttribIndex(), position, 3);
 
             float[] texCoord = GLESUtils.makeTexCoord(0f, 0f, 1f, 1f);
             vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);
+
+            if (i == mPrevIndex) {
+                object.setTranslate(-mWidth, 0f);
+                object.setScale(MIN_SCALE);
+            } else if (i == mCurrentIndex) {
+                object.setTranslate(0f, 0f);
+                object.setScale(MAX_SCALE);
+            } else if (i == mNextIndex) {
+                object.setTranslate(mWidth, 0f);
+                object.setScale(MIN_SCALE);
+            } else {
+                object.setTranslate(0f, mHeight);
+                object.setScale(MAX_SCALE);
+            }
         }
 
         if (mCurrentImageIndexingInfo != null) {
@@ -696,6 +744,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         }
 
         mTextureShader = textureShader;
+
+        int location = textureShader.getUniformLocation("uAlpha");
+        GLES20.glUniform1f(location, 1f);
     }
 
     void setSurfaceView(GallerySurfaceView surfaceView) {
@@ -780,6 +831,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         @Override
         public void apply(GLESObject object) {
+            ImageObject imageObject = (ImageObject) object;
+
+            int location = mTextureShader.getUniformLocation("uAlpha");
+            GLES20.glUniform1f(location, imageObject.getAlpha());
         }
     };
 }
