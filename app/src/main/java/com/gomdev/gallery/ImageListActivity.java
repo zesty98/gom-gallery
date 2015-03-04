@@ -157,7 +157,7 @@ public class ImageListActivity extends Activity {
                     mSurfaceView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
                     break;
                 case UPDATE_ACTION_BAR_TITLE:
-                    getActionBar().setTitle((String)msg.obj);
+                    getActionBar().setTitle((String) msg.obj);
                     break;
                 default:
             }

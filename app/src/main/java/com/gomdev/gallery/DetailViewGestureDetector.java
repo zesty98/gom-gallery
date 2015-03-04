@@ -9,10 +9,6 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 
 import com.gomdev.gles.GLESAnimator;
-import com.gomdev.gles.GLESAnimatorCallback;
-import com.gomdev.gles.GLESNode;
-import com.gomdev.gles.GLESNodeListener;
-import com.gomdev.gles.GLESVector3;
 
 /**
  * Created by gomdev on 15. 2. 23..
@@ -129,7 +125,7 @@ public class DetailViewGestureDetector {
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (mIsDown == true) {
-                    mDragDistance  = mDownX - event.getX();
+                    mDragDistance = mDownX - event.getX();
                 }
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
