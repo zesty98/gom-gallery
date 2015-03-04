@@ -43,8 +43,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private static final int SWIPE_FLING_DURATION = 100;
     private static final int SWIPE_SCROLLING_DURATION = 300;
 
-    private static final int NUM_OF_DETAIL_OBJECTS = 3;
-    private static final int NUM_OF_RESERVED_TEXTURE_MAPPING_INFO = 2;
+    private static final int NUM_OF_DETAIL_OBJECTS = 5;
 
     private static final int MIN_FLING_VELOCITY = 400;  // dips
     private static final int MIN_DISTANCE_FOR_FLING = 25; // dips
@@ -73,7 +72,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private ImageIndexingInfo mCurrentImageIndexingInfo = null;
 
     private TextureMappingInfo[] mTextureMappingInfos = new TextureMappingInfo[NUM_OF_DETAIL_OBJECTS];
-    private TextureMappingInfo[] mReservedTextureMappingInfo = new TextureMappingInfo[2];
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
 
     private FOCUS_DIRECTION mFocusDirection = FOCUS_DIRECTION.NONE;
@@ -84,7 +82,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private int mPrevIndex = 0;
     private int mCurrentIndex = 1;
     private int mNextIndex = 2;
-
     private int mReservedIndex = 3;
     private int mReservedIndex2 = 4;
 
@@ -162,12 +159,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             texture.load(bitmap);
             bitmap.recycle();
 
-            TextureMappingInfo textureMappingInfo = null;
-            if (index == mReservedIndex) {
-                textureMappingInfo = mReservedTextureMappingInfo[0];
-            } else {
-                textureMappingInfo = mTextureMappingInfos[index];
-            }
+            TextureMappingInfo textureMappingInfo = mTextureMappingInfos[index];
+
             ImageObject object = (ImageObject) textureMappingInfo.getObject();
 
             object.setTexture(texture.getTexture());
@@ -211,9 +204,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         }
 
         if (mFocusDirection == FOCUS_DIRECTION.LEFT) {
-            mReservedTextureMappingInfo[1] = mTextureMappingInfos[mNextIndex];
-            if (mReservedTextureMappingInfo[1].getTexture() != null) {
-                mReservedTextureMappingInfo[1].getTexture().setIndex(mReservedIndex2);
+            mTextureMappingInfos[mReservedIndex2] = mTextureMappingInfos[mNextIndex];
+            if (mTextureMappingInfos[mReservedIndex2].getTexture() != null) {
+                mTextureMappingInfos[mReservedIndex2].getTexture().setIndex(mReservedIndex2);
             }
 
             mTextureMappingInfos[mNextIndex] = mTextureMappingInfos[mCurrentIndex];
@@ -222,17 +215,17 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             mTextureMappingInfos[mCurrentIndex] = mTextureMappingInfos[mPrevIndex];
             mTextureMappingInfos[mCurrentIndex].getTexture().setIndex(mCurrentIndex);
 
-            mTextureMappingInfos[mPrevIndex] = mReservedTextureMappingInfo[0];
+            mTextureMappingInfos[mPrevIndex] = mTextureMappingInfos[mReservedIndex];
             mTextureMappingInfos[mPrevIndex].getTexture().setIndex(mPrevIndex);
 
-            mReservedTextureMappingInfo[0] = mReservedTextureMappingInfo[1];
-            if (mReservedTextureMappingInfo[0].getTexture() != null) {
-                mReservedTextureMappingInfo[0].getTexture().setIndex(mReservedIndex);
+            mTextureMappingInfos[mReservedIndex] = mTextureMappingInfos[mReservedIndex2];
+            if (mTextureMappingInfos[mReservedIndex].getTexture() != null) {
+                mTextureMappingInfos[mReservedIndex].getTexture().setIndex(mReservedIndex);
             }
         } else if (mFocusDirection == FOCUS_DIRECTION.RIGHT) {
-            mReservedTextureMappingInfo[1] = mTextureMappingInfos[mPrevIndex];
-            if (mReservedTextureMappingInfo[1].getTexture() != null) {
-                mReservedTextureMappingInfo[1].getTexture().setIndex(mReservedIndex2);
+            mTextureMappingInfos[mReservedIndex2] = mTextureMappingInfos[mPrevIndex];
+            if (mTextureMappingInfos[mReservedIndex2].getTexture() != null) {
+                mTextureMappingInfos[mReservedIndex2].getTexture().setIndex(mReservedIndex2);
             }
 
             mTextureMappingInfos[mPrevIndex] = mTextureMappingInfos[mCurrentIndex];
@@ -241,12 +234,12 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             mTextureMappingInfos[mCurrentIndex] = mTextureMappingInfos[mNextIndex];
             mTextureMappingInfos[mCurrentIndex].getTexture().setIndex(mCurrentIndex);
 
-            mTextureMappingInfos[mNextIndex] = mReservedTextureMappingInfo[0];
+            mTextureMappingInfos[mNextIndex] = mTextureMappingInfos[mReservedIndex];
             mTextureMappingInfos[mNextIndex].getTexture().setIndex(mNextIndex);
 
-            mReservedTextureMappingInfo[0] = mReservedTextureMappingInfo[1];
-            if (mReservedTextureMappingInfo[0].getTexture() != null) {
-                mReservedTextureMappingInfo[0].getTexture().setIndex(mReservedIndex);
+            mTextureMappingInfos[mReservedIndex] = mTextureMappingInfos[mReservedIndex2];
+            if (mTextureMappingInfos[mReservedIndex].getTexture() != null) {
+                mTextureMappingInfos[mReservedIndex].getTexture().setIndex(mReservedIndex);
             }
         }
 
@@ -266,8 +259,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             object.setScale(1.0f);
         }
 
-        mReservedTextureMappingInfo[0].getObject().setTranslate(0f, mHeight);
-        mReservedTextureMappingInfo[1].getObject().setTranslate(0f, mHeight);
+        mTextureMappingInfos[mReservedIndex].getObject().setTranslate(0f, mHeight);
+        mTextureMappingInfos[mReservedIndex2].getObject().setTranslate(0f, mHeight);
 
         if (DEBUG) {
             Log.d(TAG, "changePosition() after");
@@ -302,8 +295,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         for (int i = 0; i < NUM_OF_DETAIL_OBJECTS; i++) {
             mTextureMappingInfos[i].getObject().setShader(mTextureShader);
         }
-        mReservedTextureMappingInfo[0].getObject().setShader(mTextureShader);
-        mReservedTextureMappingInfo[1].getObject().setShader(mTextureShader);
+        mTextureMappingInfos[mReservedIndex].getObject().setShader(mTextureShader);
+        mTextureMappingInfos[mReservedIndex2].getObject().setShader(mTextureShader);
     }
 
     // initialization
@@ -325,22 +318,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
             float[] texCoord = GLESUtils.makeTexCoord(0f, 0f, 1f, 1f);
             vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);
-        }
-
-        for (int i = 0; i < NUM_OF_RESERVED_TEXTURE_MAPPING_INFO; i++) {
-            ImageObject object = (ImageObject) mReservedTextureMappingInfo[i].getObject();
-            object.setCamera(camera);
-
-            GLESVertexInfo vertexInfo = object.getVertexInfo();
-
-            float[] position = GLESUtils.makePositionCoord(-mWidth * 0.5f, mHeight * 0.5f, mWidth, mHeight);
-            vertexInfo.setBuffer(mTextureShader.getPositionAttribIndex(), position, 3);
-
-            float[] texCoord = GLESUtils.makeTexCoord(0f, 0f, 1f, 1f);
-            vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);
-
-            object.setTranslate(0f, mHeight);
-            object.setScale(1.0f);
         }
 
         if (mCurrentImageIndexingInfo != null) {
@@ -422,12 +399,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private void loadDetailTexture(int index, ImageIndexingInfo imageIndexingInfo) {
         ImageInfo imageInfo = ImageManager.getInstance().getImageInfo(imageIndexingInfo);
 
-        TextureMappingInfo textureMappingInfo = null;
-        if (index == mReservedIndex) {
-            textureMappingInfo = mReservedTextureMappingInfo[0];
-        } else {
-            textureMappingInfo = mTextureMappingInfos[index];
-        }
+        TextureMappingInfo textureMappingInfo = mTextureMappingInfos[index];
         textureMappingInfo.setGalleryInfo(imageInfo);
 
         GalleryTexture texture = new GalleryTexture(imageInfo.getWidth(), imageInfo.getHeight());
@@ -460,12 +432,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             Log.d(TAG, "\t top=" + top + " right=" + right);
         }
 
-        TextureMappingInfo textureMappingInfo = null;
-        if (index == mReservedIndex) {
-            textureMappingInfo = mReservedTextureMappingInfo[0];
-        } else {
-            textureMappingInfo = mTextureMappingInfos[index];
-        }
+        TextureMappingInfo textureMappingInfo = mTextureMappingInfos[index];
 
         ImageObject object = (ImageObject) textureMappingInfo.getObject();
         FloatBuffer positionBuffer = (FloatBuffer) object.getVertexInfo().getBuffer(mTextureShader.getPositionAttribIndex());
@@ -514,23 +481,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             object.hide();
 
             mTextureMappingInfos[i] = new TextureMappingInfo(object);
-        }
-
-        for (int i = 0; i < NUM_OF_RESERVED_TEXTURE_MAPPING_INFO; i++) {
-            ImageObject reservedObject = new ImageObject("reservedObject_" + i);
-            mViewPagerNode.addChild(reservedObject);
-
-            GLESVertexInfo vertexInfo = new GLESVertexInfo();
-            vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
-            vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
-            reservedObject.setVertexInfo(vertexInfo, false, false);
-
-            reservedObject.setGLState(glState);
-            reservedObject.setListener(mDetailImageObjectListener);
-            reservedObject.setIndex(mReservedIndex + i);
-            reservedObject.hide();
-
-            mReservedTextureMappingInfo[i] = new TextureMappingInfo(reservedObject);
         }
     }
 
@@ -767,10 +717,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         for (int i = 0; i < NUM_OF_DETAIL_OBJECTS; i++) {
             mTextureMappingInfos[i].getObject().show();
         }
-
-        for (int i = 0; i < NUM_OF_RESERVED_TEXTURE_MAPPING_INFO; i++) {
-            mReservedTextureMappingInfo[i].getObject().show();
-        }
     }
 
     void hide() {
@@ -780,10 +726,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         for (int i = 0; i < NUM_OF_DETAIL_OBJECTS; i++) {
             mTextureMappingInfos[i].getObject().hide();
-        }
-
-        for (int i = 0; i < NUM_OF_RESERVED_TEXTURE_MAPPING_INFO; i++) {
-            mReservedTextureMappingInfo[i].getObject().hide();
         }
     }
 

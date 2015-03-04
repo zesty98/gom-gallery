@@ -429,8 +429,6 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
             float y = imageObject.getTranslateY();
             float scale = imageObject.getScale();
 
-            Log.d(TAG, "update() object=" + object.getName() + " scale=" + scale);
-
             transform.setTranslate(x, y, 0f);
             transform.setScale(scale);
 
