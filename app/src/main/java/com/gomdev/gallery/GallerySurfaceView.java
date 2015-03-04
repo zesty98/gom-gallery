@@ -33,9 +33,9 @@ public class GallerySurfaceView extends GLSurfaceView {
         mRenderer.setSurfaceView(this);
 
         setEGLContextClientVersion(2);
-        setEGLConfigChooser(8, 8, 8, 8, 16, 0);
-        getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        setEGLConfigChooser(8, 8, 8, 8, 0, 0);
         setRenderer(mRenderer);
+        getHolder().setFormat(PixelFormat.TRANSLUCENT);
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 

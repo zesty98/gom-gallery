@@ -24,6 +24,7 @@ class GalleryObject extends GLESObject {
 
     private float mTranslateX = 0f;
     private float mTranslateY = 0f;
+    private float mTranslateZ = 0f;
 
     private boolean mIsTextureMapped = false;
 
@@ -92,6 +93,13 @@ class GalleryObject extends GLESObject {
     void setTranslate(float x, float y) {
         mTranslateX = x;
         mTranslateY = y;
+        mTranslateZ = 0f;
+    }
+
+    void setTranslate(float x, float y, float z) {
+        mTranslateX = x;
+        mTranslateY = y;
+        mTranslateZ = z;
     }
 
     float getTranslateX() {
@@ -100,6 +108,10 @@ class GalleryObject extends GLESObject {
 
     float getTranslateY() {
         return mTranslateY;
+    }
+
+    float getTranslateZ() {
+        return mTranslateZ;
     }
 
     void setTextureMapping(boolean isTextureMapped) {

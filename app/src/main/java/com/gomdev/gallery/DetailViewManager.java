@@ -17,6 +17,7 @@ import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESObject;
 import com.gomdev.gles.GLESObjectListener;
 import com.gomdev.gles.GLESShader;
+import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVector3;
 import com.gomdev.gles.GLESVertexInfo;
@@ -46,6 +47,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
 
     private ImageObject mBGObject = null;
     private ImageObject mCurrentDetailObject = null;
+    private GLESObjectListener mBackupListener = null;
 
     private GLESAnimator mSelectionAnimator = null;
     private ImageObject mSelectedImageObject = null;
@@ -215,6 +217,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
         glState.setCullFace(GLES20.GL_BACK);
         glState.setBlendState(true);
         glState.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+        glState.setDepthState(false);
 
         mBGObject = new ImageObject("BG");
         node.addChild(mBGObject);
@@ -293,6 +296,11 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
 
         setupSelectionStartingAnimationInfo();
 
+        mBackupListener = mCurrentDetailObject.getListener();
+        mCurrentDetailObject.setListener(mDetailImageObjectListener);
+
+        mPager.hide();
+
         mSelectionAnimator.setValues(0f, 1f);
         mSelectionAnimator.cancel();
         mSelectionAnimator.start();
@@ -348,6 +356,9 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
         mCurrentImageIndexingInfo = mPager.getCurrentImageIndexingInfo();
 
         setupSelectionFinishingAnimationInfo();
+
+        mBackupListener = mCurrentDetailObject.getListener();
+        mCurrentDetailObject.setListener(mDetailImageObjectListener);
 
         if (mSelectionAnimator.isFinished() == false) {
             mSelectionAnimator.cancel();
@@ -406,6 +417,30 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
         }
     };
 
+    private GLESObjectListener mDetailImageObjectListener = new GLESObjectListener() {
+        @Override
+        public void update(GLESObject object) {
+
+            ImageObject imageObject = (ImageObject) object;
+            GLESTransform transform = object.getTransform();
+            transform.setIdentity();
+
+            float x = imageObject.getTranslateX();
+            float y = imageObject.getTranslateY();
+            float scale = imageObject.getScale();
+
+            Log.d(TAG, "update() object=" + object.getName() + " scale=" + scale);
+
+            transform.setTranslate(x, y, 0f);
+            transform.setScale(scale);
+
+        }
+
+        @Override
+        public void apply(GLESObject object) {
+        }
+    };
+
     private final GLESAnimatorCallback mSelectionAnimatorCB = new GLESAnimatorCallback() {
         @Override
         public void onAnimation(GLESVector3 current) {
@@ -416,7 +451,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
 
             updateBGObject(normalizedValue);
 
-            show();
+            mCurrentDetailObject.show();
         }
 
         private void updateDetailViewObject(float normalizedValue) {
@@ -512,7 +547,11 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
                 mHandler.sendMessage(msg);
 
                 mRenderer.onFinished();
+            } else {
+                mPager.show();
             }
+
+            mCurrentDetailObject.setListener(mBackupListener);
 
             mIsOnSelectionAnimation = false;
         }

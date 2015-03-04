@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class DetailViewPager implements GridInfoChangeListener, ImageLoadingListener {
     static final String CLASS = "DetailViewPager";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
-    static final boolean DEBUG = true;//GalleryConfig.DEBUG;
+    static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private static final int SWIPE_FLING_DURATION = 100;
     private static final int SWIPE_SCROLLING_DURATION = 300;
@@ -84,7 +84,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private int mPrevIndex = 0;
     private int mCurrentIndex = 1;
     private int mNextIndex = 2;
+
     private int mReservedIndex = 3;
+    private int mReservedIndex2 = 4;
 
     private int mWidth = 0;
     private int mHeight = 0;
@@ -103,6 +105,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private GestureDetector mGestureDetector = null;
 
     private boolean mIsOnSwipeAnimation = false;
+    private boolean mIsOnScroll = false;
 
     private int mMinFlingVelocity = 0;
     private int mMinDistanceForFling = 0;
@@ -137,9 +140,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mIsFirstImage = false;
         mIsLastImage = false;
 
-        mPrevIndex = 0;
-        mCurrentIndex = 1;
-        mNextIndex = 2;
+        mFocusDirection = FOCUS_DIRECTION.NONE;
     }
 
     private void clear() {
@@ -180,10 +181,15 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     void updateAnimation() {
         if (mScroller.isFinished() == false) {
             mSurfaceView.requestRender();
+
+            if (mScroller.computeScrollOffset() == true) {
+                mDragDistance = mScroller.getCurrX();
+            }
         } else {
             if (mIsOnSwipeAnimation == true) {
-                changePosition();
+                mIsOnScroll = false;
                 mDragDistance = 0f;
+                changePosition();
 
                 Message msg = mHandler.obtainMessage(ImageListActivity.UPDATE_ACTION_BAR_TITLE);
                 BucketInfo bucketInfo = mImageManager.getBucketInfo(mCurrentImageIndexingInfo.mBucketIndex);
@@ -197,10 +203,17 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     }
 
     private void changePosition() {
+        if (DEBUG) {
+            Log.d(TAG, "changePosition() before");
+            Log.d(TAG, "\t mPrev =" + mTextureMappingInfos[mPrevIndex].getObject().getName());
+            Log.d(TAG, "\t mCurrent =" + mTextureMappingInfos[mCurrentIndex].getObject().getName());
+            Log.d(TAG, "\t mNext =" + mTextureMappingInfos[mNextIndex].getObject().getName());
+        }
+
         if (mFocusDirection == FOCUS_DIRECTION.LEFT) {
             mReservedTextureMappingInfo[1] = mTextureMappingInfos[mNextIndex];
             if (mReservedTextureMappingInfo[1].getTexture() != null) {
-                mReservedTextureMappingInfo[1].getTexture().setIndex(mReservedIndex);
+                mReservedTextureMappingInfo[1].getTexture().setIndex(mReservedIndex2);
             }
 
             mTextureMappingInfos[mNextIndex] = mTextureMappingInfos[mCurrentIndex];
@@ -219,7 +232,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         } else if (mFocusDirection == FOCUS_DIRECTION.RIGHT) {
             mReservedTextureMappingInfo[1] = mTextureMappingInfos[mPrevIndex];
             if (mReservedTextureMappingInfo[1].getTexture() != null) {
-                mReservedTextureMappingInfo[1].getTexture().setIndex(mReservedIndex);
+                mReservedTextureMappingInfo[1].getTexture().setIndex(mReservedIndex2);
             }
 
             mTextureMappingInfos[mPrevIndex] = mTextureMappingInfos[mCurrentIndex];
@@ -257,10 +270,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mReservedTextureMappingInfo[1].getObject().setTranslate(0f, mHeight);
 
         if (DEBUG) {
-            Log.d(TAG, "changePosition()");
-            Log.d(TAG, "\t mPrevIndex=" + mPrevIndex);
-            Log.d(TAG, "\t mCurrentIndex=" + mCurrentIndex);
-            Log.d(TAG, "\t mNextIndex=" + mNextIndex);
+            Log.d(TAG, "changePosition() after");
+            Log.d(TAG, "\t mPrev =" + mTextureMappingInfos[mPrevIndex].getObject().getName());
+            Log.d(TAG, "\t mCurrent =" + mTextureMappingInfos[mCurrentIndex].getObject().getName());
+            Log.d(TAG, "\t mNext =" + mTextureMappingInfos[mNextIndex].getObject().getName());
         }
     }
 
@@ -480,13 +493,14 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         glState.setCullFace(GLES20.GL_BACK);
         glState.setBlendState(true);
         glState.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+        glState.setDepthState(false);
 
         mViewPagerNode = new GLESNode("ViewPagerNode");
         node.addChild(mViewPagerNode);
         mViewPagerNode.setListener(mViewPagerNodeListener);
 
         for (int i = 0; i < NUM_OF_DETAIL_OBJECTS; i++) {
-            ImageObject object = new ImageObject("DetailObject");
+            ImageObject object = new ImageObject("DetailObject_" + i);
             mViewPagerNode.addChild(object);
 
             GLESVertexInfo vertexInfo = new GLESVertexInfo();
@@ -513,7 +527,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
             reservedObject.setGLState(glState);
             reservedObject.setListener(mDetailImageObjectListener);
-            reservedObject.setIndex(mReservedIndex);
+            reservedObject.setIndex(mReservedIndex + i);
             reservedObject.hide();
 
             mReservedTextureMappingInfo[i] = new TextureMappingInfo(reservedObject);
@@ -536,6 +550,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 if (mIsOnSwipeAnimation == false) {
+                    mIsOnScroll = true;
                     mIsDown = true;
                     mDownX = event.getX();
                     mDragDistance = 0f;
@@ -555,7 +570,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (mIsDown == true) {
-
                     mDragDistance = event.getX() - mDownX;
                     if (mIsFirstImage == true && mDragDistance >= 0) {
                         mDragDistance = 0f;
@@ -702,7 +716,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         BucketInfo bucketInfo = mImageManager.getBucketInfo(mCurrentImageIndexingInfo.mBucketIndex);
         mSelectedDateLabelInfo = bucketInfo.get(mCurrentImageIndexingInfo.mDateLabelIndex);
 
-
         loadDetailTextures();
 
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos[mCurrentIndex];
@@ -803,10 +816,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             GLESTransform transform = node.getTransform();
             transform.setIdentity();
 
-            if (mScroller.computeScrollOffset() == true) {
-                mDragDistance = mScroller.getCurrX();
-            }
-
             transform.setTranslate(mDragDistance, 0f, 0f);
         }
     };
@@ -820,9 +829,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
             float x = imageObject.getTranslateX();
             float y = imageObject.getTranslateY();
+            float z = imageObject.getTranslateZ();
             float scale = imageObject.getScale();
 
-            transform.setTranslate(x, y, 0f);
+            transform.setTranslate(x, y, z);
             transform.setScale(scale);
         }
 

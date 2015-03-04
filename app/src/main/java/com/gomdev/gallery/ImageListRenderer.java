@@ -166,7 +166,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
         camera.setLookAt(0f, 0f, eyeZ, 0f, 0f, 0f, 0f, 1f, 0f);
 
-        camera.setFrustum(fovy, screenRatio, eyeZ * 0.01f, eyeZ * 10f);
+        camera.setFrustum(fovy, screenRatio, eyeZ * 0.001f, eyeZ * 1.5f);
 
         camera.setViewport(new GLESRect(0, 0, width, height));
 
