@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -140,7 +141,16 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         if (texture != null) {
             TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(texture.getIndex());
             final ImageObject object = (ImageObject) textureMappingInfo.getObject();
-            final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
+            Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
+
+            if (bitmap == null) {
+                ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
+
+                int width = imageInfo.getWidth() / 10;
+                int height = imageInfo.getHeight() / 10;
+
+                bitmap = GLESUtils.makeBitmap(width, height, Bitmap.Config.ARGB_8888, Color.DKGRAY);
+            }
             texture.load(bitmap);
 
             object.setTexture(texture.getTexture());
@@ -564,7 +574,19 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
 
-        float[] texCoord = GalleryUtils.calcTexCoord(bitmap.getWidth(), bitmap.getHeight());
+        int imageWidth = 0;
+        int imageHeight = 0;
+
+        if (bitmap == null) {
+            ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
+            imageWidth = imageInfo.getWidth();
+            imageHeight = imageInfo.getHeight();
+        } else {
+            imageWidth = bitmap.getWidth();
+            imageHeight = bitmap.getHeight();
+        }
+
+        float[] texCoord = GalleryUtils.calcTexCoord(imageWidth, imageHeight);
 
         GLESVertexInfo vertexInfo = object.getVertexInfo();
         vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);

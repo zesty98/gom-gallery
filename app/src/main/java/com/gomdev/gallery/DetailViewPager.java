@@ -176,7 +176,18 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         if (texture != null) {
             int index = texture.getIndex();
-            final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
+            Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
+
+            if (bitmap == null) {
+                TextureMappingInfo textureMappingInfo = mTextureMappingInfos[index];
+                ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
+
+                int width = imageInfo.getWidth() / 10;
+                int height = imageInfo.getHeight() / 10;
+
+                bitmap = GLESUtils.makeBitmap(width, height, Bitmap.Config.ARGB_8888, Color.DKGRAY);
+            }
+
             texture.load(bitmap);
             bitmap.recycle();
 
@@ -272,13 +283,17 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             }
 
             mTextureMappingInfos[nextIndex] = mTextureMappingInfos[currentIndex];
-            mTextureMappingInfos[nextIndex].getTexture().setIndex(nextIndex);
+            if (mTextureMappingInfos[nextIndex].getTexture() != null) {
+                mTextureMappingInfos[nextIndex].getTexture().setIndex(nextIndex);
+            }
 
             mTextureMappingInfos[currentIndex] = mTextureMappingInfos[prevIndex];
             mTextureMappingInfos[currentIndex].getTexture().setIndex(currentIndex);
 
             mTextureMappingInfos[prevIndex] = mTextureMappingInfos[reservedIndex];
-            mTextureMappingInfos[prevIndex].getTexture().setIndex(prevIndex);
+            if (mTextureMappingInfos[prevIndex].getTexture() != null) {
+                mTextureMappingInfos[prevIndex].getTexture().setIndex(prevIndex);
+            }
 
             mTextureMappingInfos[reservedIndex] = mTextureMappingInfos[reserved2Index];
             if (mTextureMappingInfos[reservedIndex].getTexture() != null) {
@@ -291,13 +306,17 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             }
 
             mTextureMappingInfos[prevIndex] = mTextureMappingInfos[currentIndex];
-            mTextureMappingInfos[prevIndex].getTexture().setIndex(prevIndex);
+            if (mTextureMappingInfos[prevIndex].getTexture() != null) {
+                mTextureMappingInfos[prevIndex].getTexture().setIndex(prevIndex);
+            }
 
             mTextureMappingInfos[currentIndex] = mTextureMappingInfos[nextIndex];
             mTextureMappingInfos[currentIndex].getTexture().setIndex(currentIndex);
 
             mTextureMappingInfos[nextIndex] = mTextureMappingInfos[reservedIndex];
-            mTextureMappingInfos[nextIndex].getTexture().setIndex(nextIndex);
+            if (mTextureMappingInfos[nextIndex].getTexture() != null) {
+                mTextureMappingInfos[nextIndex].getTexture().setIndex(nextIndex);
+            }
 
             mTextureMappingInfos[reservedIndex] = mTextureMappingInfos[reserved2Index];
             if (mTextureMappingInfos[reservedIndex].getTexture() != null) {
@@ -877,7 +896,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         @Override
         public void onLongPress(MotionEvent e) {
             OptionDialog dialog = new OptionDialog();
-            dialog.show(((Activity)(mContext)).getFragmentManager(), "option");
+            dialog.show(((Activity) (mContext)).getFragmentManager(), "option");
             mGalleryContext.setImageIndexingInfo(mCurrentImageIndexingInfo);
         }
     };
