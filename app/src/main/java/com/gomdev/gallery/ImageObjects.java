@@ -398,7 +398,25 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     @Override
     public void onNumOfImageInfosChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onNumOfImageInfosChanged()");
+        }
+
         mNumOfImages = mDateLabelInfo.getNumOfImages();
+
+        int size = mObjects.size();
+        for (int i = 0; i < size; i++) {
+            ImageObject object = mObjects.get(i);
+
+            float left = mSpacing + (i % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
+            float top = -((i / mNumOfColumns) * (mColumnWidth + mSpacing));
+            object.setLeftTop(left, top);
+
+            float scale = (float) mColumnWidth / mDefaultColumnWidth;
+            object.setScale(scale);
+
+            mEndOffsetY = top - mDefaultColumnWidth * scale;
+        }
     }
 
     @Override

@@ -22,6 +22,7 @@ public class ImageListActivity extends Activity {
     final static int UPDATE_ACTION_BAR_TITLE = 104;
 
     private GallerySurfaceView mSurfaceView = null;
+    private GalleryContext mGalleryContext = null;
     private ImageManager mImageManager = null;
     private GridInfo mGridInfo = null;
 
@@ -36,9 +37,9 @@ public class ImageListActivity extends Activity {
     }
 
     private void init(Bundle savedInstanceState) {
-        GalleryContext galleryContext = GalleryContext.getInstance();
-        if (galleryContext == null) {
-            galleryContext = GalleryContext.newInstance(this);
+        mGalleryContext = GalleryContext.getInstance();
+        if (mGalleryContext == null) {
+            mGalleryContext = GalleryContext.newInstance(this);
             GalleryUtils.setDefaultInfo(this);
         }
 
@@ -54,8 +55,8 @@ public class ImageListActivity extends Activity {
         int numOfColumns = pref.getInt(GalleryConfig.PREF_NUM_OF_COLUMNS, 0);
         int columnWidth = pref.getInt(GalleryConfig.PREF_COLUMNS_WIDTH, 0);
         if (numOfColumns == 0 || columnWidth == 0) {
-            numOfColumns = galleryContext.getNumOfColumns();
-            columnWidth = galleryContext.getColumnWidth();
+            numOfColumns = mGalleryContext.getNumOfColumns();
+            columnWidth = mGalleryContext.getColumnWidth();
 
             SharedPreferences.Editor editor = pref.edit();
             editor.putInt(GalleryConfig.PREF_COLUMNS_WIDTH, columnWidth);

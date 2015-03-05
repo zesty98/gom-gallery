@@ -4,16 +4,13 @@ import android.content.Context;
 import android.graphics.RectF;
 
 class GalleryContext {
+    enum ImageViewMode {
+        ALBUME_VIEW_MODE,
+        DETAIL_VIEW_MODE
+    }
+
     static final Object sLockObject = new Object();
     private static GalleryContext sGalleryContext;
-
-    private int mNumOfColumns = GalleryConfig.DEFAULT_NUM_OF_COLUMNS;
-    private int mGridColumnWidth;
-    private int mActionBarHeight = 0;
-    private int mVersionCode = 100;
-
-    private ImageIndexingInfo mImageIndexingInfo = new ImageIndexingInfo(0, 0, 0);
-    private RectF mCurrentViewport = null;
 
     static GalleryContext newInstance(Context context) {
         sGalleryContext = new GalleryContext();
@@ -25,6 +22,16 @@ class GalleryContext {
     static GalleryContext getInstance() {
         return sGalleryContext;
     }
+
+    private int mNumOfColumns = GalleryConfig.DEFAULT_NUM_OF_COLUMNS;
+    private int mGridColumnWidth;
+    private int mActionBarHeight = 0;
+    private int mVersionCode = 100;
+
+    private ImageIndexingInfo mImageIndexingInfo = new ImageIndexingInfo(0, 0, 0);
+    private RectF mCurrentViewport = null;
+
+    private ImageViewMode mImageViewMode = ImageViewMode.ALBUME_VIEW_MODE;
 
     private GalleryContext() {
 
@@ -76,5 +83,13 @@ class GalleryContext {
 
     RectF getCurrentViewport() {
         return mCurrentViewport;
+    }
+
+    void setImageViewMode(ImageViewMode mode) {
+        mImageViewMode = mode;
+    }
+
+    ImageViewMode getImageViewMode() {
+        return mImageViewMode;
     }
 }

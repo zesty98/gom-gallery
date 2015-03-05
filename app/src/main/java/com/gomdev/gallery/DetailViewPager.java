@@ -222,7 +222,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             for (DetailViewIndex index : DetailViewIndex.values()) {
                 float scale = 1f;
 
-                switch(index) {
+                switch (index) {
                     case PREV_INDEX:
                         scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * normalizedValue;
                         break;
@@ -311,7 +311,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             TextureMappingInfo textureMappingInfo = mTextureMappingInfos[i];
             ImageObject object = (ImageObject) textureMappingInfo.getObject();
 
-            switch(index) {
+            switch (index) {
                 case PREV_INDEX:
                     object.setTranslate(-mWidth, 0f);
                     object.setScale(MIN_SCALE);
@@ -402,7 +402,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             float[] texCoord = GLESUtils.makeTexCoord(0f, 0f, 1f, 1f);
             vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);
 
-            switch(index) {
+            switch (index) {
                 case PREV_INDEX:
                     object.setTranslate(-mWidth, 0f);
                     object.setScale(MIN_SCALE);
@@ -751,6 +751,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         if (DEBUG) {
             Log.d(TAG, "onNumOfImageInfosChanged()");
         }
+
+        mCurrentImageIndexingInfo = null;
     }
 
     @Override
@@ -870,6 +872,13 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 ((Activity) mContext).getActionBar().setTitle(mSelectedDateLabelInfo.getDate());
             }
             return true;
+        }
+
+        @Override
+        public void onLongPress(MotionEvent e) {
+            OptionDialog dialog = new OptionDialog();
+            dialog.show(((Activity)(mContext)).getFragmentManager(), "option");
+            mGalleryContext.setImageIndexingInfo(mCurrentImageIndexingInfo);
         }
     };
 

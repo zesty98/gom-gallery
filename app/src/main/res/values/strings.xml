@@ -4,5 +4,6 @@
     <string name="app_name">GomGallery</string>
     <string name="action_delete">Delete</string>
     <string name="imageview_description">Image Thumbnail</string>
+    <string name="option_dialog_title">Options</string>
 
 </resources>
