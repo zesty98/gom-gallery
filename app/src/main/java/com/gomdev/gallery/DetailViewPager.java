@@ -48,14 +48,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private static final int MIN_FLING_VELOCITY = 400;  // dips
     private static final int MIN_DISTANCE_FOR_FLING = 25; // dips
 
+    private static final int MAX_DISTANCE_AT_EDGE = 50; //dips
+
     private static final float MIN_SCALE = 0.7f;
     private static final float MAX_SCALE = 1.0f;
-
-//    private static final int RPEV_INDEX = 0;
-//    private static final int CURRENT_INDEX = 1;
-//    private static final int NEXT_INDEX = 2;
-//    private static final int RESERVED_INDEX = 3;
-//    private static final int RESERVED2_INDEX = 4;
 
     private enum FocusDirection {
         LEFT,
@@ -155,6 +151,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mMinFlingVelocity = (int) (MIN_FLING_VELOCITY * density);
         mMinDistanceForFling = (int) (MIN_DISTANCE_FOR_FLING * density);
         mMaxFlingVelocity = configuration.getScaledMaximumFlingVelocity();
+        mMaxDragDistanceAtEdge = (int) (MAX_DISTANCE_AT_EDGE * density);
     }
 
     private void reset() {
@@ -359,8 +356,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         mRequestWidth = mWidth / 2;
         mRequestHeight = mHeight / 2;
-
-        mMaxDragDistanceAtEdge = mWidth / 4;
     }
 
     // onSurfaceCreated
