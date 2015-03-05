@@ -100,9 +100,7 @@ class Scrollbar implements GridInfoChangeListener {
 
             mAnimator.cancel();
 
-            mColorShader.useProgram();
-            int location = mColorShader.getUniformLocation("uAlpha");
-            GLES20.glUniform1f(location, 1f);
+            mBlendingAlpha = 1.0f;
         }
 
         if (mAnimator.doAnimation() == true) {
