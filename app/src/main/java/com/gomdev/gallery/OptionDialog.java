@@ -59,7 +59,7 @@ public class OptionDialog extends DialogFragment {
                             shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
 
                             shareIntent.setType("image/*");
-                            startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.send_to)));
+                            startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.action_share)));
                         }
                     }
                 });

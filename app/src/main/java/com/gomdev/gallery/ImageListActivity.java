@@ -1,12 +1,18 @@
 package com.gomdev.gallery;
 
 import android.app.Activity;
+import android.content.ContentUris;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.provider.MediaStore;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -20,6 +26,7 @@ public class ImageListActivity extends Activity {
     final static int SET_SYSTEM_UI_FLAG_LOW_PROFILE = 102;
     final static int SET_SYSTEM_UI_FLAG_VISIBLE = 103;
     final static int UPDATE_ACTION_BAR_TITLE = 104;
+    final static int INVALIDATE_OPTION_MENU = 105;
 
     private GallerySurfaceView mSurfaceView = null;
     private GalleryContext mGalleryContext = null;
@@ -87,6 +94,8 @@ public class ImageListActivity extends Activity {
                         if ((vis & View.SYSTEM_UI_FLAG_LOW_PROFILE) != 0) {
                             getActionBar().hide();
                         } else {
+                            updateActionBarTitle();
+                            invalidateOptionsMenu();
                             getActionBar().show();
                         }
                     }
@@ -97,6 +106,15 @@ public class ImageListActivity extends Activity {
         editor.putInt(GalleryConfig.PREF_DATE_LABEL_INDEX, 0);
         editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
         editor.commit();
+    }
+
+    private void updateActionBarTitle() {
+        ImageIndexingInfo indexingInfo = mGalleryContext.getImageIndexingInfo();
+        BucketInfo bucketInfo = mImageManager.getBucketInfo(indexingInfo.mBucketIndex);
+        DateLabelInfo dateLabelInfo = bucketInfo.get(indexingInfo.mDateLabelIndex);
+
+        String actionBarTitle = dateLabelInfo.getDate();
+        getActionBar().setTitle(actionBarTitle);
     }
 
     @Override
@@ -146,19 +164,96 @@ public class ImageListActivity extends Activity {
         super.finish();
     }
 
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        GalleryContext.ImageViewMode mode = mGalleryContext.getImageViewMode();
+
+        switch (mode) {
+            case ALBUME_VIEW_MODE:
+                menu.removeItem(R.id.action_delete);
+                break;
+            case DETAIL_VIEW_MODE:
+                if (menu.findItem(R.id.action_delete) == null) {
+                    getMenuInflater().inflate(R.menu.main, menu);
+
+
+                }
+                break;
+            default:
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_delete) {
+            delete();
+            return true;
+        } else if (id == R.id.action_share) {
+            share();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void delete() {
+        GalleryContext galleryContext = GalleryContext.getInstance();
+        ImageIndexingInfo imageIndexingInfo = galleryContext.getImageIndexingInfo();
+
+        boolean isBucketDeleted = ImageManager.getInstance().deleteImage(imageIndexingInfo);
+
+        if (isBucketDeleted == true) {
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+        } else {
+            galleryContext.setImageViewMode(GalleryContext.ImageViewMode.ALBUME_VIEW_MODE);
+            Intent intent = new Intent(this, ImageListActivity.class);
+            intent.putExtra(GalleryConfig.BUCKET_INDEX, imageIndexingInfo.mBucketIndex);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+        }
+    }
+
+    private void share() {
+        GalleryContext galleryContext = GalleryContext.getInstance();
+        ImageIndexingInfo imageIndexingInfo = galleryContext.getImageIndexingInfo();
+
+        ImageInfo imageInfo = ImageManager.getInstance().getImageInfo(imageIndexingInfo);
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        Uri uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, imageInfo.getImageID());
+        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+
+        shareIntent.setType("image/*");
+        startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.action_share)));
+    }
+
     private Handler mHandler = new Handler(Looper.getMainLooper()) {
 
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case SET_SYSTEM_UI_FLAG_LOW_PROFILE:
+//                    invalidateOptionsMenu();
                     mSurfaceView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
                     break;
                 case SET_SYSTEM_UI_FLAG_VISIBLE:
+                    invalidateOptionsMenu();
                     mSurfaceView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
                     break;
                 case UPDATE_ACTION_BAR_TITLE:
                     getActionBar().setTitle((String) msg.obj);
+                    break;
+                case INVALIDATE_OPTION_MENU:
+                    invalidateOptionsMenu();
                     break;
                 default:
             }

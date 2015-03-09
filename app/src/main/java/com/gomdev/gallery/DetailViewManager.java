@@ -436,6 +436,8 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
 
         @Override
         public void apply(GLESObject object) {
+            int location = GLES20.glGetUniformLocation(object.getShader().getProgram(), "uAlpha");
+            GLES20.glUniform1f(location, 1f);
         }
     };
 
@@ -546,6 +548,8 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
 
                 mRenderer.onFinished(true);
             } else {
+//                mHandler.sendEmptyMessage(ImageListActivity.INVALIDATE_OPTION_MENU);
+
                 mPager.show();
                 mRenderer.onFinished(false);
             }

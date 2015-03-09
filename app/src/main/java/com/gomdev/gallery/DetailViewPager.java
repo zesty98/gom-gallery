@@ -217,12 +217,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 mDragDistance = 0f;
                 changePosition();
 
-                Message msg = mHandler.obtainMessage(ImageListActivity.UPDATE_ACTION_BAR_TITLE);
-                BucketInfo bucketInfo = mImageManager.getBucketInfo(mCurrentImageIndexingInfo.mBucketIndex);
-                mSelectedDateLabelInfo = bucketInfo.get(mCurrentImageIndexingInfo.mDateLabelIndex);
-
-                msg.obj = mSelectedDateLabelInfo.getDate();
-                mHandler.sendMessage(msg);
+                mGalleryContext.setImageIndexingInfo(mCurrentImageIndexingInfo);
+                updateActionBarTitle();
             }
             mIsOnSwipeAnimation = false;
         }
@@ -260,6 +256,15 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 }
             }
         }
+    }
+
+    private void updateActionBarTitle() {
+        Message msg = mHandler.obtainMessage(ImageListActivity.UPDATE_ACTION_BAR_TITLE);
+        BucketInfo bucketInfo = mImageManager.getBucketInfo(mCurrentImageIndexingInfo.mBucketIndex);
+        mSelectedDateLabelInfo = bucketInfo.get(mCurrentImageIndexingInfo.mDateLabelIndex);
+
+        msg.obj = mSelectedDateLabelInfo.getDate();
+        mHandler.sendMessage(msg);
     }
 
     private void changePosition() {
