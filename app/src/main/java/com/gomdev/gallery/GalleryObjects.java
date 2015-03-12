@@ -667,10 +667,10 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         static final String TAG = GalleryConfig.TAG + "_" + CLASS;
         static final boolean DEBUG = GalleryConfig.DEBUG;
 
-        private final float DATE_LABEL_TEXT_SIZE = 18f;
-        private final float DATE_LABEL_TEXT_SHADOW_RADIUS = 1f;
-        private final float DATE_LABEL_TEXT_SHADOW_DX = 0.5f;
-        private final float DATE_LABEL_TEXT_SHADOW_DY = 0.5f;
+        private final float DATE_LABEL_TEXT_SIZE = 17f;
+        private final float DATE_LABEL_TEXT_SHADOW_RADIUS = 0.7f;
+        private final float DATE_LABEL_TEXT_SHADOW_DX = 0.3f;
+        private final float DATE_LABEL_TEXT_SHADOW_DY = 0.3f;
         private final int DATE_LABEL_TEXT_SHADOW_COLOR = 0x88444444;
         private final int DATE_LABEL_TEXT_COLOR = 0xFF222222;
 
