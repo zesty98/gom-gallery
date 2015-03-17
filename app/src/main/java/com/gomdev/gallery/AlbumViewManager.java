@@ -264,15 +264,6 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         if (DEBUG) {
             Log.d(TAG, "onResume()");
         }
-
-        SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
-        int bucketIndex = pref.getInt(GalleryConfig.PREF_BUCKET_INDEX, 0);
-        int dateLabelIndex = pref.getInt(GalleryConfig.PREF_DATE_LABEL_INDEX, 0);
-        int imageIndex = pref.getInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
-
-        ImageIndexingInfo imageIndexingInfo = new ImageIndexingInfo(bucketIndex, dateLabelIndex, imageIndex);
-        mCenterObject = getImageObject(imageIndexingInfo);
-        mGalleryContext.setImageIndexingInfo(imageIndexingInfo);
     }
 
     void onPause() {

@@ -68,6 +68,10 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
     private int mHeight = 0;
 
     AlbumViewGestureDetector(Context context, GridInfo gridInfo) {
+        if (DEBUG) {
+            Log.d(TAG, "AlbumViewGestureDetector()");
+        }
+
         mContext = context;
         mGridInfo = gridInfo;
 
@@ -99,6 +103,10 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
     }
 
     void setSurfaceView(GallerySurfaceView surfaceView) {
+        if (DEBUG) {
+            Log.d(TAG, "setSurfaceView()");
+        }
+
         mSurfaceView = surfaceView;
         mRenderer = surfaceView.getRenderer();
     }
@@ -108,6 +116,10 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
     }
 
     void surfaceChanged(int width, int height) {
+        if (DEBUG) {
+            Log.d(TAG, "surfaceChanged() width=" + width + " height=" + height);
+        }
+
         mHeight = height;
 
         mContentRect.set(0, 0, width, height);
@@ -123,6 +135,10 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
         mSurfaceBufferBottom = mSurfaceBufferTop - mScrollableHeight;
 
         if (mCurrentViewport == null) {
+            if (DEBUG) {
+                Log.d(TAG, "surfaceChanged() create CurrentViewPort");
+            }
+
             float right = width * 0.5f;
             float left = -right;
             float top = mSurfaceBufferTop;
@@ -131,8 +147,6 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
             // OpenGL ES coordiante.
             mCurrentViewport = new RectF(left, bottom, right, top);
         }
-
-        adjustViewport();
     }
 
     RectF getCurrentViewport() {
@@ -151,6 +165,10 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
 
     @Override
     public void onNumOfImageInfosChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onNumOfImageInfosChanged()");
+        }
+
         mScrollableHeight = mGridInfo.getScrollableHeight();
 
         mSurfaceSizeBuffer.y = mScrollableHeight;
@@ -161,6 +179,10 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
 
     @Override
     public void onNumOfDateLabelInfosChanged() {
+        if (DEBUG) {
+            Log.d(TAG, "onNumOfDateLabelInfosChanged()");
+        }
+
         mScrollableHeight = mGridInfo.getScrollableHeight();
 
         mSurfaceSizeBuffer.y = mScrollableHeight;
