@@ -3,6 +3,7 @@ package com.gomdev.gallery;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.opengl.GLES20;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -29,7 +30,17 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
+    private final int ALPAH_ANIMATION_DURATION = 300;
     private final float VISIBILITY_PADDING_DP = 60f;    // dp
+
+    private final float DUMMY_TEXTURE_R = 0.8f;
+    private final float DUMMY_TEXTURE_G = 0.8f;
+    private final float DUMMY_TEXTURE_B = 0.8f;
+    private final float DUMMY_TEXTURE_A = 1.0f;
+    private final int DUMMY_TEXTURE_COLOR = (int) (DUMMY_TEXTURE_A * 0xFF) << 24 |
+            (int) (DUMMY_TEXTURE_R * 0xFF) << 16 |
+            (int) (DUMMY_TEXTURE_G * 0xFF) << 8 |
+            (int) (DUMMY_TEXTURE_B * 0xFF);
 
     private final Context mContext;
     private final GridInfo mGridInfo;
@@ -43,7 +54,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private List<ImageObject> mObjects = new ArrayList<>();
 
-    private GLESShader mTextureShader = null;
+    private GLESShader mShader = null;
     private GLESGLState mGLState = null;
     private GLESTexture mDummyTexture = null;
 
@@ -72,6 +83,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     private float mScale = 1f;
 
     private boolean mNeedToSetTranslate = false;
+
+    private long mCurrentTime = 0L;
 
     ImageObjects(Context context, GridInfo gridInfo, DateLabelInfo dateLabelInfo) {
         mContext = context;
@@ -135,7 +148,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         object.setTranslate(translateX, translateY);
     }
 
-    void updateTexture() {
+    void updateTexture(long currentTime) {
+        mCurrentTime = currentTime;
+
         GalleryTexture texture = mWaitingTextures.poll();
 
         if (texture != null) {
@@ -154,6 +169,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             texture.load(bitmap);
 
             object.setTexture(texture.getTexture());
+
+            object.setAnimationStartTime(currentTime);
         }
 
         if (mWaitingTextures.size() > 0) {
@@ -290,7 +307,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             GLESVertexInfo vertexInfo = object.getVertexInfo();
             float[] vertex = GLESUtils.makePositionCoord(-mDefaultColumnWidth * 0.5f, mDefaultColumnWidth * 0.5f, mDefaultColumnWidth, mDefaultColumnWidth);
-            vertexInfo.setBuffer(mTextureShader.getPositionAttribIndex(), vertex, 3);
+            vertexInfo.setBuffer(mShader.getPositionAttribIndex(), vertex, 3);
 
             mEndOffsetY = top - mColumnWidth;
         }
@@ -306,12 +323,16 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         cancelLoading();
         clear();
 
+        mDummyTexture = GalleryUtils.createDummyTexture(DUMMY_TEXTURE_COLOR);
+
         int size = mObjects.size();
         for (int i = 0; i < size; i++) {
             ImageObject object = mObjects.get(i);
             object.setTextureMapping(false);
             object.setVisibility(false);
-            object.setShader(mTextureShader);
+            object.setShader(mShader);
+
+            object.setTexture(mDummyTexture);
         }
 
         size = mTextureMappingInfos.size();
@@ -530,26 +551,17 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             Log.d(TAG, "setShader()");
         }
 
-        mTextureShader = shader;
+        mShader = shader;
+
+        int location = mShader.getUniformLocation("uAlpha");
+        GLES20.glUniform1f(location, 1f);
+
+        location = mShader.getUniformLocation("uDefaultColor");
+        GLES20.glUniform4f(location, DUMMY_TEXTURE_R, DUMMY_TEXTURE_G, DUMMY_TEXTURE_B, DUMMY_TEXTURE_A);
     }
 
     void setGLState(GLESGLState state) {
         mGLState = state;
-    }
-
-    void setDummyTexture(GLESTexture dummyTexture) {
-        if (DEBUG) {
-            Log.d(TAG, "setDummyTexture()");
-        }
-
-        mDummyTexture = dummyTexture;
-
-        int size = mObjects.size();
-        for (int i = 0; i < size; i++) {
-            ImageObject object = mObjects.get(i);
-            object.setTexture(dummyTexture);
-            object.setTextureMapping(false);
-        }
     }
 
     ImageObject getObject(int index) {
@@ -589,7 +601,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         float[] texCoord = GalleryUtils.calcTexCoord(imageWidth, imageHeight);
 
         GLESVertexInfo vertexInfo = object.getVertexInfo();
-        vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);
+        vertexInfo.setBuffer(mShader.getTexCoordAttribIndex(), texCoord, 2);
 
         mWaitingTextures.add(texture);
         mSurfaceView.requestRender();
@@ -672,11 +684,29 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
                     0f);
 
             transform.scale(imageObject.getScale());
+
+            long startTime = imageObject.getAnimationStartTime();
+            int elapsedTime = (int) (mCurrentTime - startTime);
+            if (elapsedTime <= ALPAH_ANIMATION_DURATION) {
+                float alpha = ((float) elapsedTime / ALPAH_ANIMATION_DURATION);
+                imageObject.setAlpha(alpha);
+
+                mSurfaceView.requestRender();
+            } else {
+                imageObject.setAlpha(1f);
+            }
         }
 
         @Override
         public void apply(GLESObject object) {
+            ImageObject imageObject = (ImageObject) object;
+            float alpha = imageObject.getAlpha();
 
+            int location = mShader.getUniformLocation("uAlpha");
+            GLES20.glUniform1f(location, alpha);
+
+            location = mShader.getUniformLocation("uDefaultColor");
+            GLES20.glUniform4f(location, DUMMY_TEXTURE_R, DUMMY_TEXTURE_G, DUMMY_TEXTURE_B, DUMMY_TEXTURE_A);
         }
     };
 }

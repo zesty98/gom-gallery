@@ -1,7 +1,6 @@
 package com.gomdev.gallery;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -50,11 +49,13 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     private AlbumViewManager mAlbumViewManager = null;
     private DetailViewManager mDetailViewManager = null;
 
-    private GLESShader mTextureShader = null;
+    private GLESShader mTextureCustomShader = null;
     private GLESShader mTextureAlphaShader = null;
     private GLESShader mColorShader = null;
 
     private boolean mIsSurfaceChanged = false;
+
+    private long mCurrentTime = 0L;
 
     ImageListRenderer(Context context, GridInfo gridInfo) {
         if (DEBUG) {
@@ -112,17 +113,19 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
             return;
         }
 
+        mCurrentTime = System.currentTimeMillis();
+
 //        GLESUtils.checkFPS();
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         synchronized (GalleryContext.sLockObject) {
-            mViewManager.update();
+            mViewManager.update(mCurrentTime);
 
             mGLESRenderer.updateScene(mSM);
             mGLESRenderer.drawScene(mSM);
 
-            mViewManager.updateAnimation();
+            mViewManager.updateAnimation(mCurrentTime);
         }
     }
 
@@ -193,13 +196,12 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     }
 
     private boolean createShader() {
-        mTextureShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_20_fs);
-        if (mTextureShader == null) {
+        mTextureCustomShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_custom_20_fs);
+        if (mTextureCustomShader == null) {
             return false;
         }
 
-        mAlbumViewManager.setTextureShader(mTextureShader);
-
+        mAlbumViewManager.setTextureCustomShader(mTextureCustomShader);
 
         mTextureAlphaShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_alpha_20_fs);
         if (mTextureAlphaShader == null) {
@@ -207,7 +209,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         }
 
         mAlbumViewManager.setTextureAlphaShader(mTextureAlphaShader);
-        mDetailViewManager.setTextureShader(mTextureAlphaShader);
+        mDetailViewManager.setTextureAlphaShader(mTextureAlphaShader);
 
         mColorShader = createColorShader(R.raw.color_20_vs, R.raw.color_alpha_20_fs);
         if (mColorShader == null) {
@@ -273,7 +275,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         ImageObject selectedObject = mAlbumViewManager.getImageObject(imageIndexingInfo);
 
         GLESVertexInfo vertexInfo = selectedObject.getVertexInfo();
-        vertexInfo.getBuffer(mTextureShader.getPositionAttribIndex());
+        vertexInfo.getBuffer(mTextureCustomShader.getPositionAttribIndex());
 
         mDetailViewManager.onImageSelected(selectedObject);
 

@@ -175,8 +175,6 @@ public class ImageListActivity extends Activity {
             case DETAIL_VIEW_MODE:
                 if (menu.findItem(R.id.action_delete) == null) {
                     getMenuInflater().inflate(R.menu.main, menu);
-
-
                 }
                 break;
             default:

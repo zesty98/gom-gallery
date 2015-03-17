@@ -51,7 +51,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private GLESGLState mDateLabelGLState = null;
     private GLESGLState mImageGLState = null;
-    private GLESShader mDateLabelShader = null;
+    private GLESShader mShader = null;
 
     private int mNumOfDateInfos = 0;
     private int mDateLabelHeight = 0;
@@ -63,7 +63,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     private int mActionBarHeight = 0;
 
     private Bitmap mLoadingBitmap = null;
-    private GLESTexture mDummyDateLabelTexture = null;
+    private GLESTexture mDummyTexture = null;
 
     private int mWidth = 0;
     private int mHeight = 0;
@@ -117,17 +117,13 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     // Rendering
 
     void update(boolean isOnScrolling) {
-        if (isOnScrolling == false) {
-            updateTexture();
-        }
-
         checkVisibility(isOnScrolling);
 
         update();
     }
 
     // this function should be called on GLThread
-    void updateTexture() {
+    void updateTexture(long currentTime) {
         GalleryTexture texture = mWaitingTextures.poll();
 
         if (texture != null) {
@@ -151,7 +147,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             DateLabelObject dateLabelObject = mDateLabelObjects.get(i);
 
             ImageObjects imageObjects = dateLabelObject.getImageObjects();
-            imageObjects.updateTexture();
+            imageObjects.updateTexture(currentTime);
         }
     }
 
@@ -243,7 +239,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     void unmapTexture(int index, GalleryObject object) {
-        object.setTexture(mDummyDateLabelTexture);
+        object.setTexture(mDummyTexture);
 
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
         GalleryTexture texture = textureMappingInfo.getTexture();
@@ -297,9 +293,9 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             GLESVertexInfo vertexInfo = object.getVertexInfo();
             float[] vertex = GLESUtils.makePositionCoord(-width * 0.5f, height * 0.5f, width, height);
-            vertexInfo.setBuffer(mDateLabelShader.getPositionAttribIndex(), vertex, 3);
+            vertexInfo.setBuffer(mShader.getPositionAttribIndex(), vertex, 3);
             float[] texCoord = GLESUtils.makeTexCoord(0f, 0f, 1f, 1f);
-            vertexInfo.setBuffer(mDateLabelShader.getTexCoordAttribIndex(), texCoord, 2);
+            vertexInfo.setBuffer(mShader.getTexCoordAttribIndex(), texCoord, 2);
 
             yOffset -= (mDateLabelHeight + mSpacing);
 
@@ -322,11 +318,13 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         clear();
 
+        mDummyTexture = GalleryUtils.createDummyTexture(Color.WHITE);
+
         int size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mDateLabelObjects.get(i);
-            object.setShader(mDateLabelShader);
-
+            object.setShader(mShader);
+            object.setTexture(mDummyTexture);
 
             ImageObjects imageObjects = object.getImageObjects();
             imageObjects.onSurfaceCreated();
@@ -550,9 +548,9 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             Log.d(TAG, "setDateLabelShader()");
         }
 
-        mDateLabelShader = shader;
+        mShader = shader;
 
-        int location = mDateLabelShader.getUniformLocation("uAlpha");
+        int location = mShader.getUniformLocation("uAlpha");
         GLES20.glUniform1f(location, 1f);
     }
 
@@ -566,24 +564,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             DateLabelObject object = mDateLabelObjects.get(i);
             ImageObjects imageObjects = object.getImageObjects();
             imageObjects.setShader(shader);
-        }
-    }
-
-    void setDummyTexture(GLESTexture dummyDateLabelTexture, GLESTexture dummyImageTexture) {
-        if (DEBUG) {
-            Log.d(TAG, "setDummyTexture()");
-        }
-
-        mDummyDateLabelTexture = dummyDateLabelTexture;
-
-        int size = mDateLabelObjects.size();
-        for (int i = 0; i < size; i++) {
-            DateLabelObject object = mDateLabelObjects.get(i);
-            object.setTexture(dummyDateLabelTexture);
-            object.setTextureMapping(false);
-
-            ImageObjects imageObjects = object.getImageObjects();
-            imageObjects.setDummyTexture(dummyImageTexture);
         }
     }
 
@@ -805,7 +785,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         @Override
         public void apply(GLESObject object) {
-            int location = mDateLabelShader.getUniformLocation("uAlpha");
+            int location = mShader.getUniformLocation("uAlpha");
             GLES20.glUniform1f(location, mAlpha);
         }
     };

@@ -15,6 +15,8 @@ class ImageObject extends GalleryObject {
     private float mNextStartOffsetY = 0f;
     private float mAlpha = 1f;
 
+    private long mAnimationStartTime = 0L;
+
     private boolean mPrevVisibility = false;
 
     ImageObject(String name) {
@@ -76,5 +78,13 @@ class ImageObject extends GalleryObject {
 
     float getAlpha() {
         return mAlpha;
+    }
+
+    void setAnimationStartTime(long startTime) {
+        mAnimationStartTime = startTime;
+    }
+
+    long getAnimationStartTime() {
+        return mAnimationStartTime;
     }
 }

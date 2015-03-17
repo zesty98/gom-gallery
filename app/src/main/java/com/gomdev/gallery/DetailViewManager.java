@@ -59,7 +59,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
     private float mNormalizedValue = 0f;
 
     private GLESShader mColorShader = null;
-    private GLESShader mTextureShader = null;
+    private GLESShader mTextureAlphaShader = null;
 
     private int mWidth = 0;
     private int mHeight = 0;
@@ -110,12 +110,12 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
     // rendering
 
     @Override
-    public void update() {
+    public void update(long currentTime) {
         mPager.update();
     }
 
     @Override
-    public void updateAnimation() {
+    public void updateAnimation(long currentTime) {
         if (mSelectionAnimator.doAnimation() == true) {
             mSurfaceView.requestRender();
         }
@@ -239,13 +239,13 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
         mColorShader = colorShader;
     }
 
-    public void setTextureShader(GLESShader textureShader) {
+    public void setTextureAlphaShader(GLESShader textureShader) {
         if (DEBUG) {
-            Log.d(TAG, "setTextureShader()");
+            Log.d(TAG, "setTextureAlphaShader()");
         }
 
-        mTextureShader = textureShader;
-        mPager.setTextureShader(textureShader);
+        mTextureAlphaShader = textureShader;
+        mPager.setTextureAlphaShader(textureShader);
     }
 
     void setSurfaceView(GallerySurfaceView surfaceView) {
@@ -320,12 +320,12 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
 
         GLESVertexInfo vertexInfo = mCurrentDetailObject.getVertexInfo();
         float[] vertex = GLESUtils.makePositionCoord(-mWidth * 0.5f, mWidth * 0.5f, mWidth, mWidth);
-        vertexInfo.setBuffer(mTextureShader.getPositionAttribIndex(), vertex, 3);
+        vertexInfo.setBuffer(mTextureAlphaShader.getPositionAttribIndex(), vertex, 3);
 
         calcTexCoordInfo(imageInfo);
 
         float[] texCoord = GLESUtils.makeTexCoord(mMinS, mMinT, mMaxS, mMaxT);
-        vertexInfo.setBuffer(mTextureShader.getTexCoordAttribIndex(), texCoord, 2);
+        vertexInfo.setBuffer(mTextureAlphaShader.getTexCoordAttribIndex(), texCoord, 2);
     }
 
     private void calcTexCoordInfo(ImageInfo imageInfo) {
@@ -467,7 +467,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
             mCurrentDetailObject.setScale(scale);
 
             GLESVertexInfo vertexInfo = mCurrentDetailObject.getVertexInfo();
-            FloatBuffer positionBuffer = (FloatBuffer) vertexInfo.getBuffer(mTextureShader.getPositionAttribIndex());
+            FloatBuffer positionBuffer = (FloatBuffer) vertexInfo.getBuffer(mTextureAlphaShader.getPositionAttribIndex());
 
             ImageInfo imageInfo = mImageManager.getImageInfo(mCurrentImageIndexingInfo);
 
@@ -509,7 +509,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
             float currentMaxS = mMaxS + (1f - mMaxS) * normalizedValue;
             float currentMaxT = mMaxT + (1f - mMaxT) * normalizedValue;
 
-            FloatBuffer texBuffer = (FloatBuffer) mCurrentDetailObject.getVertexInfo().getBuffer(mTextureShader.getTexCoordAttribIndex());
+            FloatBuffer texBuffer = (FloatBuffer) mCurrentDetailObject.getVertexInfo().getBuffer(mTextureAlphaShader.getTexCoordAttribIndex());
 
             texBuffer.put(0, currentMinS);
             texBuffer.put(1, currentMaxT);

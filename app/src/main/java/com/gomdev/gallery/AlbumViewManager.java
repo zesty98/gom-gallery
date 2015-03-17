@@ -94,6 +94,8 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         GLESGLState glState = new GLESGLState();
         glState.setCullFaceState(true);
         glState.setCullFace(GLES20.GL_BACK);
+        glState.setBlendState(true);
+        glState.setBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         glState.setDepthState(false);
 
         mGalleryObjects.setImageGLState(glState);
@@ -135,7 +137,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
     // rendering
 
     @Override
-    public void update() {
+    public void update(long currentTime) {
         udpateGestureDetector();
 
         boolean isOnScrolling = mAlbumViewGestureDetector.isOnScrolling();
@@ -144,7 +146,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         }
 
         if (isOnScrolling == false) {
-            mGalleryObjects.updateTexture();
+            mGalleryObjects.updateTexture(currentTime);
         }
 
         mGalleryObjects.checkVisibility(isOnScrolling);
@@ -163,7 +165,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
     }
 
     @Override
-    public void updateAnimation() {
+    public void updateAnimation(long currentTime) {
         if (mScaleAnimator.doAnimation() == true) {
             mSurfaceView.requestRender();
         }
@@ -209,11 +211,6 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         mScrollbar.setShader(mColorShader);
 
         mGalleryObjects.onSurfaceCreated();
-
-        GLESTexture dummyImageTexture = GalleryUtils.createDummyTexture(Color.LTGRAY);
-        GLESTexture dummyDateLabelTexture = GalleryUtils.createDummyTexture(Color.WHITE);
-
-        mGalleryObjects.setDummyTexture(dummyDateLabelTexture, dummyImageTexture);
     }
 
     // initialization
@@ -239,7 +236,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         mTextureAlphaShader = shader;
     }
 
-    void setTextureShader(GLESShader shader) {
+    void setTextureCustomShader(GLESShader shader) {
         mTextureShader = shader;
     }
 

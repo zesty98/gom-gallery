@@ -834,9 +834,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mHandler = handler;
     }
 
-    public void setTextureShader(GLESShader textureShader) {
+    public void setTextureAlphaShader(GLESShader textureShader) {
         if (DEBUG) {
-            Log.d(TAG, "setTextureShader()");
+            Log.d(TAG, "setTextureAlphaShader()");
         }
 
         mTextureShader = textureShader;
