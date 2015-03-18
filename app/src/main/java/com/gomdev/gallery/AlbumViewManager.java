@@ -1,8 +1,6 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.opengl.GLES20;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -15,7 +13,6 @@ import com.gomdev.gles.GLESGLState;
 import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESNodeListener;
 import com.gomdev.gles.GLESShader;
-import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESVector3;
 
