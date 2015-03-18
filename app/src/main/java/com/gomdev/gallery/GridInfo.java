@@ -80,17 +80,19 @@ class GridInfo {
     }
 
     void resize(int numOfColumns) {
-        mNumOfColumns = numOfColumns;
+        synchronized (GalleryContext.sLockObject) {
+            mNumOfColumns = numOfColumns;
 
-        setNumOfColumnsToDateInfo(mNumOfColumns);
+            setNumOfColumnsToDateInfo(mNumOfColumns);
 
-        mColumnWidth = calcColumnWidth();
-        mNumOfRows = calcNumOfRows();
-        mScrollableHeight = calcScrollableHeight();
+            mColumnWidth = calcColumnWidth();
+            mNumOfRows = calcNumOfRows();
+            mScrollableHeight = calcScrollableHeight();
 
-        int size = mListeners.size();
-        for (int i = 0; i < size; i++) {
-            mListeners.get(i).onColumnWidthChanged();
+            int size = mListeners.size();
+            for (int i = 0; i < size; i++) {
+                mListeners.get(i).onColumnWidthChanged();
+            }
         }
 
         SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);

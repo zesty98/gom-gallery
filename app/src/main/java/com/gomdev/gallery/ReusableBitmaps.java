@@ -33,9 +33,7 @@ class ReusableBitmaps {
     }
 
     void addBitmapToResuableSet(Bitmap bitmap) {
-        synchronized (mReusableBitmaps) {
-            mReusableBitmaps.add(new SoftReference<>(bitmap));
-        }
+        mReusableBitmaps.add(new SoftReference<>(bitmap));
 
         if (DEBUG) {
             Log.d(TAG, "addBitmapToResuableSet() add Bitmap width=" + bitmap.getWidth() + " height=" + bitmap.getHeight() + " size=" + mReusableBitmaps.size());

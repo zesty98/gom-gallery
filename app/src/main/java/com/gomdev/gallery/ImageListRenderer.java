@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 
+import com.gomdev.gallery.GalleryContext.ImageViewMode;
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESContext;
 import com.gomdev.gles.GLESNode;
@@ -19,8 +20,6 @@ import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESShaderConstant;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
-
-import com.gomdev.gallery.GalleryContext.*;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -120,13 +119,12 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         synchronized (GalleryContext.sLockObject) {
-            mViewManager.update(mCurrentTime);
-
-            mGLESRenderer.updateScene(mSM);
-            mGLESRenderer.drawScene(mSM);
-
             mViewManager.updateAnimation(mCurrentTime);
+            mViewManager.update(mCurrentTime);
         }
+
+        mGLESRenderer.updateScene(mSM);
+        mGLESRenderer.drawScene(mSM);
     }
 
 

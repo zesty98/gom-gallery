@@ -410,10 +410,8 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
             }
 
             if (numOfColumns != mNumOfColumns) {
-                synchronized (GalleryContext.sLockObject) {
-                    mAlbumViewManager.resize(x, y);
-                    mGridInfo.resize(numOfColumns);
-                }
+                mAlbumViewManager.resize(x, y);
+                mGridInfo.resize(numOfColumns);
             }
 
             mSurfaceView.requestRender();

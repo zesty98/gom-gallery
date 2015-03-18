@@ -98,7 +98,7 @@ class RecyclingBitmapDrawable extends BitmapDrawable {
         }
     }
 
-    private synchronized boolean hasValidBitmap() {
+    private boolean hasValidBitmap() {
         Bitmap bitmap = getBitmap();
         return bitmap != null && !bitmap.isRecycled();
     }
