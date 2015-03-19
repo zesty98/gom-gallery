@@ -113,8 +113,17 @@ public class ImageListActivity extends Activity {
         BucketInfo bucketInfo = mImageManager.getBucketInfo(indexingInfo.mBucketIndex);
         DateLabelInfo dateLabelInfo = bucketInfo.get(indexingInfo.mDateLabelIndex);
 
-        String actionBarTitle = dateLabelInfo.getDate();
-        getActionBar().setTitle(actionBarTitle);
+        GalleryContext.ImageViewMode mode = mGalleryContext.getImageViewMode();
+        switch(mode) {
+            case ALBUME_VIEW_MODE:
+                getActionBar().setTitle(bucketInfo.getName());
+                break;
+            case DETAIL_VIEW_MODE:
+                getActionBar().setTitle(dateLabelInfo.getDate());
+                break;
+            default:
+                getActionBar().setTitle(bucketInfo.getName());
+        }
     }
 
     @Override
@@ -241,11 +250,11 @@ public class ImageListActivity extends Activity {
             switch (msg.what) {
                 case SET_SYSTEM_UI_FLAG_LOW_PROFILE:
 //                    invalidateOptionsMenu();
-                    mSurfaceView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+                    GalleryUtils.hideSystemUiVisibility(ImageListActivity.this);
                     break;
                 case SET_SYSTEM_UI_FLAG_VISIBLE:
                     invalidateOptionsMenu();
-                    mSurfaceView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+                    GalleryUtils.showSystemUiVisibility(ImageListActivity.this);
                     break;
                 case UPDATE_ACTION_BAR_TITLE:
                     getActionBar().setTitle((String) msg.obj);

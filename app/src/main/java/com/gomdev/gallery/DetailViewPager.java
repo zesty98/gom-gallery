@@ -109,7 +109,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private boolean mIsFirstImage = false;
     private boolean mIsLastImage = false;
 
-
     private int mWidth = 0;
     private int mHeight = 0;
 
@@ -134,6 +133,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
     private boolean mIsAtEdge = false;
     private int mMaxDragDistanceAtEdge = 0;
+
+    private boolean mIsActionBarShown = false;
 
     DetailViewPager(Context context, GridInfo gridInfo) {
         mContext = context;
@@ -165,6 +166,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private void reset() {
         mIsFirstImage = false;
         mIsLastImage = false;
+        mIsActionBarShown = false;
 
         mFocusDirection = FocusDirection.NONE;
     }
@@ -884,7 +886,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     // memeber class
 
     private final GestureDetector.SimpleOnGestureListener mGestureListener = new GestureDetector.SimpleOnGestureListener() {
-        private boolean mIsShown = false;
+
 
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
@@ -892,11 +894,11 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 Log.d(TAG, "onSingleTabUp()");
             }
 
-            if (mIsShown == true) {
-                mIsShown = false;
+            if (mIsActionBarShown == true) {
+                mIsActionBarShown = false;
                 mHandler.sendEmptyMessage(ImageListActivity.SET_SYSTEM_UI_FLAG_LOW_PROFILE);
             } else {
-                mIsShown = true;
+                mIsActionBarShown = true;
                 mHandler.sendEmptyMessage(ImageListActivity.SET_SYSTEM_UI_FLAG_VISIBLE);
                 ((Activity) mContext).getActionBar().setTitle(mSelectedDateLabelInfo.getDate());
             }

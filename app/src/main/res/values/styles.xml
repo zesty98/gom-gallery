@@ -4,12 +4,21 @@
         <item name="android:drawSelectorOnTop">true</item>
     </style>
 
-    <style name="AppBaseTheme" parent="android:Theme.Light">
+    <style name="AppTheme" parent="android:Theme.Holo.Light">
+        <item name="android:windowActionBarOverlay">true</item>
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:actionBarStyle">@style/TranslucentActionBar</item>
     </style>
 
-    <style name="AppTheme" parent="AppBaseTheme">
+    <style name="AppTheme.FullScreen" />
+
+    <style name="TranslucentActionBar" parent="@android:style/Widget.Holo.ActionBar">
+        <item name="android:background">#99000000</item>
+        <item name="android:titleTextStyle">@style/ActionBarTitleText</item>
     </style>
 
-    <style name="AppTheme.FullScreen" parent="@android:style/Theme.NoTitleBar.Fullscreen" />
+    <style name="ActionBarTitleText" parent="@android:style/TextAppearance.Holo.Widget.ActionBar.Title">
+        <item name="android:textColor">#FFFF</item>
+    </style>
 
 </resources>

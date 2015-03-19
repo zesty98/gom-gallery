@@ -1,10 +1,12 @@
 package com.gomdev.gallery;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.util.TypedValue;
+import android.view.View;
 
 import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESTexture;
@@ -194,5 +196,20 @@ class GalleryUtils {
                 .load(bitmap);
 
         return dummyTexture;
+    }
+
+    static void initSystemUiVisibility(Activity activity) {
+        activity.getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_VISIBLE);
+    }
+
+    static void showSystemUiVisibility(Activity activity) {
+        activity.getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_VISIBLE);
+    }
+
+    static void hideSystemUiVisibility(Activity activity) {
+        activity.getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LOW_PROFILE);
     }
 }

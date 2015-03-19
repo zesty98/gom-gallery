@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
+import android.view.WindowManager;
 
 public class MainActivity extends Activity {
     static final String CLASS = "MainActivity";
@@ -31,6 +32,9 @@ public class MainActivity extends Activity {
 
         GalleryUtils.setDefaultInfo(this);
 
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        GalleryUtils.showSystemUiVisibility(this);
+
         PackageInfo packageInfo;
         try {
             packageInfo = this.getPackageManager().getPackageInfo(
@@ -44,4 +48,6 @@ public class MainActivity extends Activity {
             e.printStackTrace();
         }
     }
+
+
 }
