@@ -13,7 +13,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
-import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
 import android.widget.Scroller;
 
 import com.gomdev.gles.GLESCamera;
@@ -40,8 +40,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private static final int SWIPE_FLING_DURATION = 100;
-    private static final int SWIPE_SCROLLING_DURATION = 300;
+    private static final int MAX_SETTLE_DURATION = 600;
+    private static final int EDGE_SCROLLING_DURATION = 500;
 
     private static final int NUM_OF_DETAIL_OBJECTS = 5;
 
@@ -76,6 +76,13 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             return mIndex;
         }
     }
+
+    private static final Interpolator sInterpolator = new Interpolator() {
+        public float getInterpolation(float t) {
+            t -= 1.0f;
+            return t * t * t * t * t + 1.0f;
+        }
+    };
 
     private final Context mContext;
     private final GridInfo mGridInfo;
@@ -112,7 +119,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     // touch or gesture
     private boolean mIsDown = false;
     private float mDownX = 0f;
-    private float mDragDistance = 0f;
+    private int mDragDistance = 0;
 
     private Scroller mScroller = null;
     private VelocityTracker mVelocityTracker = null;
@@ -143,14 +150,15 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mGalleryContext = GalleryContext.getInstance();
         mImageManager = ImageManager.getInstance();
 
-        mScroller = new Scroller(mContext, new DecelerateInterpolator());
+        mScroller = new Scroller(mContext, sInterpolator);
+//        mScroller = new Scroller(mContext, new DecelerateInterpolator());
         mGestureDetector = new GestureDetector(mContext, mGestureListener);
         final ViewConfiguration configuration = ViewConfiguration.get(mContext);
         final float density = mContext.getResources().getDisplayMetrics().density;
 
         mMinFlingVelocity = (int) (MIN_FLING_VELOCITY * density);
-        mMinDistanceForFling = (int) (MIN_DISTANCE_FOR_FLING * density);
         mMaxFlingVelocity = configuration.getScaledMaximumFlingVelocity();
+        mMinDistanceForFling = (int) (MIN_DISTANCE_FOR_FLING * density);
         mMaxDragDistanceAtEdge = (int) (MAX_DISTANCE_AT_EDGE * density);
     }
 
@@ -214,7 +222,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             if (mIsOnSwipeAnimation == true) {
                 mIsOnScroll = false;
                 mIsAtEdge = false;
-                mDragDistance = 0f;
+                mDragDistance = 0;
                 changePosition();
 
                 mGalleryContext.setImageIndexingInfo(mCurrentImageIndexingInfo);
@@ -224,7 +232,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         }
 
         if (mIsOnScroll == true) {
-            float normalizedValue = Math.abs(mDragDistance / mWidth);
+            float normalizedValue = Math.abs((float) mDragDistance / mWidth);
 
             for (DetailViewIndex index : DetailViewIndex.values()) {
                 float scale = 1f;
@@ -628,11 +636,13 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                     mIsOnScroll = true;
                     mIsDown = true;
                     mDownX = event.getX();
-                    mDragDistance = 0f;
+                    mDragDistance = 0;
                 }
                 break;
             case MotionEvent.ACTION_UP:
                 if (mIsDown == true) {
+                    mDragDistance = (int) (event.getX() - mDownX);
+
                     handleAnimation();
                     mIsDown = false;
                 }
@@ -645,7 +655,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (mIsDown == true) {
-                    mDragDistance = event.getX() - mDownX;
+                    mDragDistance = (int) (event.getX() - mDownX);
                     if (mIsFirstImage == true && mDragDistance >= 0) {
                         if (mDragDistance > mMaxDragDistanceAtEdge) {
                             mDragDistance = mMaxDragDistanceAtEdge;
@@ -684,9 +694,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             int initialVelocity = (int) mVelocityTracker.getXVelocity();
 
             if (Math.abs(initialVelocity) < mMinFlingVelocity) {
-                handleScrollAnimation();
+                handleScrollAnimation(0);
             } else {
-                handleFlingAnimation(initialVelocity);
+                handleScrollAnimation(initialVelocity);
             }
         }
 
@@ -695,42 +705,37 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         prePopulate();
     }
 
-    private void handleScrollAnimation() {
-        if (Math.abs(mDragDistance) > mWidth * 0.5f) {
-            if (mDragDistance > 0) {
-                mFocusDirection = FocusDirection.LEFT;
-                mScroller.startScroll((int) mDragDistance, 0, (int) (mWidth - mDragDistance), 0, SWIPE_SCROLLING_DURATION);
-            } else {
-                mFocusDirection = FocusDirection.RIGHT;
-                mScroller.startScroll((int) mDragDistance, 0, (int) (-mWidth - mDragDistance), 0, SWIPE_SCROLLING_DURATION);
-            }
-        } else {
-            mFocusDirection = FocusDirection.NONE;
-            mScroller.startScroll((int) mDragDistance, 0, (int) -mDragDistance, 0, SWIPE_SCROLLING_DURATION);
-        }
-    }
-
     private void handleEdgeAnimation() {
         mFocusDirection = FocusDirection.NONE;
-        mScroller.startScroll((int) mDragDistance, 0, (int) -mDragDistance, 0, SWIPE_SCROLLING_DURATION);
+        mScroller.startScroll(mDragDistance, 0, -mDragDistance, 0, EDGE_SCROLLING_DURATION);
     }
 
-    private void handleFlingAnimation(int initialVelocity) {
+    private void handleScrollAnimation(int initialVelocity) {
+        int distance = 0;
+
         if (Math.abs(mDragDistance) > mMinDistanceForFling) {
             if (mDragDistance > 0) {
                 mFocusDirection = FocusDirection.LEFT;
-//                mScroller.fling((int) mDragDistance, 0, initialVelocity, 0, mWidth, mWidth, 0, 0);
-                mScroller.startScroll((int) mDragDistance, 0, (int) (mWidth - mDragDistance), 0, SWIPE_FLING_DURATION);
+                distance = mWidth - mDragDistance;
             } else {
                 mFocusDirection = FocusDirection.RIGHT;
-//                mScroller.fling((int) mDragDistance, 0, initialVelocity, 0, -mWidth, -mWidth, 0, 0);
-                mScroller.startScroll((int) mDragDistance, 0, (int) (-mWidth - mDragDistance), 0, SWIPE_FLING_DURATION);
+                distance = -mWidth - mDragDistance;
             }
         } else {
             mFocusDirection = FocusDirection.NONE;
-//            mScroller.fling((int) mDragDistance, 0, initialVelocity, 0, 0, 0, 0, 0);
-            mScroller.startScroll((int) mDragDistance, 0, (int) -mDragDistance, 0, SWIPE_FLING_DURATION);
+            distance = -mDragDistance;
         }
+
+        int velocity = Math.abs(initialVelocity);
+        int duration = 0;
+        if (velocity > 0) {
+            duration = 4 * Math.round(1000 * Math.abs((float) distance / velocity));
+        } else {
+            duration = (int) ((((float) Math.abs(distance) / mWidth) + 4) * 100);
+        }
+
+        duration = Math.min(duration, MAX_SETTLE_DURATION);
+        mScroller.startScroll(mDragDistance, 0, distance, 0, duration);
     }
 
     private void prePopulate() {
