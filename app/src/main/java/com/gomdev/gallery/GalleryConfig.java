@@ -35,4 +35,6 @@ public class GalleryConfig {
     static final long SELECTION_ANIMATION_END_OFFSET = 300L;
 
     static final long SCROLLBAR_ANIMATION_DURATION = 300L;
+
+    static final float ACTIONBAR_ELEVATION = 4f;    // dpi
 }

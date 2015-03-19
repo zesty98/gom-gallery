@@ -5,6 +5,7 @@ import android.content.ContentUris;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -17,6 +18,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+
+import com.gomdev.gles.GLESUtils;
 
 public class ImageListActivity extends Activity {
     static final String CLASS = "ImageListActivity";
@@ -57,6 +60,8 @@ public class ImageListActivity extends Activity {
         int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_INDEX, 0);
         BucketInfo bucketInfo = mImageManager.getBucketInfo(bucketPosition);
         getActionBar().setTitle(bucketInfo.getName());
+
+        GalleryUtils.setActionBarElevation(this);
 
         SharedPreferences pref = getSharedPreferences(GalleryConfig.PREF_NAME, 0);
         int numOfColumns = pref.getInt(GalleryConfig.PREF_NUM_OF_COLUMNS, 0);
@@ -107,6 +112,8 @@ public class ImageListActivity extends Activity {
         editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
         editor.commit();
     }
+
+
 
     private void updateActionBarTitle() {
         ImageIndexingInfo indexingInfo = mGalleryContext.getImageIndexingInfo();

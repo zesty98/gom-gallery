@@ -158,7 +158,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
         GLESVertexInfo vertexInfo = GalleryUtils.createColorVertexInfo(mColorShader,
                 -mWidth * 0.5f, mHeight * 0.5f,
                 mWidth, mHeight,
-                0f, 0f, 0f, 1f);
+                1f, 1f, 1f, 1f);
 
         vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
         vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);

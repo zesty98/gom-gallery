@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.opengl.GLES20;
+import android.os.Build;
 import android.util.TypedValue;
 import android.view.View;
 
@@ -211,5 +212,12 @@ class GalleryUtils {
     static void hideSystemUiVisibility(Activity activity) {
         activity.getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LOW_PROFILE);
+    }
+
+    static void setActionBarElevation(Activity activity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            float elevation = GLESUtils.getPixelFromDpi(activity, GalleryConfig.ACTIONBAR_ELEVATION);
+            activity.getActionBar().setElevation(elevation);
+        }
     }
 }

@@ -3,6 +3,7 @@
 
     <style name="AppTheme" parent="android:Theme.Material.Light.DarkActionBar">
         <item name="android:windowActionBarOverlay">true</item>
+        <item name="android:windowContentOverlay">@null</item>
         <item name="android:windowBackground">@android:color/white</item>
         <item name="android:actionBarStyle">@style/TranslucentActionBar</item>
     </style>
@@ -10,7 +11,12 @@
     <style name="AppTheme.FullScreen" />
 
     <style name="TranslucentActionBar" parent="@android:style/Widget.Material.Light.ActionBar">
-        <item name="android:background">#99000000</item>
+        <item name="android:background">@color/actionBarBackground</item>
+        <item name="android:titleTextStyle">@style/ActionBarTitleText</item>
+    </style>
+
+    <style name="ActionBarTitleText" parent="@android:style/TextAppearance.Material.Widget.ActionBar.Title">
+        <item name="android:textColor">@color/actionBarTitleText</item>
     </style>
 
 </resources>

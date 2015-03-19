@@ -3,8 +3,12 @@ package com.gomdev.gallery;
 import android.app.Activity;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.WindowManager;
+
+import com.gomdev.gles.GLESUtils;
 
 public class MainActivity extends Activity {
     static final String CLASS = "MainActivity";
@@ -34,6 +38,8 @@ public class MainActivity extends Activity {
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         GalleryUtils.showSystemUiVisibility(this);
+
+        GalleryUtils.setActionBarElevation(this);
 
         PackageInfo packageInfo;
         try {
