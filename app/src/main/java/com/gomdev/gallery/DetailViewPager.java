@@ -361,7 +361,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 default:
                     object.setTranslate(0f, mHeight);
                     object.setScale(MIN_SCALE);
-
             }
 
             object.setScale(1.0f);
@@ -629,17 +628,19 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             if (mVelocityTracker == null) {
                 mVelocityTracker = VelocityTracker.obtain();
             }
+
+            mScroller.abortAnimation();
+            mIsDown = false;
         }
+
         mVelocityTracker.addMovement(event);
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                if (mIsOnSwipeAnimation == false) {
-                    mIsOnScroll = true;
-                    mIsDown = true;
-                    mDownX = event.getX();
-                    mDragDistance = 0;
-                }
+                mIsOnScroll = true;
+                mIsDown = true;
+                mDownX = event.getX();
+                mDragDistance = 0;
                 break;
             case MotionEvent.ACTION_UP:
                 if (mIsDown == true) {
@@ -657,6 +658,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (mIsDown == true) {
+                    mIsOnScroll = true;
                     mDragDistance = (int) (event.getX() - mDownX);
                     if (mIsFirstImage == true && mDragDistance >= 0) {
                         if (mDragDistance > mMaxDragDistanceAtEdge) {
