@@ -44,7 +44,7 @@ public class OptionDialog extends DialogFragment {
                                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                 startActivity(intent);
                             } else {
-                                galleryContext.setImageViewMode(GalleryContext.ImageViewMode.ALBUME_VIEW_MODE);
+                                galleryContext.setImageViewMode(GalleryConfig.ImageViewMode.ALBUME_VIEW_MODE);
                                 Intent intent = new Intent(getActivity(), ImageListActivity.class);
                                 intent.putExtra(GalleryConfig.BUCKET_INDEX, imageIndexingInfo.mBucketIndex);
                                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);

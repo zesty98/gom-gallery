@@ -4,6 +4,17 @@ public class GalleryConfig {
     static final boolean DEBUG = false;
     static final String TAG = "gomdev";
 
+    enum ImageViewMode {
+        ALBUME_VIEW_MODE,
+        DETAIL_VIEW_MODE
+    }
+
+    enum VisibleMode {
+        VISIBLE_MODE,
+        VISIBLE_TRANSPARENT_MODE,
+        FULLSCREEN_MODE
+    }
+
     private GalleryConfig() {
 
     }
@@ -37,4 +48,6 @@ public class GalleryConfig {
     static final long SCROLLBAR_ANIMATION_DURATION = 300L;
 
     static final float ACTIONBAR_ELEVATION = 4f;    // dpi
+
+
 }

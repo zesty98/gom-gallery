@@ -4,10 +4,6 @@ import android.content.Context;
 import android.graphics.RectF;
 
 class GalleryContext {
-    enum ImageViewMode {
-        ALBUME_VIEW_MODE,
-        DETAIL_VIEW_MODE
-    }
 
     static final Object sLockObject = new Object();
     private static GalleryContext sGalleryContext;
@@ -31,7 +27,7 @@ class GalleryContext {
     private ImageIndexingInfo mImageIndexingInfo = new ImageIndexingInfo(0, 0, 0);
     private RectF mCurrentViewport = null;
 
-    private ImageViewMode mImageViewMode = ImageViewMode.ALBUME_VIEW_MODE;
+    private GalleryConfig.ImageViewMode mImageViewMode = GalleryConfig.ImageViewMode.ALBUME_VIEW_MODE;
 
     private GalleryContext() {
 
@@ -85,11 +81,11 @@ class GalleryContext {
         return mCurrentViewport;
     }
 
-    void setImageViewMode(ImageViewMode mode) {
+    void setImageViewMode(GalleryConfig.ImageViewMode mode) {
         mImageViewMode = mode;
     }
 
-    ImageViewMode getImageViewMode() {
+    GalleryConfig.ImageViewMode getImageViewMode() {
         return mImageViewMode;
     }
 }

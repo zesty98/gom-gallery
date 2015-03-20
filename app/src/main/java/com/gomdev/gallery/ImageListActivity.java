@@ -5,7 +5,6 @@ import android.content.ContentUris;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,10 +15,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.FrameLayout;
 
-import com.gomdev.gles.GLESUtils;
+import com.gomdev.gallery.GalleryConfig.VisibleMode;
 
 public class ImageListActivity extends Activity {
     static final String CLASS = "ImageListActivity";
@@ -55,7 +53,7 @@ public class ImageListActivity extends Activity {
 
         mImageManager = ImageManager.getInstance();
 
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        GalleryUtils.setSystemUiVisibility(this, VisibleMode.VISIBLE_MODE);
 
         int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_INDEX, 0);
         BucketInfo bucketInfo = mImageManager.getBucketInfo(bucketPosition);
@@ -114,14 +112,13 @@ public class ImageListActivity extends Activity {
     }
 
 
-
     private void updateActionBarTitle() {
         ImageIndexingInfo indexingInfo = mGalleryContext.getImageIndexingInfo();
         BucketInfo bucketInfo = mImageManager.getBucketInfo(indexingInfo.mBucketIndex);
         DateLabelInfo dateLabelInfo = bucketInfo.get(indexingInfo.mDateLabelIndex);
 
-        GalleryContext.ImageViewMode mode = mGalleryContext.getImageViewMode();
-        switch(mode) {
+        GalleryConfig.ImageViewMode mode = mGalleryContext.getImageViewMode();
+        switch (mode) {
             case ALBUME_VIEW_MODE:
                 getActionBar().setTitle(bucketInfo.getName());
                 break;
@@ -182,7 +179,7 @@ public class ImageListActivity extends Activity {
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        GalleryContext.ImageViewMode mode = mGalleryContext.getImageViewMode();
+        GalleryConfig.ImageViewMode mode = mGalleryContext.getImageViewMode();
 
         switch (mode) {
             case ALBUME_VIEW_MODE:
@@ -228,7 +225,7 @@ public class ImageListActivity extends Activity {
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         } else {
-            galleryContext.setImageViewMode(GalleryContext.ImageViewMode.ALBUME_VIEW_MODE);
+            galleryContext.setImageViewMode(GalleryConfig.ImageViewMode.ALBUME_VIEW_MODE);
             Intent intent = new Intent(this, ImageListActivity.class);
             intent.putExtra(GalleryConfig.BUCKET_INDEX, imageIndexingInfo.mBucketIndex);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -256,12 +253,11 @@ public class ImageListActivity extends Activity {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case SET_SYSTEM_UI_FLAG_LOW_PROFILE:
-//                    invalidateOptionsMenu();
-                    GalleryUtils.hideSystemUiVisibility(ImageListActivity.this);
+                    GalleryUtils.setSystemUiVisibility(ImageListActivity.this, VisibleMode.FULLSCREEN_MODE);
                     break;
                 case SET_SYSTEM_UI_FLAG_VISIBLE:
                     invalidateOptionsMenu();
-                    GalleryUtils.showSystemUiVisibility(ImageListActivity.this);
+                    GalleryUtils.setSystemUiVisibility(ImageListActivity.this, VisibleMode.VISIBLE_TRANSPARENT_MODE);
                     break;
                 case UPDATE_ACTION_BAR_TITLE:
                     getActionBar().setTitle((String) msg.obj);

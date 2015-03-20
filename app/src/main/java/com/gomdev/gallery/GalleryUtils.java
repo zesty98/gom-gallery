@@ -199,25 +199,34 @@ class GalleryUtils {
         return dummyTexture;
     }
 
-    static void initSystemUiVisibility(Activity activity) {
-        activity.getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_VISIBLE);
-    }
-
-    static void showSystemUiVisibility(Activity activity) {
-        activity.getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_VISIBLE);
-    }
-
-    static void hideSystemUiVisibility(Activity activity) {
-        activity.getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LOW_PROFILE);
-    }
-
     static void setActionBarElevation(Activity activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             float elevation = GLESUtils.getPixelFromDpi(activity, GalleryConfig.ACTIONBAR_ELEVATION);
             activity.getActionBar().setElevation(elevation);
         }
+    }
+
+    static void setSystemUiVisibility(Activity activity, GalleryConfig.VisibleMode mode) {
+        int flags = 0;
+        switch (mode) {
+            case VISIBLE_MODE:
+                flags = View.SYSTEM_UI_FLAG_VISIBLE;
+                break;
+            case VISIBLE_TRANSPARENT_MODE:
+                flags = View.SYSTEM_UI_FLAG_VISIBLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+                break;
+            case FULLSCREEN_MODE:
+                flags = View.SYSTEM_UI_FLAG_LOW_PROFILE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+                break;
+            default:
+                flags = View.SYSTEM_UI_FLAG_VISIBLE;
+        }
+
+        activity.getWindow().getDecorView().setSystemUiVisibility(flags);
     }
 }

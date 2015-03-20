@@ -9,7 +9,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 
-import com.gomdev.gallery.GalleryContext.ImageViewMode;
+import com.gomdev.gallery.GalleryConfig.ImageViewMode;
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESContext;
 import com.gomdev.gles.GLESNode;
@@ -278,7 +278,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         mDetailViewManager.onImageSelected(selectedObject);
 
         mViewManager = mDetailViewManager;
-        mGalleryContext.setImageViewMode(GalleryContext.ImageViewMode.DETAIL_VIEW_MODE);
+        mGalleryContext.setImageViewMode(GalleryConfig.ImageViewMode.DETAIL_VIEW_MODE);
 
         mHandler.sendEmptyMessage(ImageListActivity.SET_SYSTEM_UI_FLAG_LOW_PROFILE);
     }
@@ -351,7 +351,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         }
 
         ImageViewMode mode = mGalleryContext.getImageViewMode();
-        if (mode == ImageViewMode.ALBUME_VIEW_MODE) {
+        if (mode == GalleryConfig.ImageViewMode.ALBUME_VIEW_MODE) {
             ((ImageListActivity) mContext).onFinished();
             return;
         }
@@ -370,7 +370,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
             mDetailViewManager.hide();
 
             mViewManager = mAlbumViewManager;
-            mGalleryContext.setImageViewMode(ImageViewMode.ALBUME_VIEW_MODE);
+            mGalleryContext.setImageViewMode(GalleryConfig.ImageViewMode.ALBUME_VIEW_MODE);
             mSurfaceView.requestRender();
 
             mHandler.sendEmptyMessage(ImageListActivity.SET_SYSTEM_UI_FLAG_VISIBLE);
