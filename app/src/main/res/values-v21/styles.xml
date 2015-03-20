@@ -8,8 +8,6 @@
         <item name="android:actionBarStyle">@style/TranslucentActionBar</item>
     </style>
 
-    <style name="AppTheme.FullScreen" />
-
     <style name="TranslucentActionBar" parent="@android:style/Widget.Material.Light.ActionBar">
         <item name="android:background">@color/actionBarBackground</item>
         <item name="android:titleTextStyle">@style/ActionBarTitleText</item>
@@ -17,6 +15,7 @@
 
     <style name="ActionBarTitleText" parent="@android:style/TextAppearance.Material.Widget.ActionBar.Title">
         <item name="android:textColor">@color/actionBarTitleText</item>
+        <item name="android:textSize">18dp</item>
     </style>
 
 </resources>

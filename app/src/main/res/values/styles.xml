@@ -10,16 +10,14 @@
         <item name="android:actionBarStyle">@style/TranslucentActionBar</item>
     </style>
 
-    <style name="AppTheme.FullScreen" />
-
     <style name="TranslucentActionBar" parent="@android:style/Widget.Holo.ActionBar">
         <item name="android:background">@color/actionBarBackground</item>
-        <!--<item name="android:background">#99C1C5CD</item>-->
         <item name="android:titleTextStyle">@style/ActionBarTitleText</item>
     </style>
 
     <style name="ActionBarTitleText" parent="@android:style/TextAppearance.Holo.Widget.ActionBar.Title">
         <item name="android:textColor">@color/actionBarTitleText</item>
+        <item name="android:textSize">18dp</item>
     </style>
 
 </resources>
