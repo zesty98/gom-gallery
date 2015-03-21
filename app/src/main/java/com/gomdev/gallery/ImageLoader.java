@@ -98,6 +98,10 @@ public class ImageLoader {
 
         Set<Integer> buckets = new HashSet<>();
 
+        if (DEBUG) {
+            Log.d(TAG, "loadFolderInfo()");
+        }
+
         if (cursor.moveToFirst() == true) {
             do {
                 int columnIndex = cursor
@@ -112,6 +116,10 @@ public class ImageLoader {
                     BucketInfo bucketInfo = new BucketInfo(bucketID);
                     bucketInfo.setName(bucketName);
                     mImageManager.addBucketInfo(bucketInfo);
+
+                    if (DEBUG) {
+                        Log.d(TAG, "\t bucketName=" + bucketName);
+                    }
                 }
             } while (cursor.moveToNext());
         }
@@ -120,13 +128,15 @@ public class ImageLoader {
     }
 
     void loadImageInfoFromBucketInfo(BucketInfo bucketInfo) {
+        if (DEBUG) {
+            Log.d(TAG, "loadImageInfoFromBucketInfo() bucketName=" + bucketInfo.getName());
+        }
+
         int bucketID = bucketInfo.getID();
         String[] projection = {
                 MediaStore.Images.Media._ID,
                 MediaStore.Images.Media.DATA,
                 MediaStore.Images.Media.ORIENTATION,
-                MediaStore.Images.Media.WIDTH,
-                MediaStore.Images.Media.HEIGHT,
                 MediaStore.Images.Media.DATE_TAKEN
         };
 
@@ -154,27 +164,13 @@ public class ImageLoader {
                         .getColumnIndexOrThrow(MediaStore.Images.Media.ORIENTATION);
                 int orientation = cursor.getInt(columnIndex);
 
-                columnIndex = cursor
-                        .getColumnIndexOrThrow(MediaStore.Images.Media.WIDTH);
-                int width = cursor.getInt(columnIndex);
-
-                columnIndex = cursor
-                        .getColumnIndexOrThrow(MediaStore.Images.Media.HEIGHT);
-                int height = cursor.getInt(columnIndex);
-
                 columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
                 long dateTakenInMs = cursor.getLong(columnIndex);
 
                 ImageInfo imageInfo = new ImageInfo(imageID, orientation);
                 imageInfo.setImagePath(imagePath);
 
-                if (orientation == 90 || orientation == 270) {
-                    imageInfo.setWidth(height);
-                    imageInfo.setHeight(width);
-                } else {
-                    imageInfo.setWidth(width);
-                    imageInfo.setHeight(height);
-                }
+                setImageSize(imageInfo);
 
                 int flags = DateUtils.FORMAT_SHOW_YEAR;
                 String date = DateUtils.formatDateTime(mContext, dateTakenInMs, flags);
@@ -185,8 +181,16 @@ public class ImageLoader {
                     dateLabelInfo = new DateLabelInfo(date);
                     dateLabelInfo.add(imageInfo);
                     bucketInfo.add(dateLabelInfo);
+
+                    if (DEBUG) {
+                        Log.d(TAG, "\t dateLabel " + dateLabelInfo.getDate());
+                    }
                 } else {
                     dateLabelInfo.add(imageInfo);
+
+                    if (DEBUG) {
+                        Log.d(TAG, "\t\t imageInfo width=" + imageInfo.getWidth() + " height=" + imageInfo.getHeight() + " path=" + imageInfo.getImagePath());
+                    }
                 }
 
                 prevDateTaken = dateTakenInMs;
@@ -194,6 +198,23 @@ public class ImageLoader {
         }
 
         cursor.close();
+    }
+
+    private static void setImageSize(ImageInfo imageInfo) {
+        String path = imageInfo.getImagePath();
+
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(path, options);
+
+        int orientation = imageInfo.getOrientation();
+        if (orientation == 90 || orientation == 270) {
+            imageInfo.setWidth(options.outHeight);
+            imageInfo.setHeight(options.outWidth);
+        } else {
+            imageInfo.setWidth(options.outWidth);
+            imageInfo.setHeight(options.outHeight);
+        }
     }
 
     void setLoadingBitmap(Bitmap bitmap) {
@@ -321,24 +342,20 @@ public class ImageLoader {
     private static Bitmap decodeSampledBitmapFromFile(ImageInfo imageInfo,
                                                       int reqWidth, int reqHeight,
                                                       ImageCache cache) {
-        String path = imageInfo.getImagePath();
 
-        // First decode with inJustDecodeBounds=true to check dimensions
         final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(path, options);
 
-        // Calculate inSampleSize
-        options.inSampleSize = calculateInSampleSize(options, reqWidth,
+        int width = imageInfo.getWidth();
+        int height = imageInfo.getHeight();
+        options.inSampleSize = calculateInSampleSize(width, height, reqWidth,
                 reqHeight);
-
-        // Decode bitmap with inSampleSize set
-        options.inJustDecodeBounds = false;
 
         addInBitmapOptions(options, cache);
 
+        String path = imageInfo.getImagePath();
         return BitmapFactory.decodeFile(path, options);
     }
+
 
     private static void addInBitmapOptions(BitmapFactory.Options options,
                                            ImageCache cache) {
@@ -358,60 +375,42 @@ public class ImageLoader {
         }
     }
 
-    private static Bitmap decodeSampledBitmap(ImageInfo imageInfo,
-                                              int reqWidth, int reqHeight) {
-        String path = imageInfo.getImagePath();
-
-        // First decode with inJustDecodeBounds=true to check dimensions
+    private static Bitmap decodeSampledBitmap(ImageInfo imageInfo, int reqWidth, int reqHeight) {
         final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(path, options);
 
-        // Calculate inSampleSize
-        options.inSampleSize = calculateInSampleSize(options, reqWidth,
-                reqHeight);
+        int width = imageInfo.getWidth();
+        int height = imageInfo.getHeight();
+        options.inSampleSize = calculateInSampleSize(width, height, reqWidth, reqHeight);
 
-        // Decode bitmap with inSampleSize set
-        options.inJustDecodeBounds = false;
-
+        String path = imageInfo.getImagePath();
         return BitmapFactory.decodeFile(path, options);
     }
 
-    static Bitmap decodeSampledBitmapFromDescriptor(
-            FileDescriptor fileDescriptor, int reqWidth, int reqHeight) {
+    static Bitmap decodeSampledBitmapFromDescriptor(ImageInfo imageInfo,
+                                                    FileDescriptor fileDescriptor, int reqWidth, int reqHeight) {
 
-        // First decode with inJustDecodeBounds=true to check dimensions
         final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
 
-        // Calculate inSampleSize
-        options.inSampleSize = calculateInSampleSize(options, reqWidth,
-                reqHeight);
-
-        // Decode bitmap with inSampleSize set
-        options.inJustDecodeBounds = false;
+        int width = imageInfo.getWidth();
+        int height = imageInfo.getHeight();
+        options.inSampleSize = calculateInSampleSize(width, height, reqWidth, reqHeight);
 
         return BitmapFactory
                 .decodeFileDescriptor(fileDescriptor, null, options);
     }
 
     static Bitmap decodeSampledBitmapFromDescriptor(
+            ImageInfo imageInfo,
             FileDescriptor fileDescriptor,
             int reqWidth, int reqHeight,
             ImageCache cache) {
 
-        // First decode with inJustDecodeBounds=true to check dimensions
         final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
 
-        // Calculate inSampleSize
-        options.inSampleSize = calculateInSampleSize(options, reqWidth,
+        int width = imageInfo.getWidth();
+        int height = imageInfo.getHeight();
+        options.inSampleSize = calculateInSampleSize(width, height, reqWidth,
                 reqHeight);
-
-        // Decode bitmap with inSampleSize set
-        options.inJustDecodeBounds = false;
 
         addInBitmapOptions(options, cache);
 
@@ -420,10 +419,7 @@ public class ImageLoader {
     }
 
     private static int calculateInSampleSize(
-            BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        // Raw height and width of image
-        final int height = options.outHeight;
-        final int width = options.outWidth;
+            int width, int height, int reqWidth, int reqHeight) {
         int inSampleSize = 1;
 
         if (height > reqHeight || width > reqWidth) {
@@ -474,8 +470,8 @@ public class ImageLoader {
             Bitmap bitmap;
             BitmapDrawable value;
             if (mNeedThumbnail == true) {
-                String imageKey = String.valueOf(imageInfo.getImageID());
-                bitmap = mImageCache.getBitmapFromDiskCache(imageKey);
+
+                bitmap = mImageCache.getBitmapFromDiskCache(imageInfo);
                 if (bitmap == null) {
                     bitmap = mImageLoader.getThumbnail(imageInfo, true);
                 } else {
@@ -488,6 +484,7 @@ public class ImageLoader {
                 value = new RecyclingBitmapDrawable(mContext.getResources(), bitmap);
 
                 if (bitmap != null) {
+                    String imageKey = String.valueOf(imageInfo.getImageID());
                     mImageCache.addBitmapToCache(imageKey, value);
                 }
             } else {

@@ -1,5 +1,6 @@
 package com.gomdev.gallery;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
@@ -172,12 +173,17 @@ class GalleryUtils {
 
             minT = 0f;
             maxT = 1f;
-        } else {
+        } else if (width < height) {
             minT = (float) ((height - width) / 2f) / height;
             maxT = 1f - minT;
 
             minS = 0f;
             maxS = 1f;
+        } else {
+            minS = 0f;
+            minT = 0f;
+            maxS = 1f;
+            maxT = 1f;
         }
 
         float[] texCoord = new float[]{
@@ -199,6 +205,7 @@ class GalleryUtils {
         return dummyTexture;
     }
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     static void setActionBarElevation(Activity activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             float elevation = GLESUtils.getPixelFromDpi(activity, GalleryConfig.ACTIONBAR_ELEVATION);

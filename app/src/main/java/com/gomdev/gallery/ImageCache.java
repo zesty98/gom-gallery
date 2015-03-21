@@ -218,8 +218,10 @@ class ImageCache {
         return value;
     }
 
-    Bitmap getBitmapFromDiskCache(String key) {
+    Bitmap getBitmapFromDiskCache(ImageInfo imageInfo) {
         Bitmap bitmap = null;
+
+        String key = String.valueOf(imageInfo.getImageID());
 
         synchronized (mDiskCacheLock) {
             while (mDiskCacheStarting) {
@@ -243,7 +245,7 @@ class ImageCache {
                             // Decode bitmap, but we don't want to sample so
                             // give
                             // MAX_VALUE as the target dimensions
-                            bitmap = ImageLoader.decodeSampledBitmapFromDescriptor(
+                            bitmap = ImageLoader.decodeSampledBitmapFromDescriptor(imageInfo,
                                     fd, Integer.MAX_VALUE,
                                     Integer.MAX_VALUE, this);
 //                            bitmap = ImageManager.decodeSampledBitmapFromDescriptor(
