@@ -350,6 +350,9 @@ public class ImageLoader {
         options.inSampleSize = calculateInSampleSize(width, height, reqWidth,
                 reqHeight);
 
+        options.outWidth = width;
+        options.outHeight = height;
+
         addInBitmapOptions(options, cache);
 
         String path = imageInfo.getImagePath();
@@ -411,6 +414,9 @@ public class ImageLoader {
         int height = imageInfo.getHeight();
         options.inSampleSize = calculateInSampleSize(width, height, reqWidth,
                 reqHeight);
+
+        options.outWidth = width;
+        options.outHeight = height;
 
         addInBitmapOptions(options, cache);
 
