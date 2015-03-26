@@ -669,17 +669,25 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 if (mIsDown == true) {
                     mIsOnScroll = true;
                     mDragDistance = (int) (event.getX() - mDownX);
-                    if (mIsFirstImage == true && mDragDistance >= 0) {
+                    if (mIsFirstImage == true && mDragDistance > 0) {
                         if (mDragDistance > mMaxDragDistanceAtEdge) {
                             mDragDistance = mMaxDragDistanceAtEdge;
+                        }
+
+                        if (DEBUG) {
+                            Log.d(TAG, "onTouchEvent() mIsAtEdge==true mDragDistance=" + mDragDistance);
                         }
 
                         mIsAtEdge = true;
                     }
 
-                    if (mIsLastImage == true && mDragDistance <= 0) {
+                    if (mIsLastImage == true && mDragDistance < 0) {
                         if (mDragDistance < -mMaxDragDistanceAtEdge) {
                             mDragDistance = -mMaxDragDistanceAtEdge;
+                        }
+
+                        if (DEBUG) {
+                            Log.d(TAG, "onTouchEvent() mIsAtEdge==true mDragDistance=" + mDragDistance);
                         }
 
                         mIsAtEdge = true;
