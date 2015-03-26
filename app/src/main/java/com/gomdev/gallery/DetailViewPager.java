@@ -284,12 +284,12 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         int reservedIndex = DetailViewIndex.RESERVED_INDEX.getIndex();
         int reserved2Index = DetailViewIndex.RESERVED2_INDEX.getIndex();
 
-        if (DEBUG) {
-            Log.d(TAG, "changePosition() before");
-            Log.d(TAG, "\t mPrev =" + mTextureMappingInfos[prevIndex].getObject().getName());
-            Log.d(TAG, "\t mCurrent =" + mTextureMappingInfos[currentIndex].getObject().getName());
-            Log.d(TAG, "\t mNext =" + mTextureMappingInfos[nextIndex].getObject().getName());
-        }
+//        if (DEBUG) {
+//            Log.d(TAG, "changePosition() before");
+//            Log.d(TAG, "\t mPrev =" + mTextureMappingInfos[prevIndex].getObject().getName());
+//            Log.d(TAG, "\t mCurrent =" + mTextureMappingInfos[currentIndex].getObject().getName());
+//            Log.d(TAG, "\t mNext =" + mTextureMappingInfos[nextIndex].getObject().getName());
+//        }
 
         if (mFocusDirection == FocusDirection.LEFT) {
             mTextureMappingInfos[reserved2Index] = mTextureMappingInfos[nextIndex];
@@ -369,12 +369,12 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mTextureMappingInfos[reservedIndex].getObject().setTranslate(0f, mHeight);
         mTextureMappingInfos[reserved2Index].getObject().setTranslate(0f, mHeight);
 
-        if (DEBUG) {
-            Log.d(TAG, "changePosition() after");
-            Log.d(TAG, "\t mPrev =" + mTextureMappingInfos[prevIndex].getObject().getName());
-            Log.d(TAG, "\t mCurrent =" + mTextureMappingInfos[currentIndex].getObject().getName());
-            Log.d(TAG, "\t mNext =" + mTextureMappingInfos[nextIndex].getObject().getName());
-        }
+//        if (DEBUG) {
+//            Log.d(TAG, "changePosition() after");
+//            Log.d(TAG, "\t mPrev =" + mTextureMappingInfos[prevIndex].getObject().getName());
+//            Log.d(TAG, "\t mCurrent =" + mTextureMappingInfos[currentIndex].getObject().getName());
+//            Log.d(TAG, "\t mNext =" + mTextureMappingInfos[nextIndex].getObject().getName());
+//        }
     }
 
     // onSurfaceChanged
@@ -650,7 +650,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 break;
             case MotionEvent.ACTION_UP:
                 if (mIsDown == true) {
-                    mDragDistance = (int) (event.getX() - mDownX);
+
+                    if (mIsAtEdge == false) {
+                        mDragDistance = (int) (event.getX() - mDownX);
+                    }
 
                     handleAnimation();
                     mIsDown = false;
@@ -716,11 +719,19 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     }
 
     private void handleEdgeAnimation() {
+        if (DEBUG) {
+            Log.d(TAG, "handleEdgeAnimation() mDragDistance=" + mDragDistance);
+        }
+
         mFocusDirection = FocusDirection.NONE;
         mScroller.startScroll(mDragDistance, 0, -mDragDistance, 0, EDGE_SCROLLING_DURATION);
     }
 
     private void handleScrollAnimation(int initialVelocity) {
+        if (DEBUG) {
+            Log.d(TAG, "handleScrollAnimation() mDragDistance=" + mDragDistance);
+        }
+
         int distance = 0;
 
         if (Math.abs(mDragDistance) > mMinDistanceForFling) {
