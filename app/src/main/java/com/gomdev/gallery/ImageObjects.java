@@ -161,8 +161,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             if (bitmap == null) {
                 ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
 
-                int width = imageInfo.getWidth() / 10;
-                int height = imageInfo.getHeight() / 10;
+                int width = mWidth / 10;
+                int height = mHeight / 10;
 
                 bitmap = GLESUtils.makeBitmap(width, height, Bitmap.Config.ARGB_8888, Color.DKGRAY);
             }

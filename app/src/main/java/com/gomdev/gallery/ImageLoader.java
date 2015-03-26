@@ -180,7 +180,7 @@ public class ImageLoader {
                 ImageInfo imageInfo = new ImageInfo(imageID, orientation);
                 imageInfo.setImagePath(imagePath);
 
-                if (width == 0 || height == 0) {
+                if (width <= 0 || height <= 0) {
                     setImageSize(imageInfo);
                 } else {
                     imageInfo.setWidth(width);
