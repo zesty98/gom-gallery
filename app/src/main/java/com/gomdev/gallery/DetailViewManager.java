@@ -480,10 +480,13 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
             float prevRight = mWidth * 0.5f;
             float nextRight = 0f;
 
-            nextTop = ((float) imageHeight / imageWidth) * mWidth * 0.5f;
-            nextRight = prevRight;
-
-            if (nextTop > mHeight * 0.5f) {
+            if (imageHeight < mHeight && imageWidth < mWidth) {
+                nextTop = imageHeight * 0.5f;
+                nextRight = imageWidth * 0.5f;
+            } else if (imageWidth >= imageHeight) {
+                nextTop = ((float) imageHeight / imageWidth) * mWidth * 0.5f;
+                nextRight = mWidth * 0.5f;
+            } else {
                 nextTop = mHeight * 0.5f;
                 nextRight = ((float) imageWidth / imageHeight) * mHeight * 0.5f;
             }

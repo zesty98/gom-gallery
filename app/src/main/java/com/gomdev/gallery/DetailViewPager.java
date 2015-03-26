@@ -553,10 +553,16 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         int imageWidth = imageInfo.getWidth();
         int imageHeight = imageInfo.getHeight();
 
-        float top = ((float) imageHeight / imageWidth) * mWidth * 0.5f;
-        float right = mWidth * 0.5f;
+        float top = 0f;
+        float right = 0f;
 
-        if (top > mHeight * 0.5f) {
+        if (imageHeight < mHeight && imageWidth < mWidth) {
+            top = imageHeight * 0.5f;
+            right = imageWidth * 0.5f;
+        } else if (imageWidth >= imageHeight) {
+            top = ((float) imageHeight / imageWidth) * mWidth * 0.5f;
+            right = mWidth * 0.5f;
+        } else {
             top = mHeight * 0.5f;
             right = ((float) imageWidth / imageHeight) * mHeight * 0.5f;
         }
