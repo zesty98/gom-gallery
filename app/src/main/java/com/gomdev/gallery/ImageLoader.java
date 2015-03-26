@@ -137,7 +137,9 @@ public class ImageLoader {
                 MediaStore.Images.Media._ID,
                 MediaStore.Images.Media.DATA,
                 MediaStore.Images.Media.ORIENTATION,
-                MediaStore.Images.Media.DATE_TAKEN
+                MediaStore.Images.Media.DATE_TAKEN,
+                MediaStore.Images.Media.WIDTH,
+                MediaStore.Images.Media.HEIGHT
         };
 
         Cursor cursor = mContext.getContentResolver().query(
@@ -167,10 +169,25 @@ public class ImageLoader {
                 columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
                 long dateTakenInMs = cursor.getLong(columnIndex);
 
+                columnIndex = cursor
+                        .getColumnIndexOrThrow(MediaStore.Images.Media.WIDTH);
+                int width = cursor.getInt(columnIndex);
+
+                columnIndex = cursor
+                        .getColumnIndexOrThrow(MediaStore.Images.Media.HEIGHT);
+                int height = cursor.getInt(columnIndex);
+
                 ImageInfo imageInfo = new ImageInfo(imageID, orientation);
                 imageInfo.setImagePath(imagePath);
 
-                setImageSize(imageInfo);
+                if (width == 0 || height == 0) {
+                    setImageSize(imageInfo);
+                } else {
+                    imageInfo.setWidth(width);
+                    imageInfo.setHeight(height);
+
+                    adjustWidthAndHeight(imageInfo);
+                }
 
                 int flags = DateUtils.FORMAT_SHOW_YEAR;
                 String date = DateUtils.formatDateTime(mContext, dateTakenInMs, flags);
@@ -207,13 +224,18 @@ public class ImageLoader {
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(path, options);
 
+        imageInfo.setWidth(options.outWidth);
+        imageInfo.setHeight(options.outHeight);
+
+        adjustWidthAndHeight(imageInfo);
+    }
+
+    private static void adjustWidthAndHeight(ImageInfo imageInfo) {
         int orientation = imageInfo.getOrientation();
         if (orientation == 90 || orientation == 270) {
-            imageInfo.setWidth(options.outHeight);
-            imageInfo.setHeight(options.outWidth);
-        } else {
-            imageInfo.setWidth(options.outWidth);
-            imageInfo.setHeight(options.outHeight);
+            int height = imageInfo.getHeight();
+            imageInfo.setHeight(imageInfo.getWidth());
+            imageInfo.setWidth(height);
         }
     }
 
