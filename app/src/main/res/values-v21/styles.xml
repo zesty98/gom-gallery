@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="AppTheme" parent="android:Theme.Material.Light.DarkActionBar">
+    <style name="AppTheme" parent="android:Theme.Material.Light">
         <item name="android:windowActionBarOverlay">true</item>
         <item name="android:windowBackground">@android:color/white</item>
-        <item name="android:actionBarStyle">@style/TranslucentActionBar</item>
+        <item name="android:colorPrimary">@color/actionBarBackground</item>
+        <item name="android:textColorPrimary">@color/actionBarTitleText</item>
+        <item name="android:actionBarStyle">@style/GalleryActionBar</item>
     </style>
 
-    <style name="TranslucentActionBar" parent="@android:style/Widget.Material.Light.ActionBar">
+    <style name="GalleryActionBar" parent="@android:style/Widget.Material.Light.ActionBar">
         <item name="android:background">@color/actionBarBackground</item>
         <item name="android:titleTextStyle">@style/ActionBarTitleText</item>
     </style>
 
     <style name="ActionBarTitleText" parent="@android:style/TextAppearance.Material.Widget.ActionBar.Title">
-        <item name="android:textColor">@color/actionBarTitleText</item>
         <item name="android:textSize">18dp</item>
     </style>
 

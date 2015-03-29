@@ -7,9 +7,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.os.Build;
-import android.os.Handler;
-import android.provider.MediaStore;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 
@@ -17,9 +14,6 @@ import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
-
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
 
 /**
  * Created by gomdev on 14. 12. 27..
@@ -219,10 +213,8 @@ class GalleryUtils {
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     static void setActionBarElevation(Activity activity) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            float elevation = GLESUtils.getPixelFromDpi(activity, GalleryConfig.ACTIONBAR_ELEVATION);
-            activity.getActionBar().setElevation(elevation);
-        }
+        float elevation = GLESUtils.getPixelFromDpi(activity, GalleryConfig.ACTIONBAR_ELEVATION);
+        activity.getActionBar().setElevation(elevation);
     }
 
     static void setSystemUiVisibility(Activity activity, GalleryConfig.VisibleMode mode) {

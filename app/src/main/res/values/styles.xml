@@ -7,10 +7,10 @@
     <style name="AppTheme" parent="android:Theme.Holo.Light">
         <item name="android:windowActionBarOverlay">true</item>
         <item name="android:windowBackground">@android:color/white</item>
-        <item name="android:actionBarStyle">@style/TranslucentActionBar</item>
+        <item name="android:actionBarStyle">@style/GalleryActionBar</item>
     </style>
 
-    <style name="TranslucentActionBar" parent="@android:style/Widget.Holo.ActionBar">
+    <style name="GalleryActionBar" parent="@android:style/Widget.Holo.ActionBar">
         <item name="android:background">@color/actionBarBackground</item>
         <item name="android:titleTextStyle">@style/ActionBarTitleText</item>
     </style>

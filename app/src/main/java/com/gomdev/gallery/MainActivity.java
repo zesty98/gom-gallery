@@ -3,6 +3,7 @@ package com.gomdev.gallery;
 import android.app.Activity;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -42,7 +43,10 @@ public class MainActivity extends Activity {
         GalleryUtils.setDefaultInfo(this);
 
         GalleryUtils.setSystemUiVisibility(this, VisibleMode.VISIBLE_MODE);
-        GalleryUtils.setActionBarElevation(this);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            GalleryUtils.setActionBarElevation(this);
+        }
 
         PackageInfo packageInfo;
         try {

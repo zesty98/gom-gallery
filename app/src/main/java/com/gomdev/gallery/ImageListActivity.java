@@ -5,6 +5,7 @@ import android.content.ContentUris;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -59,7 +60,9 @@ public class ImageListActivity extends Activity {
         BucketInfo bucketInfo = mImageManager.getBucketInfo(bucketPosition);
         getActionBar().setTitle(bucketInfo.getName());
 
-        GalleryUtils.setActionBarElevation(this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            GalleryUtils.setActionBarElevation(this);
+        }
 
         SharedPreferences pref = getSharedPreferences(GalleryConfig.PREF_NAME, 0);
         int numOfColumns = pref.getInt(GalleryConfig.PREF_NUM_OF_COLUMNS, 0);
