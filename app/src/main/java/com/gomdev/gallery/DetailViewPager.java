@@ -681,7 +681,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             mIsDown = false;
         }
 
-        mVelocityTracker.addMovement(event);
+        if (mVelocityTracker != null) {
+            mVelocityTracker.addMovement(event);
+        }
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
