@@ -7,6 +7,9 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.os.Build;
+import android.os.Handler;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 
@@ -15,10 +18,19 @@ import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+
 /**
  * Created by gomdev on 14. 12. 27..
  */
 class GalleryUtils {
+    private static final String CLASS = "GalleryUtils";
+    private static final String TAG = GalleryConfig.TAG + "_" + CLASS;
+    private static final boolean DEBUG = GalleryConfig.DEBUG;
+
+    private static DataObserver sContentObserver = null;
+
 
     // prevent to create instance
     private GalleryUtils() {
@@ -236,4 +248,6 @@ class GalleryUtils {
 
         activity.getWindow().getDecorView().setSystemUiVisibility(flags);
     }
+
+
 }

@@ -131,6 +131,28 @@ public class ImageListActivity extends Activity {
     }
 
     @Override
+    protected void onStart() {
+        if (DEBUG) {
+            Log.d(TAG, "onStart()");
+        }
+
+        super.onStart();
+
+        DataObserver.registerContentObserver(this);
+    }
+
+    @Override
+    protected void onStop() {
+        if (DEBUG) {
+            Log.d(TAG, "onStop()");
+        }
+
+        DataObserver.unregisterContentObserver(this);
+
+        super.onStop();
+    }
+
+    @Override
     protected void onResume() {
         if (DEBUG) {
             Log.d(TAG, "onResume()");

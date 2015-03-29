@@ -2,11 +2,13 @@ package com.gomdev.gallery;
 
 import android.app.Activity;
 import android.content.Context;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -23,7 +25,32 @@ public class ImageLoader {
     private static final String DISK_CACHE_SUBDIR = "thumbnails";
     private static final long MS_TO_DAY_CONVERT_UNIT = 86400000l; // 24 * 60 * 60 * 1000;
 
+    private static final String BUCKET_GROUP_BY = "1) GROUP BY (1";
+
+    private static final String[] PROJECTION_BUCKET = {
+            MediaStore.Images.Media.BUCKET_ID,
+            MediaStore.Images.Media.BUCKET_DISPLAY_NAME};
+
+    private static final String[] PROJECTION_IMAGE = {
+            MediaStore.Images.Media._ID,
+            MediaStore.Images.Media.DATE_TAKEN,
+            MediaStore.Images.Media.DATA,
+            MediaStore.Images.Media.ORIENTATION,
+            MediaStore.Images.Media.BUCKET_ID,
+            MediaStore.Images.Media.WIDTH,
+            MediaStore.Images.Media.HEIGHT
+    };
+
     private static ImageLoader sImageLoader = null;
+
+    public static ImageLoader newInstance(Context context) {
+        sImageLoader = new ImageLoader(context);
+        return sImageLoader;
+    }
+
+    public static ImageLoader getInstance() {
+        return sImageLoader;
+    }
 
     private final Context mContext;
 
@@ -54,53 +81,31 @@ public class ImageLoader {
         mOrderClause = MediaStore.Images.ImageColumns.DATE_TAKEN + " DESC, "
                 + MediaStore.Images.ImageColumns._ID + " DESC";
 
-        loadFolderInfo();
-
-        int size = mImageManager.getNumOfBucketInfos();
-        for (int i = 0; i < size; i++) {
-            BucketInfo bucketInfo = mImageManager.getBucketInfo(i);
-            loadImageInfoFromBucketInfo(bucketInfo);
-        }
-    }
-
-    public static ImageLoader newInstance(Context context) {
-        sImageLoader = new ImageLoader(context);
-        return sImageLoader;
-    }
-
-    public static ImageLoader getInstance() {
-        return sImageLoader;
-    }
-
-
-    private void loadFolderInfo() {
-        String[] projection = {
-                MediaStore.Images.Media.BUCKET_ID,
-                MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
-        };
-
         long tick = System.nanoTime();
-        // CursorLoader cursorLoader = new CursorLoader(mContext,
-        // MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection,
-        // null, null, null);
-        // Cursor cursor = cursorLoader.loadInBackground();
+
+        loadBucketInfos();
+        loadImageInfos();
+
+
+
+//        if (DEBUG) {
+            Log.d(TAG, "init() loading duration=" + ((System.nanoTime() - tick) / 1000000));
+//        }
+    }
+
+    private void loadBucketInfos() {
+        if (DEBUG) {
+            Log.d(TAG, "loadBucketInfos()");
+        }
 
         Cursor cursor = mContext.getContentResolver().query(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, null,
-                null, mOrderClause);
-
-        if (DEBUG) {
-            Log.d(TAG, "loadFolderInfo() duration=" + (System.nanoTime() - tick));
-        }
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, PROJECTION_BUCKET,
+                BUCKET_GROUP_BY, null, mOrderClause);
 
         int numOfImages = cursor.getCount();
         mImageManager.setNumOfImages(numOfImages);
 
         Set<Integer> buckets = new HashSet<>();
-
-        if (DEBUG) {
-            Log.d(TAG, "loadFolderInfo()");
-        }
 
         if (cursor.moveToFirst() == true) {
             do {
@@ -127,24 +132,24 @@ public class ImageLoader {
         cursor.close();
     }
 
-    void loadImageInfoFromBucketInfo(BucketInfo bucketInfo) {
+    private void loadImageInfos() {
+        int size = mImageManager.getNumOfBucketInfos();
+        for (int i = 0; i < size; i++) {
+            BucketInfo bucketInfo = mImageManager.getBucketInfo(i);
+            loadImageInfosFromBucketInfo(bucketInfo);
+        }
+    }
+
+    void loadImageInfosFromBucketInfo(BucketInfo bucketInfo) {
         if (DEBUG) {
-            Log.d(TAG, "loadImageInfoFromBucketInfo() bucketName=" + bucketInfo.getName());
+            Log.d(TAG, "loadImageInfosFromBucketInfo() bucketName=" + bucketInfo.getName());
         }
 
         int bucketID = bucketInfo.getID();
-        String[] projection = {
-                MediaStore.Images.Media._ID,
-                MediaStore.Images.Media.DATA,
-                MediaStore.Images.Media.ORIENTATION,
-                MediaStore.Images.Media.DATE_TAKEN,
-                MediaStore.Images.Media.WIDTH,
-                MediaStore.Images.Media.HEIGHT
-        };
 
         Cursor cursor = mContext.getContentResolver().query(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                projection,
+                PROJECTION_IMAGE,
                 MediaStore.Images.Media.BUCKET_ID + " = ? ",
                 new String[]{String.valueOf(bucketID)
                 },
@@ -287,20 +292,6 @@ public class ImageLoader {
             task.execute(imageInfo);
         }
     }
-
-//    void loadBitmap(ImageInfo imageInfo, RecyclingImageView imageView,
-//                    int requestWidth, int requestHeight) {
-//        if (BitmapWorker.cancelPotentialWork(imageInfo, imageView)) {
-//            final BitmapLoaderTask<RecyclingImageView> task = new BitmapLoaderTask(imageView,
-//                    requestWidth, requestHeight);
-//
-//            final AsyncDrawable asyncDrawable =
-//                    new AsyncDrawable(mContext.getResources(),
-//                            mLoadingBitmap, task);
-//            imageView.setImageDrawable(asyncDrawable);
-//            task.execute(imageInfo);
-//        }
-//    }
 
     Bitmap getThumbnail(ImageInfo imageInfo,
                         boolean forcePortrait) {

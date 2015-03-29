@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.gomdev.gallery.GalleryConfig.VisibleMode;
 
@@ -12,8 +13,18 @@ public class MainActivity extends Activity {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
+    public MainActivity() {
+        if (DEBUG) {
+            Log.d(TAG, "MainActivity()");
+        }
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        if (DEBUG) {
+            Log.d(TAG, "onCreate()");
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
@@ -47,5 +58,52 @@ public class MainActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onStart() {
+        if (DEBUG) {
+            Log.d(TAG, "onStart()");
+        }
 
+        super.onStart();
+
+        DataObserver.registerContentObserver(this);
+    }
+
+    @Override
+    protected void onStop() {
+        if (DEBUG) {
+            Log.d(TAG, "onStop()");
+        }
+
+        DataObserver.unregisterContentObserver(this);
+
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (DEBUG) {
+            Log.d(TAG, "onDestroy()");
+        }
+
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        if (DEBUG) {
+            Log.d(TAG, "onResume()");
+        }
+
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        if (DEBUG) {
+            Log.d(TAG, "onPause()");
+        }
+
+        super.onPause();
+    }
 }
