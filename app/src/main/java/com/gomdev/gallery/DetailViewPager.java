@@ -16,6 +16,8 @@ import android.view.ViewConfiguration;
 import android.view.animation.Interpolator;
 import android.widget.Scroller;
 
+import com.gomdev.gles.GLESAnimator;
+import com.gomdev.gles.GLESAnimatorCallback;
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESGLState;
 import com.gomdev.gles.GLESNode;
@@ -26,6 +28,7 @@ import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
+import com.gomdev.gles.GLESVector3;
 import com.gomdev.gles.GLESVertexInfo;
 
 import java.nio.FloatBuffer;
@@ -39,6 +42,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     static final String CLASS = "DetailViewPager";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
+    static final boolean DEBUG_TOUCH = GalleryConfig.DEBUG;
 
     private static final int MAX_SETTLE_DURATION = 600;
     private static final int EDGE_SCROLLING_DURATION = 500;
@@ -111,6 +115,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
     private int mWidth = 0;
     private int mHeight = 0;
+    private float mScreenRatio = 0f;
 
     private int mRequestWidth = 0;
     private int mRequestHeight = 0;
@@ -135,6 +140,17 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private int mMaxDragDistanceAtEdge = 0;
 
     private boolean mIsActionBarShown = false;
+
+    // scale animation
+    private ImageObject mCurrentObject = null;
+    private ImageInfo mCurrentImageInfo = null;
+    private GLESAnimator mScaleAnimator = null;
+
+    private boolean mIsFitScreen = true;
+    private volatile boolean mIsOnScaleAnimation = false;
+
+    private float mPrevScale = 1f;
+    private float mNextScale = 1f;
 
     DetailViewPager(Context context, GridInfo gridInfo) {
         mContext = context;
@@ -189,9 +205,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
 
             if (bitmap == null) {
-                TextureMappingInfo textureMappingInfo = mTextureMappingInfos[index];
-                ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
-
                 int width = mWidth / 10;
                 int height = mHeight / 10;
 
@@ -201,9 +214,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             texture.load(bitmap);
             bitmap.recycle();
 
-            TextureMappingInfo textureMappingInfo = mTextureMappingInfos[index];
-
-            ImageObject object = (ImageObject) textureMappingInfo.getObject();
+            ImageObject object = getImageObject(index);
 
             object.setTexture(texture.getTexture());
         }
@@ -213,7 +224,19 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         }
     }
 
+    private ImageObject getImageObject(int index) {
+        TextureMappingInfo textureMappingInfo = mTextureMappingInfos[index];
+        return (ImageObject) textureMappingInfo.getObject();
+    }
+
     void updateAnimation() {
+        if (mIsOnScaleAnimation == true) {
+            if (mScaleAnimator.doAnimation() == true) {
+                mSurfaceView.requestRender();
+            }
+            return;
+        }
+
         if (mScroller.isFinished() == false) {
             mSurfaceView.requestRender();
 
@@ -225,6 +248,14 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 mIsOnScroll = false;
                 mIsAtEdge = false;
                 mDragDistance = 0;
+
+                if (mFocusDirection != FocusDirection.NONE) {
+                    if (mIsFitScreen == false && mCurrentImageInfo != null) {
+                        mIsFitScreen = true;
+                        setPositionCoord(DetailViewIndex.CURRENT_INDEX.getIndex(), mCurrentImageInfo);
+                    }
+                }
+
                 changePosition();
 
                 mGalleryContext.setImageIndexingInfo(mCurrentImageIndexingInfo);
@@ -238,26 +269,29 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
             for (DetailViewIndex index : DetailViewIndex.values()) {
                 float scale = 1f;
+                float alpha = 1f;
 
                 switch (index) {
                     case PREV_INDEX:
                         scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * normalizedValue;
+                        alpha = normalizedValue;
                         break;
                     case CURRENT_INDEX:
                         scale = MAX_SCALE + (MIN_SCALE - MAX_SCALE) * normalizedValue;
+                        alpha = 1f - normalizedValue;
                         break;
                     case NEXT_INDEX:
                         scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * normalizedValue;
+                        alpha = normalizedValue;
                         break;
                     default:
                         scale = 1f;
                 }
 
-                float alpha = (float) Math.pow(scale, 3f);
 
                 int i = index.getIndex();
-
                 ImageObject object = (ImageObject) mTextureMappingInfos[i].getObject();
+
                 object.setScale(scale);
                 object.setAlpha(alpha);
 
@@ -278,6 +312,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     }
 
     private void changePosition() {
+        if (DEBUG) {
+            Log.d(TAG, "changePosition()");
+        }
+
         int prevIndex = DetailViewIndex.PREV_INDEX.getIndex();
         int currentIndex = DetailViewIndex.CURRENT_INDEX.getIndex();
         int nextIndex = DetailViewIndex.NEXT_INDEX.getIndex();
@@ -342,8 +380,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         for (DetailViewIndex index : DetailViewIndex.values()) {
             int i = index.getIndex();
 
-            TextureMappingInfo textureMappingInfo = mTextureMappingInfos[i];
-            ImageObject object = (ImageObject) textureMappingInfo.getObject();
+            ImageObject object = getImageObject(i);
 
             switch (index) {
                 case PREV_INDEX:
@@ -362,8 +399,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                     object.setTranslate(0f, mHeight);
                     object.setScale(MIN_SCALE);
             }
-
-            object.setScale(1.0f);
         }
 
         mTextureMappingInfos[reservedIndex].getObject().setTranslate(0f, mHeight);
@@ -381,11 +416,12 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
     void onSurfaceChanged(int width, int height) {
         if (DEBUG) {
-            Log.d(TAG, "onSurfaceChanged()");
+            Log.d(TAG, "onSurfaceChanged() width=" + width + " height=" + height);
         }
 
         mWidth = width;
         mHeight = height;
+        mScreenRatio = (float) width / height;
 
         mRequestWidth = mWidth / 2;
         mRequestHeight = mHeight / 2;
@@ -419,9 +455,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         for (DetailViewIndex index : DetailViewIndex.values()) {
             int i = index.getIndex();
+            ImageObject object = getImageObject(i);
 
-            TextureMappingInfo textureMappingInfo = mTextureMappingInfos[i];
-            ImageObject object = (ImageObject) textureMappingInfo.getObject();
             object.setCamera(camera);
 
             GLESVertexInfo vertexInfo = object.getVertexInfo();
@@ -556,25 +591,29 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         float top = 0f;
         float right = 0f;
 
-        if (imageHeight < mHeight && imageWidth < mWidth) {
-            top = imageHeight * 0.5f;
-            right = imageWidth * 0.5f;
-        } else if (imageWidth >= imageHeight) {
-            top = ((float) imageHeight / imageWidth) * mWidth * 0.5f;
-            right = mWidth * 0.5f;
+        ImageObject object = getImageObject(index);
+
+        float imageRatio = (float) imageWidth / imageHeight;
+
+        if (mIsFitScreen == false && index == DetailViewIndex.CURRENT_INDEX.getIndex()) {
+            top = mCurrentImageInfo.getHeight() * 0.5f;
+            right = mCurrentImageInfo.getWidth() * 0.5f;
         } else {
-            top = mHeight * 0.5f;
-            right = ((float) imageWidth / imageHeight) * mHeight * 0.5f;
+            if (imageRatio >= mScreenRatio) {
+                top = ((float) imageHeight / imageWidth) * mWidth * 0.5f;
+                right = mWidth * 0.5f;
+            } else {
+                top = mHeight * 0.5f;
+                right = ((float) imageWidth / imageHeight) * mHeight * 0.5f;
+            }
         }
 
         if (DEBUG) {
             Log.d(TAG, "setPositionCoord() index=" + index);
-            Log.d(TAG, "\t top=" + top + " right=" + right);
+            Log.d(TAG, "\t imageWidth=" + imageWidth + " imageHeight=" + imageHeight);
+            Log.d(TAG, "\t right=" + right + " top=" + top);
         }
 
-        TextureMappingInfo textureMappingInfo = mTextureMappingInfos[index];
-
-        ImageObject object = (ImageObject) textureMappingInfo.getObject();
         FloatBuffer positionBuffer = (FloatBuffer) object.getVertexInfo().getBuffer(mTextureShader.getPositionAttribIndex());
 
         positionBuffer.put(0, -right);
@@ -627,6 +666,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     // touch
 
     public boolean onTouchEvent(MotionEvent event) {
+        if (mIsOnScaleAnimation == true) {
+            return true;
+        }
 
         final int action = MotionEventCompat.getActionMasked(event);
 
@@ -674,20 +716,12 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                             mDragDistance = mMaxDragDistanceAtEdge;
                         }
 
-                        if (DEBUG) {
-                            Log.d(TAG, "onTouchEvent() mIsAtEdge==true mDragDistance=" + mDragDistance);
-                        }
-
                         mIsAtEdge = true;
                     }
 
                     if (mIsLastImage == true && mDragDistance < 0) {
                         if (mDragDistance < -mMaxDragDistanceAtEdge) {
                             mDragDistance = -mMaxDragDistanceAtEdge;
-                        }
-
-                        if (DEBUG) {
-                            Log.d(TAG, "onTouchEvent() mIsAtEdge==true mDragDistance=" + mDragDistance);
                         }
 
                         mIsAtEdge = true;
@@ -846,8 +880,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         loadDetailTextures();
 
-        TextureMappingInfo textureMappingInfo = mTextureMappingInfos[DetailViewIndex.CURRENT_INDEX.getIndex()];
-        ImageObject object = (ImageObject) textureMappingInfo.getObject();
+        ImageObject object = getImageObject(DetailViewIndex.CURRENT_INDEX.getIndex());
         object.setTexture(selectedImageObject.getTexture());
 
         mTextureMappingInfos[DetailViewIndex.PREV_INDEX.getIndex()].getObject().setTranslate(-mWidth, 0);
@@ -913,12 +946,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     // memeber class
 
     private final GestureDetector.SimpleOnGestureListener mGestureListener = new GestureDetector.SimpleOnGestureListener() {
-
-
         @Override
-        public boolean onSingleTapUp(MotionEvent e) {
-            if (DEBUG) {
-                Log.d(TAG, "onSingleTabUp()");
+        public boolean onSingleTapConfirmed(MotionEvent e) {
+            if (DEBUG_TOUCH) {
+                Log.d(TAG, "onSingleTapConfirmed()");
             }
 
             if (mIsActionBarShown == true) {
@@ -929,14 +960,100 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 mHandler.sendEmptyMessage(ImageListActivity.SET_SYSTEM_UI_FLAG_VISIBLE);
                 ((Activity) mContext).getActionBar().setTitle(mSelectedDateLabelInfo.getDate());
             }
+
             return true;
         }
 
         @Override
+        public boolean onDoubleTap(MotionEvent e) {
+            if (DEBUG_TOUCH) {
+                Log.d(TAG, "onDoubleTap()");
+            }
+
+            return super.onDoubleTap(e);
+        }
+
+        @Override
+        public boolean onDoubleTapEvent(MotionEvent e) {
+            if (DEBUG_TOUCH) {
+                Log.d(TAG, "onDoubleTapEvent()");
+            }
+
+            int action = e.getAction();
+            if (action == MotionEvent.ACTION_UP) {
+                startScaleAnimation();
+            }
+            return true;
+        }
+
+        private void startScaleAnimation() {
+            int index = DetailViewIndex.CURRENT_INDEX.getIndex();
+            mCurrentObject = (ImageObject) mTextureMappingInfos[index].getObject();
+            mCurrentImageInfo = (ImageInfo) mTextureMappingInfos[index].getGalleryInfo();
+
+            int width = mCurrentImageInfo.getWidth();
+            int height = mCurrentImageInfo.getHeight();
+            float imageRatio = (float) width / height;
+            if (imageRatio >= mScreenRatio) {
+                if (mIsFitScreen == true) {
+                    mIsFitScreen = false;
+
+                    mPrevScale = 1f;
+                    mNextScale = (float) width / mWidth;
+                } else {
+                    mIsFitScreen = true;
+
+                    mPrevScale = 1f;
+                    mNextScale = (float) mWidth / width;
+                }
+            } else {
+                if (mIsFitScreen == true) {
+                    mIsFitScreen = false;
+
+                    mPrevScale = 1f;
+                    mNextScale = (float) height / mHeight;
+                } else {
+                    mIsFitScreen = true;
+
+                    mPrevScale = 1f;
+                    mNextScale = (float) mHeight / height;
+                }
+            }
+
+            mScaleAnimator = new GLESAnimator(mScaleAnimationCB);
+            mScaleAnimator.setValues(mPrevScale, mNextScale);
+            mScaleAnimator.setDuration(0L, 300L);
+            mScaleAnimator.start();
+
+            if (DEBUG) {
+                Log.d(TAG, "startScaleAnimation() mPrevScale=" + mPrevScale + " mNextScale=" + mNextScale + " mIsFitScreen=" + mIsFitScreen);
+            }
+
+            mIsOnScaleAnimation = true;
+        }
+
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            if (DEBUG_TOUCH) {
+                Log.d(TAG, "onScroll()");
+            }
+
+            return super.onScroll(e1, e2, distanceX, distanceY);
+        }
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            if (DEBUG_TOUCH) {
+                Log.d(TAG, "onFling()");
+            }
+            return super.onFling(e1, e2, velocityX, velocityY);
+        }
+
+        @Override
         public void onLongPress(MotionEvent e) {
-            OptionDialog dialog = new OptionDialog();
-            dialog.show(((Activity) (mContext)).getFragmentManager(), "option");
-            mGalleryContext.setImageIndexingInfo(mCurrentImageIndexingInfo);
+            if (DEBUG_TOUCH) {
+                Log.d(TAG, "onLongPress()");
+            }
         }
     };
 
@@ -972,6 +1089,29 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
             int location = mTextureShader.getUniformLocation("uAlpha");
             GLES20.glUniform1f(location, imageObject.getAlpha());
+        }
+    };
+
+    private GLESAnimatorCallback mScaleAnimationCB = new GLESAnimatorCallback() {
+        @Override
+        public void onAnimation(GLESVector3 current) {
+            mCurrentObject.setScale(current.getX());
+        }
+
+        @Override
+        public void onCancel() {
+            mCurrentObject.setScale(1f);
+            mIsOnScaleAnimation = false;
+
+            setPositionCoord(DetailViewIndex.CURRENT_INDEX.getIndex(), mCurrentImageInfo);
+        }
+
+        @Override
+        public void onFinished() {
+            mCurrentObject.setScale(1f);
+            mIsOnScaleAnimation = false;
+
+            setPositionCoord(DetailViewIndex.CURRENT_INDEX.getIndex(), mCurrentImageInfo);
         }
     };
 }

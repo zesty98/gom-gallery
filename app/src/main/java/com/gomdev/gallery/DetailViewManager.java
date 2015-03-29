@@ -63,6 +63,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
 
     private int mWidth = 0;
     private int mHeight = 0;
+    private float mScreenRatio = 0f;
 
     private int mColumnWidth = 0;
 
@@ -133,6 +134,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
 
         mWidth = width;
         mHeight = height;
+        mScreenRatio = (float) mWidth / mHeight;
 
         mPager.onSurfaceChanged(width, height);
     }
@@ -480,10 +482,9 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
             float prevRight = mWidth * 0.5f;
             float nextRight = 0f;
 
-            if (imageHeight < mHeight && imageWidth < mWidth) {
-                nextTop = imageHeight * 0.5f;
-                nextRight = imageWidth * 0.5f;
-            } else if (imageWidth >= imageHeight) {
+            float imageRatio = (float) imageWidth / imageHeight;
+
+            if (imageRatio >= mScreenRatio) {
                 nextTop = ((float) imageHeight / imageWidth) * mWidth * 0.5f;
                 nextRight = mWidth * 0.5f;
             } else {
