@@ -39,10 +39,19 @@ class GalleryUtils {
                     tv.data, context.getResources().getDisplayMetrics());
 
             return actionBarHeight;
-
         }
 
         return 0;
+    }
+
+    static int getStatusBarHeight(Context context) {
+        int result = 0;
+        int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = context.getResources().getDimensionPixelSize(resourceId);
+        }
+
+        return result;
     }
 
     static void setDefaultInfo(Context context) {
@@ -53,7 +62,10 @@ class GalleryUtils {
         GalleryContext galleryContext = GalleryContext.getInstance();
 
         int actionBarHeight = GalleryUtils.getActionBarHeight(context);
-        galleryContext.setActionbarHeight(actionBarHeight);
+        int statusBarHeight = GalleryUtils.getStatusBarHeight(context);
+
+        galleryContext.setActionBarHeight(actionBarHeight);
+        galleryContext.setSystemBarHeight(actionBarHeight + statusBarHeight);
 
         int spacing = res.getDimensionPixelSize(
                 R.dimen.gridview_spacing);

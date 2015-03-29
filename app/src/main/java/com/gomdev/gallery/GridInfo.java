@@ -18,6 +18,7 @@ class GridInfo {
     private final BucketInfo mBucketInfo;
 
     private final int mActionBarHeight;
+    private final int mSystemBarHeight; // actionBar + status bar
     private final int mDateLabelHeight;
     private final int mSpacing;
 
@@ -47,6 +48,7 @@ class GridInfo {
 
         GalleryContext galleryContext = GalleryContext.getInstance();
         mActionBarHeight = galleryContext.getActionBarHeight();
+        mSystemBarHeight = galleryContext.getSystemBarHeight();
         mDateLabelHeight = mActionBarHeight;
         mDefaultColumnWidth = galleryContext.getColumnWidth();
 
@@ -108,7 +110,7 @@ class GridInfo {
     }
 
     private int calcScrollableHeight() {
-        int scrollableHeight = mActionBarHeight + (mColumnWidth + mSpacing) * mNumOfRows + (mDateLabelHeight + mSpacing) * mNumOfDateInfos + mSpacing;
+        int scrollableHeight = mSystemBarHeight + (mColumnWidth + mSpacing) * mNumOfRows + (mDateLabelHeight + mSpacing) * mNumOfDateInfos + mSpacing;
         return scrollableHeight;
     }
 
@@ -131,6 +133,10 @@ class GridInfo {
 
     int getActionBarHeight() {
         return mActionBarHeight;
+    }
+
+    int getSystemBarHeight() {
+        return mSystemBarHeight;
     }
 
     int getSpacing() {

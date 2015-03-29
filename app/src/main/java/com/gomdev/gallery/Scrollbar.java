@@ -47,7 +47,7 @@ class Scrollbar implements GridInfoChangeListener {
 
     private float mBlendingAlpha = 1f;
 
-    private int mActionBarHeight;
+    private int mSystemBarHeight;
     private int mSpacing;
     private int mNumOfColumns;
     private int mColumnWidth;
@@ -75,7 +75,7 @@ class Scrollbar implements GridInfoChangeListener {
         mSpacing = gridInfo.getSpacing();
         mNumOfColumns = gridInfo.getNumOfColumns();
         mColumnWidth = gridInfo.getColumnWidth();
-        mActionBarHeight = gridInfo.getActionBarHeight();
+        mSystemBarHeight = gridInfo.getSystemBarHeight();
 
         gridInfo.addListener(this);
     }
@@ -145,8 +145,8 @@ class Scrollbar implements GridInfoChangeListener {
         }
 
         mScrollbarRegionWidth = mContext.getResources().getDimensionPixelSize(R.dimen.gridview_scrollbar_width);
-        mScrollbarRegionHeight = height - mActionBarHeight - mSpacing * 2;
-        mScrollbarRegionTop = height * 0.5f - mActionBarHeight - mSpacing;
+        mScrollbarRegionHeight = height - mSystemBarHeight - mSpacing * 2;
+        mScrollbarRegionTop = height * 0.5f - mSystemBarHeight - mSpacing;
         mScrollbarRegionLeft = -width * 0.5f + (mSpacing + mColumnWidth) * mNumOfColumns - mScrollbarRegionWidth;
 
         calcScrollbarHeight();

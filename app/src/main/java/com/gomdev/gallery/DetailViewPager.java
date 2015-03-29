@@ -1026,7 +1026,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             mScaleAnimator.start();
 
             if (DEBUG) {
-                Log.d(TAG, "startScaleAnimation() mPrevScale=" + mPrevScale + " mNextScale=" + mNextScale + " mIsFitScreen=" + mIsFitScreen);
+                Log.d(TAG, "startScaleAnimation() mIsFitScreen=" + !mIsFitScreen);
+                Log.d(TAG, "\t image width=" + width + " height=" + height);
+                Log.d(TAG, "\t screen mWidth=" + mWidth + " mHeight=" + mHeight);
+                Log.d(TAG, "\t mPrevScale=" + mPrevScale + " mNextScale=" + mNextScale);
             }
 
             mIsOnScaleAnimation = true;

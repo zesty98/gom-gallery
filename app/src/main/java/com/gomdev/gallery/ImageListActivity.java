@@ -54,7 +54,7 @@ public class ImageListActivity extends Activity {
 
         mImageManager = ImageManager.getInstance();
 
-        GalleryUtils.setSystemUiVisibility(this, VisibleMode.VISIBLE_MODE);
+        GalleryUtils.setSystemUiVisibility(this, VisibleMode.VISIBLE_TRANSPARENT_MODE);
 
         int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_INDEX, 0);
         BucketInfo bucketInfo = mImageManager.getBucketInfo(bucketPosition);

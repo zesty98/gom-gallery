@@ -22,6 +22,7 @@ class GalleryContext {
     private int mNumOfColumns = GalleryConfig.DEFAULT_NUM_OF_COLUMNS;
     private int mGridColumnWidth;
     private int mActionBarHeight = 0;
+    private int mSystemBarHeight = 0;
     private int mVersionCode = 100;
 
     private ImageIndexingInfo mImageIndexingInfo = new ImageIndexingInfo(0, 0, 0);
@@ -53,8 +54,16 @@ class GalleryContext {
         return mActionBarHeight;
     }
 
-    void setActionbarHeight(int height) {
+    void setActionBarHeight(int height) {
         mActionBarHeight = height;
+    }
+
+    int getSystemBarHeight() {
+        return mSystemBarHeight;
+    }
+
+    void setSystemBarHeight(int height) {
+        mSystemBarHeight = height;
     }
 
     int getVersionCode() {

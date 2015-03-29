@@ -90,7 +90,7 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
         mNumOfColumns = mGridInfo.getNumOfColumns();
         mSpacing = mGridInfo.getSpacing();
 
-        mActionBarHeight = gridInfo.getActionBarHeight();
+        mActionBarHeight = gridInfo.getSystemBarHeight();
         mDateLabelHeight = gridInfo.getDateLabelHeight();
         int columnWidth = GalleryContext.getInstance().getColumnWidth();
         mMaxDistance = (columnWidth + mGridInfo.getSpacing()) * 10f;

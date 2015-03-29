@@ -60,7 +60,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     private int mPrevColumnWidth = 0;
     private int mNumOfColumns = 0;
     private int mPrevNumOfColumns = 0;
-    private int mActionBarHeight = 0;
+    private int mSystemBarHeight = 0;
 
     private Bitmap mLoadingBitmap = null;
     private GLESTexture mDummyTexture = null;
@@ -100,7 +100,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         mSpacing = gridInfo.getSpacing();
         mColumnWidth = gridInfo.getColumnWidth();
         mNumOfColumns = gridInfo.getNumOfColumns();
-        mActionBarHeight = gridInfo.getActionBarHeight();
+        mSystemBarHeight = gridInfo.getSystemBarHeight();
 
         mGridInfo.addListener(this);
     }
@@ -253,7 +253,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     void onSurfaceChanged(int width, int height) {
         if (DEBUG) {
-            Log.d(TAG, "onSurfaceChanged()");
+            Log.d(TAG, "onSurfaceChanged() width=" + width + " height=" + height);
         }
 
         mWidth = width;
@@ -272,10 +272,10 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     void setupObjects(GLESCamera camera) {
         if (DEBUG) {
-            Log.d(TAG, "setupObjects()");
+            Log.d(TAG, "setupObjects() mSystemBarHeight=" + mSystemBarHeight);
         }
 
-        float yOffset = mHeight * 0.5f - mActionBarHeight;
+        float yOffset = mHeight * 0.5f - mSystemBarHeight;
 
         int size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
@@ -364,7 +364,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private void changeDateLabelObjectPosition() {
         int index = 0;
-        float yOffset = mHeight * 0.5f - mActionBarHeight;
+        float yOffset = mHeight * 0.5f - mSystemBarHeight;
 
         int size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
