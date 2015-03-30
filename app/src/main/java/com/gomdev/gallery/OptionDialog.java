@@ -40,7 +40,7 @@ public class OptionDialog extends DialogFragment {
                             boolean isBucketDeleted = ImageManager.getInstance().deleteImage(imageIndexingInfo);
 
                             if (isBucketDeleted == true) {
-                                Intent intent = new Intent(getActivity(), MainActivity.class);
+                                Intent intent = new Intent(getActivity(), BucketListActivity.class);
                                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                 startActivity(intent);
                             } else {

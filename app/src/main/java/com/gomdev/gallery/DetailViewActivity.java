@@ -116,7 +116,7 @@ public class DetailViewActivity extends Activity {
             if (isBucketDeleted == false) {
                 finish();
             } else {
-                Intent intent = new Intent(this, MainActivity.class);
+                Intent intent = new Intent(this, BucketListActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
             }

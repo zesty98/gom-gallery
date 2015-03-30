@@ -17,7 +17,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
 import com.gomdev.gallery.GalleryConfig.VisibleMode;
 
@@ -247,7 +246,7 @@ public class ImageListActivity extends Activity {
         boolean isBucketDeleted = ImageManager.getInstance().deleteImage(imageIndexingInfo);
 
         if (isBucketDeleted == true) {
-            Intent intent = new Intent(this, MainActivity.class);
+            Intent intent = new Intent(this, BucketListActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         } else {

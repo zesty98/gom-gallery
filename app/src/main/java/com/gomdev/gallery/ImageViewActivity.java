@@ -128,7 +128,7 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
             if (isBucketDeleted == false) {
                 finish();
             } else {
-                Intent intent = new Intent(this, MainActivity.class);
+                Intent intent = new Intent(this, BucketListActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
             }

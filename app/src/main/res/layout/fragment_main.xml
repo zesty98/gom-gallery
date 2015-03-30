@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.gomdev.gallery.MainActivity$PlaceholderFragment" >
+    tools:context="com.gomdev.gallery.BucketListActivity$PlaceholderFragment" >
 
     <GridView
         android:id="@+id/gridview"

@@ -1,13 +1,17 @@
 package com.gomdev.gallery;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.Build;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-
-import com.gomdev.gallery.GalleryConfig.VisibleMode;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 
 public class MainActivity extends Activity {
     static final String CLASS = "MainActivity";
@@ -28,11 +32,16 @@ public class MainActivity extends Activity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if (savedInstanceState == null) {
-            getFragmentManager().beginTransaction()
-                    .add(R.id.container, new BucketListFragment())
-                    .commit();
-        }
+
+        ImageView imageView = new ImageView(this);
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.main);
+        imageView.setImageBitmap(bitmap);
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
+        FrameLayout layout = (FrameLayout) findViewById(R.id.container);
+        layout.addView(imageView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        GalleryUtils.setSystemUiVisibility(this, GalleryConfig.VisibleMode.VISIBLE_MODE);
 
         init();
     }
@@ -41,12 +50,6 @@ public class MainActivity extends Activity {
         GalleryContext.newInstance(this);
 
         GalleryUtils.setDefaultInfo(this);
-
-        GalleryUtils.setSystemUiVisibility(this, VisibleMode.VISIBLE_MODE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            GalleryUtils.setActionBarElevation(this);
-        }
 
         PackageInfo packageInfo;
         try {
@@ -60,54 +63,49 @@ public class MainActivity extends Activity {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+
+        mDBSyncTask.execute();
     }
 
-    @Override
-    protected void onStart() {
-        if (DEBUG) {
-            Log.d(TAG, "onStart()");
+    private AsyncTask<Void, Void, Void> mDBSyncTask = new AsyncTask<Void, Void, Void>() {
+        private long mStartTick = 0L;
+        @Override
+        protected Void doInBackground(Void... params) {
+            if (DEBUG) {
+                Log.d(TAG, "doInBackground()");
+            }
+
+            ImageLoader imageLoader = ImageLoader.getInstance();
+
+            mStartTick = System.nanoTime();
+
+            imageLoader.loadBucketInfos();
+            imageLoader.loadImageInfos();
+
+            Log.d(TAG, "init() loading duration=" + ((System.nanoTime() - mStartTick) / 1000000));
+            return null;
         }
 
-        super.onStart();
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            if (DEBUG) {
+                Log.d(TAG, "onPostExecute()");
+            }
 
-        DataObserver.registerContentObserver(this);
-    }
+            long currentTick = System.nanoTime();
+            long durationInMS = (currentTick - mStartTick) / 1000000;
 
-    @Override
-    protected void onStop() {
-        if (DEBUG) {
-            Log.d(TAG, "onStop()");
+            if (durationInMS < 1000L) {
+                try {
+                    Thread.currentThread().sleep(1000L - durationInMS);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            Intent intent = new Intent(MainActivity.this, com.gomdev.gallery.BucketListActivity.class);
+            MainActivity.this.startActivity(intent);
+            finish();
         }
-
-        DataObserver.unregisterContentObserver(this);
-
-        super.onStop();
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (DEBUG) {
-            Log.d(TAG, "onDestroy()");
-        }
-
-        super.onDestroy();
-    }
-
-    @Override
-    protected void onResume() {
-        if (DEBUG) {
-            Log.d(TAG, "onResume()");
-        }
-
-        super.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        if (DEBUG) {
-            Log.d(TAG, "onPause()");
-        }
-
-        super.onPause();
-    }
+    };
 }

@@ -80,20 +80,9 @@ public class ImageLoader {
 
         mOrderClause = MediaStore.Images.ImageColumns.DATE_TAKEN + " DESC, "
                 + MediaStore.Images.ImageColumns._ID + " DESC";
-
-        long tick = System.nanoTime();
-
-        loadBucketInfos();
-        loadImageInfos();
-
-
-
-//        if (DEBUG) {
-            Log.d(TAG, "init() loading duration=" + ((System.nanoTime() - tick) / 1000000));
-//        }
     }
 
-    private void loadBucketInfos() {
+    void loadBucketInfos() {
         if (DEBUG) {
             Log.d(TAG, "loadBucketInfos()");
         }
@@ -132,7 +121,7 @@ public class ImageLoader {
         cursor.close();
     }
 
-    private void loadImageInfos() {
+    void loadImageInfos() {
         int size = mImageManager.getNumOfBucketInfos();
         for (int i = 0; i < size; i++) {
             BucketInfo bucketInfo = mImageManager.getBucketInfo(i);

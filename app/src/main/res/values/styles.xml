@@ -4,6 +4,10 @@
         <item name="android:drawSelectorOnTop">true</item>
     </style>
 
+    <style name="FullScreen" parent="android:Theme.Holo.Light.NoActionBar">
+        <item name="android:windowActionBarOverlay">true</item>
+    </style>
+
     <style name="AppTheme" parent="android:Theme.Holo.Light">
         <item name="android:windowActionBarOverlay">true</item>
         <item name="android:windowBackground">@android:color/white</item>
