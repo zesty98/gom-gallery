@@ -15,6 +15,7 @@ import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
 import android.view.animation.Interpolator;
 import android.widget.Scroller;
+import android.widget.Toast;
 
 import com.gomdev.gles.GLESAnimator;
 import com.gomdev.gles.GLESAnimatorCallback;
@@ -956,10 +957,11 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
             if (mIsActionBarShown == true) {
                 mIsActionBarShown = false;
-                mHandler.sendEmptyMessage(ImageListActivity.SET_SYSTEM_UI_FLAG_LOW_PROFILE);
+                GalleryUtils.setSystemUiVisibility((Activity) mContext, GalleryConfig.VisibleMode.FULLSCREEN_MODE);
             } else {
                 mIsActionBarShown = true;
-                mHandler.sendEmptyMessage(ImageListActivity.SET_SYSTEM_UI_FLAG_VISIBLE);
+                ((Activity) mContext).invalidateOptionsMenu();
+                GalleryUtils.setSystemUiVisibility((Activity) mContext, GalleryConfig.VisibleMode.VISIBLE_TRANSPARENT_MODE);
                 ((Activity) mContext).getActionBar().setTitle(mSelectedDateLabelInfo.getDate());
             }
 
@@ -992,6 +994,17 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             int index = DetailViewIndex.CURRENT_INDEX.getIndex();
             mCurrentObject = (ImageObject) mTextureMappingInfos[index].getObject();
             mCurrentImageInfo = (ImageInfo) mTextureMappingInfos[index].getGalleryInfo();
+
+            String msg;
+            if (mIsFitScreen == false) {
+                Toast.makeText(mContext, "Fit Screen",
+                        Toast.LENGTH_SHORT)
+                        .show();
+            } else {
+                Toast.makeText(mContext, "Original size",
+                        Toast.LENGTH_SHORT)
+                        .show();
+            }
 
             int width = mCurrentImageInfo.getWidth();
             int height = mCurrentImageInfo.getHeight();

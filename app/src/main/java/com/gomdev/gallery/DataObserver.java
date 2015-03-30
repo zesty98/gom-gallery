@@ -46,7 +46,7 @@ class DataObserver extends ContentObserver {
                 Log.d(TAG, "registerContentObserver() >>> registerContentObserver");
             }
 
-            context.getContentResolver().registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, false, sContentObserver);
+            context.getContentResolver().registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, true, sContentObserver);
         }
     }
 
