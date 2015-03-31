@@ -15,29 +15,13 @@ public class GallerySurfaceView extends GLSurfaceView {
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final Context mContext;
-    private final GridInfo mGridInfo;
 
     private ImageListRenderer mRenderer = null;
 
-    public GallerySurfaceView(Context context, GridInfo gridInfo) {
+    public GallerySurfaceView(Context context) {
         super(context);
 
         mContext = context;
-        mGridInfo = gridInfo;
-
-        init();
-    }
-
-    private void init() {
-        mRenderer = new ImageListRenderer(mContext, mGridInfo);
-        mRenderer.setSurfaceView(this);
-
-        setEGLContextClientVersion(2);
-        setEGLConfigChooser(8, 8, 8, 8, 0, 0);
-        setRenderer(mRenderer);
-        getHolder().setFormat(PixelFormat.TRANSLUCENT);
-        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-        setPreserveEGLContextOnPause(true);
     }
 
     @Override
@@ -86,9 +70,5 @@ public class GallerySurfaceView extends GLSurfaceView {
         } else {
             ((ImageListActivity) mContext).onFinished();
         }
-    }
-
-    void setHandler(Handler handler) {
-        mRenderer.setHandler(handler);
     }
 }

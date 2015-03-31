@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.content.ContentUris;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.PixelFormat;
 import android.net.Uri;
+import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -104,9 +106,20 @@ public class ImageListActivity extends Activity {
 
         FrameLayout layout = (FrameLayout) findViewById(R.id.container);
 
-        mSurfaceView = new GallerySurfaceView(this, mGridInfo);
+        mSurfaceView = new GallerySurfaceView(this);
         layout.addView(mSurfaceView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        mSurfaceView.setHandler(mHandler);
+
+        ImageListRenderer renderer = new ImageListRenderer(this, mGridInfo);
+
+        mSurfaceView.setEGLContextClientVersion(2);
+        mSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 0, 0);
+        mSurfaceView.setRenderer(renderer);
+        mSurfaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        mSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        mSurfaceView.setPreserveEGLContextOnPause(true);
+
+        renderer.setSurfaceView(mSurfaceView);
+        renderer.setHandler(mHandler);
 
         mSurfaceView.setOnSystemUiVisibilityChangeListener(
                 new View.OnSystemUiVisibilityChangeListener() {
