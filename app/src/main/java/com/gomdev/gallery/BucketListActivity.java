@@ -1,6 +1,7 @@
 package com.gomdev.gallery;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,15 +28,27 @@ public class BucketListActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
+            Log.d(TAG, "onCreate() savedInstanceState == null");
             getFragmentManager().beginTransaction()
                     .add(R.id.container, new BucketListFragment())
                     .commit();
+        } else {
+            Log.d(TAG, "onCreate() savedInstanceState=" + savedInstanceState);
+//            finish();
+//            startActivity(new Intent(this, com.gomdev.gallery.MainActivity.class));
         }
 
         GalleryUtils.setSystemUiVisibility(this, VisibleMode.VISIBLE_MODE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             GalleryUtils.setActionBarElevation(this);
+        }
+
+        GalleryContext galleryContext = GalleryContext.getInstance();
+        if (galleryContext == null) {
+            GalleryContext.newInstance(this);
+
+
         }
 
         GalleryUtils.setDefaultInfo(this);

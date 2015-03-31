@@ -1,9 +1,15 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.RectF;
+import android.util.Log;
 
 class GalleryContext {
+    private static final String CLASS = "GalleryContext";
+    private static final String TAG = GalleryConfig.TAG + "_" + CLASS;
+    private static final boolean DEBUG = GalleryConfig.DEBUG;
 
     static final Object sLockObject = new Object();
     private static GalleryContext sGalleryContext;
@@ -12,6 +18,28 @@ class GalleryContext {
         sGalleryContext = new GalleryContext();
         ImageManager.newInstance(context);
         ImageLoader.newInstance(context);
+
+        Log.d(TAG, "GalleryContext() context=" + context);
+
+        if (!(context instanceof MainActivity)) {
+            ImageLoader imageLoader = ImageLoader.getInstance();
+            imageLoader.loadBucketInfos();
+            imageLoader.loadImageInfos();
+        }
+
+        PackageInfo packageInfo;
+        try {
+            packageInfo = context.getPackageManager().getPackageInfo(
+                    context.getPackageName(), 0);
+
+            if (packageInfo != null) {
+                GalleryContext.getInstance().setVersionCode(packageInfo.versionCode);
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
         return sGalleryContext;
     }
 

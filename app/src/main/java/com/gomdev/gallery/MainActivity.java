@@ -49,19 +49,6 @@ public class MainActivity extends Activity {
     private void init() {
         GalleryContext.newInstance(this);
 
-        PackageInfo packageInfo;
-        try {
-            packageInfo = this.getPackageManager().getPackageInfo(
-                    this.getPackageName(), 0);
-
-            if (packageInfo != null) {
-                GalleryContext.getInstance().setVersionCode(packageInfo.versionCode);
-            }
-        } catch (NameNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
         mDBSyncTask.execute();
     }
 
