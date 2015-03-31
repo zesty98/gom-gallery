@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.provider.MediaStore;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -49,8 +50,9 @@ public class ImageListActivity extends Activity {
         mGalleryContext = GalleryContext.getInstance();
         if (mGalleryContext == null) {
             mGalleryContext = GalleryContext.newInstance(this);
-            GalleryUtils.setDefaultInfo(this);
         }
+
+        GalleryUtils.setDefaultInfo(this);
 
         mImageManager = ImageManager.getInstance();
 
@@ -65,19 +67,36 @@ public class ImageListActivity extends Activity {
         }
 
         SharedPreferences pref = getSharedPreferences(GalleryConfig.PREF_NAME, 0);
-        int numOfColumns = pref.getInt(GalleryConfig.PREF_NUM_OF_COLUMNS, 0);
-        int columnWidth = pref.getInt(GalleryConfig.PREF_COLUMNS_WIDTH, 0);
-        if (numOfColumns == 0 || columnWidth == 0) {
-            numOfColumns = mGalleryContext.getNumOfColumns();
-            columnWidth = mGalleryContext.getColumnWidth();
 
-            SharedPreferences.Editor editor = pref.edit();
-            editor.putInt(GalleryConfig.PREF_COLUMNS_WIDTH, columnWidth);
-            editor.putInt(GalleryConfig.PREF_NUM_OF_COLUMNS, numOfColumns);
-            editor.putInt(GalleryConfig.PREF_MIN_NUM_OF_COLUMNS, numOfColumns);
-            editor.putInt(GalleryConfig.PREF_MAX_NUM_OF_COLUMNS, numOfColumns * 3);
-            editor.commit();
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        int width = displayMetrics.widthPixels;
+        int height = displayMetrics.heightPixels;
+
+        int numOfColumnsInPortrait = 0;
+        int numOfColumnsInLandScape = 0;
+
+        if (width < height) {
+            numOfColumnsInPortrait = pref.getInt(GalleryConfig.PREF_NUM_OF_COLUMNS_IN_PORTRAIT, 0);
+
+            if (numOfColumnsInPortrait == 0) {
+                numOfColumnsInPortrait = mGalleryContext.getDefaultNumOfColumns();
+            }
+
+            numOfColumnsInLandScape = GalleryUtils.calcNumOfColumnsInLandscape(this, numOfColumnsInPortrait);
+        } else {
+            numOfColumnsInLandScape = pref.getInt(GalleryConfig.PREF_NUM_OF_COLUMNS_IN_LANDSCAPE, 0);
+
+            if (numOfColumnsInLandScape == 0) {
+                numOfColumnsInLandScape = mGalleryContext.getDefaultNumOfColumns();
+            }
+
+            numOfColumnsInPortrait = GalleryUtils.calcNumOfColumnsInPortrait(this, numOfColumnsInLandScape);
         }
+
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putInt(GalleryConfig.PREF_NUM_OF_COLUMNS_IN_PORTRAIT, numOfColumnsInPortrait);
+        editor.putInt(GalleryConfig.PREF_NUM_OF_COLUMNS_IN_LANDSCAPE, numOfColumnsInLandScape);
+        editor.commit();
 
         setContentView(R.layout.activity_gles_main);
 
@@ -106,12 +125,6 @@ public class ImageListActivity extends Activity {
                         }
                     }
                 });
-
-        SharedPreferences.Editor editor = pref.edit();
-        editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, bucketInfo.getIndex());
-        editor.putInt(GalleryConfig.PREF_DATE_LABEL_INDEX, 0);
-        editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, 0);
-        editor.commit();
     }
 
 

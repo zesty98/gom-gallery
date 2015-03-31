@@ -34,6 +34,7 @@ class GridInfo {
     private int mMaxNumOfColumns = 0;
 
     private int mWidth = 0;
+    private int mHeight = 0;
 
     private List<GridInfoChangeListener> mListeners = new ArrayList<>();
 
@@ -50,14 +51,21 @@ class GridInfo {
         mActionBarHeight = galleryContext.getActionBarHeight();
         mSystemBarHeight = galleryContext.getSystemBarHeight();
         mDateLabelHeight = mActionBarHeight;
-        mDefaultColumnWidth = galleryContext.getColumnWidth();
+        mDefaultColumnWidth = galleryContext.getDefaultColumnWidth();
+        mMinNumOfColumns = galleryContext.getMinNumOfColumns();
+        mMaxNumOfColumns = galleryContext.getMaxNumOfColumns();
 
         SharedPreferences pref = context.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
 
-        mColumnWidth = pref.getInt(GalleryConfig.PREF_COLUMNS_WIDTH, 0);
-        mNumOfColumns = pref.getInt(GalleryConfig.PREF_NUM_OF_COLUMNS, 0);
-        mMinNumOfColumns = pref.getInt(GalleryConfig.PREF_MIN_NUM_OF_COLUMNS, 0);
-        mMaxNumOfColumns = pref.getInt(GalleryConfig.PREF_MAX_NUM_OF_COLUMNS, 0);
+        int width = context.getResources().getDisplayMetrics().widthPixels;
+        int height = context.getResources().getDisplayMetrics().heightPixels;
+        if (width < height) {
+            mNumOfColumns = pref.getInt(GalleryConfig.PREF_NUM_OF_COLUMNS_IN_PORTRAIT, 0);
+        } else {
+            mNumOfColumns = pref.getInt(GalleryConfig.PREF_NUM_OF_COLUMNS_IN_LANDSCAPE, 0);
+        }
+
+        mColumnWidth = GalleryUtils.calcColumnWidth(mNumOfColumns, width, mSpacing);
 
         setNumOfColumnsToDateInfo(mNumOfColumns);
 
@@ -77,8 +85,9 @@ class GridInfo {
 
     void setScreenSize(int width, int height) {
         mWidth = width;
+        mHeight = height;
 
-        mDateLabelWidth = mWidth - mSpacing * 2;
+        mDateLabelWidth = width - mSpacing * 2;
     }
 
     void resize(int numOfColumns) {
@@ -99,8 +108,16 @@ class GridInfo {
 
         SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
         SharedPreferences.Editor editor = pref.edit();
-        editor.putInt(GalleryConfig.PREF_COLUMNS_WIDTH, mColumnWidth);
-        editor.putInt(GalleryConfig.PREF_NUM_OF_COLUMNS, mNumOfColumns);
+
+        if (mWidth < mHeight) {
+            editor.putInt(GalleryConfig.PREF_NUM_OF_COLUMNS_IN_PORTRAIT, mNumOfColumns);
+            int numOfColumnsInLandscape = GalleryUtils.calcNumOfColumnsInLandscape(mContext, mNumOfColumns);
+            editor.putInt(GalleryConfig.PREF_NUM_OF_COLUMNS_IN_LANDSCAPE, numOfColumnsInLandscape);
+        } else {
+            editor.putInt(GalleryConfig.PREF_NUM_OF_COLUMNS_IN_LANDSCAPE, mNumOfColumns);
+            int numOfColumnsInPortrait = GalleryUtils.calcNumOfColumnsInPortrait(mContext, mNumOfColumns);
+            editor.putInt(GalleryConfig.PREF_NUM_OF_COLUMNS_IN_PORTRAIT, numOfColumnsInPortrait);
+        }
         editor.commit();
     }
 

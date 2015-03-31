@@ -170,13 +170,6 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
 
             DateLabelInfo dateLabelInfo = mBucketInfo.get(mCurrentImageIndexingInfo.mDateLabelIndex);
             getActionBar().setTitle(dateLabelInfo.getDate());
-
-            SharedPreferences pref = ImageViewActivity.this.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
-            SharedPreferences.Editor editor = pref.edit();
-            editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, mCurrentImageIndexingInfo.mImageIndex);
-            editor.putInt(GalleryConfig.PREF_DATE_LABEL_INDEX, mCurrentImageIndexingInfo.mDateLabelIndex);
-            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, mCurrentImageIndexingInfo.mBucketIndex);
-            editor.commit();
         }
 
         @Override

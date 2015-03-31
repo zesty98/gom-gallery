@@ -49,8 +49,6 @@ public class MainActivity extends Activity {
     private void init() {
         GalleryContext.newInstance(this);
 
-        GalleryUtils.setDefaultInfo(this);
-
         PackageInfo packageInfo;
         try {
             packageInfo = this.getPackageManager().getPackageInfo(

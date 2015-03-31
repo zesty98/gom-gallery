@@ -7,6 +7,8 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.os.Build;
+import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 
@@ -25,6 +27,8 @@ class GalleryUtils {
 
     private static DataObserver sContentObserver = null;
 
+    private static int sWidth = 0;
+    private static int sHeight = 0;
 
     // prevent to create instance
     private GalleryUtils() {
@@ -57,8 +61,6 @@ class GalleryUtils {
     static void setDefaultInfo(Context context) {
         Resources res = context.getResources();
 
-        int width = res.getDisplayMetrics().widthPixels;
-
         GalleryContext galleryContext = GalleryContext.getInstance();
 
         int actionBarHeight = GalleryUtils.getActionBarHeight(context);
@@ -70,12 +72,15 @@ class GalleryUtils {
         int spacing = res.getDimensionPixelSize(
                 R.dimen.gridview_spacing);
         int columnWidth = res.getDimensionPixelSize(R.dimen.gridview_column_width);
+
+        int width = res.getDisplayMetrics().widthPixels;
         int numOfColumns = width / (columnWidth + spacing);
-        galleryContext.setNumOfColumns(numOfColumns);
+        galleryContext.setDefaultNumOfColumns(numOfColumns);
+        galleryContext.setMinNumOfColumns(numOfColumns);
+        galleryContext.setMaxNumOfColumns(numOfColumns * 3);
 
-        columnWidth = (int) ((width - spacing * (numOfColumns + 1)) / numOfColumns);
-
-        galleryContext.setColumnWidth(columnWidth);
+        columnWidth = calcColumnWidth(numOfColumns, width, spacing);
+        galleryContext.setDefaultColumnWidth(columnWidth);
     }
 
     static GLESVertexInfo createImageVertexInfo(GLESShader shader, float width, float height) {
@@ -253,5 +258,47 @@ class GalleryUtils {
         activity.getWindow().getDecorView().setSystemUiVisibility(flags);
     }
 
+    static int calcColumnWidth(int numOfColumns, int width, int spacing) {
+        int columnWidth = (width - spacing * (numOfColumns + 1)) / numOfColumns;
+        return columnWidth;
+    }
 
+    static int calcNumOfColumnsInPortrait(Context context, int numOfColumnsInLandscape) {
+        if (sWidth == 0) {
+            DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+            int width = displayMetrics.widthPixels;
+            int height = displayMetrics.heightPixels;
+
+            if (width > height) {
+                sWidth = height;
+                sHeight = width;
+            } else {
+                sWidth = width;
+                sHeight = height;
+            }
+        }
+        int numOfColumns = (int) Math.floor(((float) sWidth / sHeight) * numOfColumnsInLandscape);
+
+        return numOfColumns;
+    }
+
+    static int calcNumOfColumnsInLandscape(Context context, int numOfColumnsInPortrait) {
+        if (sWidth == 0) {
+            DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+            int width = displayMetrics.widthPixels;
+            int height = displayMetrics.heightPixels;
+
+            if (width > height) {
+                sWidth = height;
+                sHeight = width;
+            } else {
+                sWidth = width;
+                sHeight = height;
+            }
+        }
+
+        int numOfColumns = (int) Math.ceil(((float) sHeight / sWidth) * numOfColumnsInPortrait);
+
+        return numOfColumns;
+    }
 }

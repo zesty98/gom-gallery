@@ -68,8 +68,8 @@ public class BucketListFragment extends Fragment {
         gridview.setAdapter(mAdapter);
 
         GalleryContext context = GalleryContext.getInstance();
-        int columnWidth = context.getColumnWidth();
-        mNumOfColumns = context.getNumOfColumns();
+        int columnWidth = context.getDefaultColumnWidth();
+        mNumOfColumns = context.getDefaultNumOfColumns();
 
         gridview.setColumnWidth(columnWidth);
         mAdapter.setItemHeight(columnWidth);

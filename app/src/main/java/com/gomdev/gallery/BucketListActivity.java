@@ -39,6 +39,8 @@ public class BucketListActivity extends Activity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             GalleryUtils.setActionBarElevation(this);
         }
+
+        GalleryUtils.setDefaultInfo(this);
     }
 
     @Override

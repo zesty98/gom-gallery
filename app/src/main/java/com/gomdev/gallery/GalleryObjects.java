@@ -2,7 +2,6 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
@@ -42,7 +41,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     private final GridInfo mGridInfo;
     private final BucketInfo mBucketInfo;
 
-    private final ReusableBitmaps mReusableBitmaps;
+    private final ConcurrentLinkedQueue<Bitmap> mReusableBitmaps = new ConcurrentLinkedQueue<>();
 
     private GallerySurfaceView mSurfaceView = null;
     private AlbumViewManager mAlbumViewManager = null;
@@ -86,8 +85,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         mBucketInfo = bucketInfo;
 
         setGridInfo(gridInfo);
-
-        mReusableBitmaps = ReusableBitmaps.getInstance();
     }
 
     private void setGridInfo(GridInfo gridInfo) {
@@ -133,7 +130,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             final Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
             texture.load(bitmap);
 
-            mReusableBitmaps.addBitmapToResuableSet(bitmap);
+            mReusableBitmaps.add(bitmap);
 
             object.setTexture(texture.getTexture());
         }
@@ -690,20 +687,17 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             int textHeight = ascent + descent;
 
-            int width = (int) (GLESUtils.getWidthPixels(mContext) - mSpacing * 2);
+            int screenWidth = mContext.getResources().getDisplayMetrics().widthPixels;
+            int width = (int) (screenWidth - mSpacing * 2);
             int height = mDateLabelHeight;
 
             int x = mContext.getResources().getDimensionPixelSize(R.dimen.dateindex_padding);
             int y = (height - textHeight) / 2 + ascent;
 
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inMutable = true;
-            options.inSampleSize = 1;
-            options.outHeight = height;
-            options.outWidth = width;
-            Bitmap bitmap = mReusableBitmaps.getBitmapFromReusableSet(options);
+            Bitmap bitmap = mReusableBitmaps.poll();
             if (bitmap == null) {
                 bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            } else {
             }
 
             bitmap = GLESUtils.drawTextToBitmap(x, y,

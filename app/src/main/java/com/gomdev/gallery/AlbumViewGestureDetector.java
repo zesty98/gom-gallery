@@ -1,8 +1,6 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -92,7 +90,7 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
 
         mActionBarHeight = gridInfo.getSystemBarHeight();
         mDateLabelHeight = gridInfo.getDateLabelHeight();
-        int columnWidth = GalleryContext.getInstance().getColumnWidth();
+        int columnWidth = GalleryContext.getInstance().getDefaultColumnWidth();
         mMaxDistance = (columnWidth + mGridInfo.getSpacing()) * 10f;
 
         mNumOfColumns = gridInfo.getNumOfColumns();
@@ -360,28 +358,11 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
                 return false;
             }
 
-            Intent intent = new Intent(mContext, com.gomdev.gallery.ImageViewActivity.class);
-
-            intent.putExtra(GalleryConfig.BUCKET_INDEX, imageIndexingInfo.mBucketIndex);
-            intent.putExtra(GalleryConfig.DATE_LABEL_INDEX, imageIndexingInfo.mDateLabelIndex);
-            intent.putExtra(GalleryConfig.IMAGE_INDEX, imageIndexingInfo.mImageIndex);
-
-            SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
-            SharedPreferences.Editor editor = pref.edit();
-
-            editor.putInt(GalleryConfig.PREF_BUCKET_INDEX, imageIndexingInfo.mBucketIndex);
-            editor.putInt(GalleryConfig.PREF_DATE_LABEL_INDEX, imageIndexingInfo.mDateLabelIndex);
-            editor.putInt(GalleryConfig.PREF_IMAGE_INDEX, imageIndexingInfo.mImageIndex);
-
-            editor.commit();
-
             invalidateViewport();
-            Log.d(TAG, "onSingleTapUp() imageIndexingInfo " + imageIndexingInfo);
+
             mGalleryContext.setImageIndexingInfo(imageIndexingInfo);
             mGalleryContext.setCurrentViewport(mCurrentViewport);
             mRenderer.onImageSelected(imageIndexingInfo);
-
-//            mContext.startActivity(intent);
 
             return true;
         }

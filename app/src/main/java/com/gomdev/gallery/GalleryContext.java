@@ -19,8 +19,10 @@ class GalleryContext {
         return sGalleryContext;
     }
 
-    private int mNumOfColumns = GalleryConfig.DEFAULT_NUM_OF_COLUMNS;
-    private int mGridColumnWidth;
+    private int mDefaultNumOfColumns = GalleryConfig.DEFAULT_NUM_OF_COLUMNS;
+    private int mMinNumOfColumns = GalleryConfig.DEFAULT_NUM_OF_COLUMNS;
+    private int mMaxNumOfColumns = GalleryConfig.DEFAULT_NUM_OF_COLUMNS * 3;
+    private int mDefaultColumnWidth;
     private int mActionBarHeight = 0;
     private int mSystemBarHeight = 0;
     private int mVersionCode = 100;
@@ -34,20 +36,36 @@ class GalleryContext {
 
     }
 
-    int getColumnWidth() {
-        return mGridColumnWidth;
+    int getDefaultColumnWidth() {
+        return mDefaultColumnWidth;
     }
 
-    void setColumnWidth(int columnWidth) {
-        mGridColumnWidth = columnWidth;
+    void setDefaultColumnWidth(int columnWidth) {
+        mDefaultColumnWidth = columnWidth;
     }
 
-    int getNumOfColumns() {
-        return mNumOfColumns;
+    int getDefaultNumOfColumns() {
+        return mDefaultNumOfColumns;
     }
 
-    void setNumOfColumns(int numOfColumns) {
-        mNumOfColumns = numOfColumns;
+    void setDefaultNumOfColumns(int defaultNumOfColumns) {
+        mDefaultNumOfColumns = defaultNumOfColumns;
+    }
+
+    int getMinNumOfColumns() {
+        return mMinNumOfColumns;
+    }
+
+    void setMinNumOfColumns(int minNumOfColumns) {
+        mMinNumOfColumns = minNumOfColumns;
+    }
+
+    int getMaxNumOfColumns() {
+        return mMaxNumOfColumns;
+    }
+
+    void setMaxNumOfColumns(int maxNumOfColumns) {
+        mMaxNumOfColumns = maxNumOfColumns;
     }
 
     int getActionBarHeight() {
