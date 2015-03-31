@@ -2,13 +2,11 @@ package com.gomdev.gallery;
 
 import android.app.Activity;
 import android.content.Context;
-import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.Handler;
 import android.provider.MediaStore;
 import android.text.format.DateUtils;
 import android.util.Log;

@@ -10,8 +10,8 @@ import android.util.Log;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
-* Created by gomdev on 15. 3. 29..
-*/
+ * Created by gomdev on 15. 3. 29..
+ */
 class DataObserver extends ContentObserver {
     private static final String CLASS = "DataObserver";
     private static final String TAG = GalleryConfig.TAG + "_" + CLASS;

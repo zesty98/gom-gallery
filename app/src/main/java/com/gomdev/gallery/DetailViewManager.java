@@ -433,7 +433,6 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
 
             transform.setTranslate(x, y, 0f);
             transform.setScale(scale);
-
         }
 
         @Override

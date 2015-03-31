@@ -8,7 +8,6 @@ import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 

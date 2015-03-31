@@ -36,6 +36,10 @@ import java.nio.FloatBuffer;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import static android.view.MotionEvent.ACTION_DOWN;
+import static android.view.MotionEvent.ACTION_MOVE;
+import static android.view.MotionEvent.ACTION_UP;
+
 /**
  * Created by gomdev on 15. 2. 24..
  */
@@ -153,6 +157,13 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private float mPrevScale = 1f;
     private float mNextScale = 1f;
 
+    private float mPrevTranslateX = 0f;
+    private float mPrevTranslateY = 0f;
+
+    // panning
+    private float mPrevX = 0f;
+    private float mPrevY = 0f;
+
     DetailViewPager(Context context, GridInfo gridInfo) {
         mContext = context;
         mGridInfo = gridInfo;
@@ -184,6 +195,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mIsFirstImage = false;
         mIsLastImage = false;
         mIsActionBarShown = false;
+        mIsFitScreen = true;
 
         mFocusDirection = FocusDirection.NONE;
     }
@@ -671,9 +683,20 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             return true;
         }
 
+        boolean retVal = mGestureDetector.onTouchEvent(event);
+
+        if (mIsFitScreen == false) {
+            handlePanning(event);
+            return true;
+        }
+
+        if (retVal == true) {
+            return true;
+        }
+
         final int action = MotionEventCompat.getActionMasked(event);
 
-        if (action == MotionEvent.ACTION_DOWN) {
+        if (action == ACTION_DOWN) {
             if (mVelocityTracker == null) {
                 mVelocityTracker = VelocityTracker.obtain();
             }
@@ -687,13 +710,13 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         }
 
         switch (action) {
-            case MotionEvent.ACTION_DOWN:
+            case ACTION_DOWN:
                 mIsOnScroll = true;
                 mIsDown = true;
                 mDownX = event.getX();
                 mDragDistance = 0;
                 break;
-            case MotionEvent.ACTION_UP:
+            case ACTION_UP:
                 if (mIsDown == true) {
 
                     if (mIsAtEdge == false) {
@@ -710,7 +733,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 }
 
                 break;
-            case MotionEvent.ACTION_MOVE:
+            case ACTION_MOVE:
                 if (mIsDown == true) {
                     mIsOnScroll = true;
                     mDragDistance = (int) (event.getX() - mDownX);
@@ -731,13 +754,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                     }
                 }
                 break;
-            case MotionEvent.ACTION_POINTER_DOWN:
-                break;
-            case MotionEvent.ACTION_POINTER_UP:
-                break;
+            default:
         }
-
-        mGestureDetector.onTouchEvent(event);
 
         mSurfaceView.requestRender();
 
@@ -802,6 +820,68 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         duration = Math.min(duration, MAX_SETTLE_DURATION);
         mScroller.startScroll(mDragDistance, 0, distance, 0, duration);
+    }
+
+
+    private void handlePanning(MotionEvent event) {
+        int width = mCurrentImageInfo.getWidth();
+        int height = mCurrentImageInfo.getHeight();
+
+        if (width < mWidth && height < mHeight) {
+            return;
+        }
+
+        float maxTranslateX = (width - mWidth) * 0.5f;
+        float maxTranslateY = (height - mHeight) * 0.5f;
+
+        float x = 0f;
+        float y = 0f;
+
+        float translateX = 0f;
+        float translateY = 0f;
+
+        int action = MotionEventCompat.getActionMasked(event);
+        switch (action) {
+            case ACTION_DOWN:
+                mPrevX = event.getX();
+                mPrevY = event.getY();
+                break;
+            case ACTION_MOVE:
+                x = event.getX();
+                y = event.getY();
+
+                Log.d(TAG, "handlePanning() moveX=" + (x - mPrevX) + " moveY=" + (mPrevY - y));
+
+                translateX = mCurrentObject.getTranslateX();
+                translateX += (x - mPrevX);
+
+                if (maxTranslateX < Math.abs(translateX)) {
+                    if (translateX < 0) {
+                        translateX = -maxTranslateX;
+                    } else {
+                        translateX = maxTranslateX;
+                    }
+                }
+
+                translateY = mCurrentObject.getTranslateY();
+                translateY += (mPrevY - y);
+                if (maxTranslateY < Math.abs(translateY)) {
+                    if (translateY < 0) {
+                        translateY = -maxTranslateY;
+                    } else {
+                        translateY = maxTranslateY;
+                    }
+                }
+
+                mCurrentObject.setTranslate(translateX, translateY);
+
+                mPrevX = x;
+                mPrevY = y;
+                break;
+            case ACTION_UP:
+                break;
+            default:
+        }
     }
 
     private void prePopulate() {
@@ -965,7 +1045,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 ((Activity) mContext).getActionBar().setTitle(mSelectedDateLabelInfo.getDate());
             }
 
-            return true;
+            return super.onSingleTapConfirmed(e);
         }
 
         @Override
@@ -984,7 +1064,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             }
 
             int action = e.getAction();
-            if (action == MotionEvent.ACTION_UP) {
+            if (action == ACTION_UP) {
                 startScaleAnimation();
             }
             return true;
@@ -1015,11 +1095,17 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
                     mPrevScale = 1f;
                     mNextScale = (float) width / mWidth;
+
+                    mPrevTranslateX = 0f;
+                    mPrevTranslateY = 0f;
                 } else {
                     mIsFitScreen = true;
 
                     mPrevScale = 1f;
                     mNextScale = (float) mWidth / width;
+
+                    mPrevTranslateX = mCurrentObject.getTranslateX();
+                    mPrevTranslateY = mCurrentObject.getTranslateY();
                 }
             } else {
                 if (mIsFitScreen == true) {
@@ -1027,16 +1113,22 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
                     mPrevScale = 1f;
                     mNextScale = (float) height / mHeight;
+
+                    mPrevTranslateX = 0f;
+                    mPrevTranslateY = 0f;
                 } else {
                     mIsFitScreen = true;
 
                     mPrevScale = 1f;
                     mNextScale = (float) mHeight / height;
+
+                    mPrevTranslateX = mCurrentObject.getTranslateX();
+                    mPrevTranslateY = mCurrentObject.getTranslateY();
                 }
             }
 
             mScaleAnimator = new GLESAnimator(mScaleAnimationCB);
-            mScaleAnimator.setValues(mPrevScale, mNextScale);
+            mScaleAnimator.setValues(0f, 1f);
             mScaleAnimator.setDuration(0L, 300L);
             mScaleAnimator.start();
 
@@ -1097,6 +1189,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             float z = imageObject.getTranslateZ();
             float scale = imageObject.getScale();
 
+//            Log.d(TAG, "update() x=" + x + " y=" + y);
+
             transform.setTranslate(x, y, z);
             transform.setScale(scale);
         }
@@ -1113,7 +1207,15 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private GLESAnimatorCallback mScaleAnimationCB = new GLESAnimatorCallback() {
         @Override
         public void onAnimation(GLESVector3 current) {
-            mCurrentObject.setScale(current.getX());
+            float normalizedValue = current.getX();
+
+            float scale = mPrevScale + (mNextScale - mPrevScale) * normalizedValue;
+            mCurrentObject.setScale(scale);
+
+            float translateX = mPrevTranslateX - mPrevTranslateX * normalizedValue;
+            float translateY = mPrevTranslateY - mPrevTranslateY * normalizedValue;
+
+            mCurrentObject.setTranslate(translateX, translateY);
         }
 
         @Override

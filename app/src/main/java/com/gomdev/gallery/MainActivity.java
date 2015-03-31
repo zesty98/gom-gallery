@@ -67,6 +67,7 @@ public class MainActivity extends Activity {
 
     private AsyncTask<Void, Void, Void> mDBSyncTask = new AsyncTask<Void, Void, Void>() {
         private long mStartTick = 0L;
+
         @Override
         protected Void doInBackground(Void... params) {
             if (DEBUG) {

@@ -1,8 +1,6 @@
 package com.gomdev.gallery;
 
 import android.app.Activity;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
