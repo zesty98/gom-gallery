@@ -831,8 +831,15 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             return;
         }
 
-        float maxTranslateX = (width - mWidth) * 0.5f;
-        float maxTranslateY = (height - mHeight) * 0.5f;
+        float maxTranslateX = 0f;
+        if (width > mWidth) {
+            maxTranslateX = (width - mWidth) * 0.5f;
+        }
+
+        float maxTranslateY = 0f;
+        if (height > mHeight) {
+            maxTranslateY = (height - mHeight) * 0.5f;
+        }
 
         float x = 0f;
         float y = 0f;
@@ -849,8 +856,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             case ACTION_MOVE:
                 x = event.getX();
                 y = event.getY();
-
-                Log.d(TAG, "handlePanning() moveX=" + (x - mPrevX) + " moveY=" + (mPrevY - y));
 
                 translateX = mCurrentObject.getTranslateX();
                 translateX += (x - mPrevX);
@@ -1188,8 +1193,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             float y = imageObject.getTranslateY();
             float z = imageObject.getTranslateZ();
             float scale = imageObject.getScale();
-
-//            Log.d(TAG, "update() x=" + x + " y=" + y);
 
             transform.setTranslate(x, y, z);
             transform.setScale(scale);
