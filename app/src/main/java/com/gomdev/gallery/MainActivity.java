@@ -2,10 +2,10 @@ package com.gomdev.gallery;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.PixelFormat;
+import android.opengl.GLSurfaceView;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,9 +14,11 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 public class MainActivity extends Activity {
-    static final String CLASS = "MainActivity";
-    static final String TAG = GalleryConfig.TAG + "_" + CLASS;
-    static final boolean DEBUG = GalleryConfig.DEBUG;
+    private static final String CLASS = "MainActivity";
+    private static final String TAG = GalleryConfig.TAG + "_" + CLASS;
+    private static final boolean DEBUG = GalleryConfig.DEBUG;
+
+    private GLSurfaceView mSurfaceView = null;
 
     public MainActivity() {
         if (DEBUG) {
@@ -43,13 +45,49 @@ public class MainActivity extends Activity {
 
         GalleryUtils.setSystemUiVisibility(this, GalleryConfig.VisibleMode.VISIBLE_MODE);
 
-        init();
-    }
-
-    private void init() {
         GalleryContext.newInstance(this);
 
         mDBSyncTask.execute();
+
+        mSurfaceView = new GLSurfaceView(this);
+        layout.addView(mSurfaceView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        IntroRenderer renderer = new IntroRenderer(this);
+
+        mSurfaceView.setEGLContextClientVersion(2);
+        mSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 0, 0);
+        mSurfaceView.setRenderer(renderer);
+        mSurfaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        mSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        mSurfaceView.setPreserveEGLContextOnPause(true);
+
+        renderer.setSurfaceView(mSurfaceView);
+    }
+
+    @Override
+    protected void onResume() {
+        if (DEBUG) {
+            Log.d(TAG, "onResume()");
+        }
+
+        super.onResume();
+
+        if (mSurfaceView != null) {
+            mSurfaceView.onResume();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (DEBUG) {
+            Log.d(TAG, "onPause()");
+        }
+
+        if (mSurfaceView != null) {
+            mSurfaceView.onPause();
+        }
+
+        super.onPause();
     }
 
     private AsyncTask<Void, Void, Void> mDBSyncTask = new AsyncTask<Void, Void, Void>() {
@@ -81,9 +119,9 @@ public class MainActivity extends Activity {
             long currentTick = System.nanoTime();
             long durationInMS = (currentTick - mStartTick) / 1000000;
 
-            if (durationInMS < 1000L) {
+            if (durationInMS < GalleryConfig.MAINACTIVITY_DURATION) {
                 try {
-                    Thread.currentThread().sleep(1000L - durationInMS);
+                    Thread.currentThread().sleep(GalleryConfig.MAINACTIVITY_DURATION - durationInMS);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
