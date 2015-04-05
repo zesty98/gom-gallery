@@ -171,6 +171,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setTexture(texture.getTexture());
 
             object.setAnimationStartTime(currentTime);
+            object.setIsOnAlphaAnimation(true);
         }
 
         if (mWaitingTextures.size() > 0) {
@@ -304,6 +305,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             object.setTranslate(left - (-mColumnWidth * 0.5f), mStartOffsetY + top - (mColumnWidth * 0.5f));
             object.setScale(mScale);
+            object.setAlpha(1.0f);
 
             GLESVertexInfo vertexInfo = object.getVertexInfo();
             float[] vertex = GLESUtils.makePositionCoord(-mDefaultColumnWidth * 0.5f, mDefaultColumnWidth * 0.5f, mDefaultColumnWidth, mDefaultColumnWidth);
@@ -687,12 +689,17 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             long startTime = imageObject.getAnimationStartTime();
             int elapsedTime = (int) (mCurrentTime - startTime);
-            if (elapsedTime <= ALPAH_ANIMATION_DURATION) {
+            if (imageObject.isOnAlphaAnimation() == true && elapsedTime <= ALPAH_ANIMATION_DURATION) {
                 float alpha = ((float) elapsedTime / ALPAH_ANIMATION_DURATION);
                 imageObject.setAlpha(alpha);
 
                 mSurfaceView.requestRender();
             } else {
+                if (imageObject.isOnAlphaAnimation() == true) {
+                    imageObject.setIsOnAlphaAnimation(false);
+                    mSurfaceView.requestRender();
+                }
+
                 imageObject.setAlpha(1f);
             }
         }

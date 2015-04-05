@@ -16,6 +16,7 @@ class ImageObject extends GalleryObject {
     private float mAlpha = 1f;
 
     private long mAnimationStartTime = 0L;
+    private boolean mIsOnAlphaAnimation = false;
 
     private boolean mPrevVisibility = false;
 
@@ -82,6 +83,14 @@ class ImageObject extends GalleryObject {
 
     void setAnimationStartTime(long startTime) {
         mAnimationStartTime = startTime;
+    }
+
+    void setIsOnAlphaAnimation(boolean isOnAlphaAnimation) {
+        mIsOnAlphaAnimation = isOnAlphaAnimation;
+    }
+
+    boolean isOnAlphaAnimation() {
+        return mIsOnAlphaAnimation;
     }
 
     long getAnimationStartTime() {
