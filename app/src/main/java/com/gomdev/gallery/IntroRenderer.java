@@ -182,7 +182,7 @@ public class IntroRenderer implements GLSurfaceView.Renderer {
 
         {
             float gomStartX = -gomWidth * 0.5f;
-            float gomStartY = gomHeight * 0.5f;
+            float gomStartY = gomHeight * 0.7f;
 
             float pointSize = Math.round(gomWidth / NUM_OF_POINT_IN_GOM_WIDTH);
             ;
@@ -319,9 +319,6 @@ public class IntroRenderer implements GLSurfaceView.Renderer {
 
         mShader = createShader(R.raw.particle_texture_20_vs, R.raw.particle_texture_20_fs);
         mIntroObject.setShader(mShader);
-
-//        mGalleryShader = createShader(R.raw.particle_texture_20_vs, R.raw.particle_texture_20_fs);
-//        mGalleryObject.setShader(mGalleryShader);
     }
 
     private GLESShader createShader(int vsResID, int fsResID) {
