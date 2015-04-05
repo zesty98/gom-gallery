@@ -35,20 +35,13 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ImageView imageView = new ImageView(this);
-        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.main);
-        imageView.setImageBitmap(bitmap);
-        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-
-        FrameLayout layout = (FrameLayout) findViewById(R.id.container);
-        layout.addView(imageView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
         GalleryUtils.setSystemUiVisibility(this, GalleryConfig.VisibleMode.VISIBLE_MODE);
 
         GalleryContext.newInstance(this);
 
         mDBSyncTask.execute();
 
+        FrameLayout layout = (FrameLayout) findViewById(R.id.container);
         mSurfaceView = new GLSurfaceView(this);
         layout.addView(mSurfaceView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
