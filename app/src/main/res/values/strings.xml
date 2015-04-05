@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">GomGallery</string>
+    <string name="app_name">gom gallery</string>
     <string name="action_delete">Delete</string>
     <string name="action_share">Share</string>
     <string name="imageview_description">Image Thumbnail</string>
