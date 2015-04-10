@@ -2,6 +2,7 @@ package com.gomdev.gallery;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,6 +11,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.provider.MediaStore;
 import android.text.format.DateUtils;
 import android.util.Log;
+
+import com.gomdev.gallery.GalleryConfig.SortBy;
 
 import java.io.FileDescriptor;
 import java.util.HashSet;
@@ -58,6 +61,8 @@ public class ImageLoader {
     private Bitmap mLoadingBitmap = null;
     private String mOrderClause;
 
+    private boolean mIsImageLoaded = false;
+
     private ImageLoader(Context context) {
         mContext = context;
 
@@ -76,11 +81,32 @@ public class ImageLoader {
         params.mMemoryCacheEnabled = true;
         mImageCache = ImageCache.getInstance(((Activity) context).getFragmentManager(), params);
 
-        mOrderClause = MediaStore.Images.ImageColumns.DATE_TAKEN + " DESC, "
-                + MediaStore.Images.ImageColumns._ID + " DESC";
+        SharedPreferences pref = mContext.getSharedPreferences(GalleryConfig.PREF_NAME, 0);
+        int sortBy = pref.getInt(GalleryConfig.PREF_SORT_BY, SortBy.DESCENDING.getIndex());
+
+        if (sortBy == SortBy.DESCENDING.getIndex()) {
+            mOrderClause = MediaStore.Images.ImageColumns.DATE_TAKEN + " DESC, "
+                    + MediaStore.Images.ImageColumns._ID + " DESC";
+        } else if (sortBy == SortBy.ASCENDING.getIndex()) {
+            mOrderClause = MediaStore.Images.ImageColumns.DATE_TAKEN + " ASC, "
+                    + MediaStore.Images.ImageColumns._ID + " DESC";
+        }
+
+        mIsImageLoaded = false;
     }
 
-    void loadBucketInfos() {
+    boolean isImageLoaded() {
+        return mIsImageLoaded;
+    }
+
+    void checkAndLoadImages() {
+        if (mIsImageLoaded == false) {
+            loadBucketInfos();
+            loadImageInfos();
+        }
+    }
+
+    private void loadBucketInfos() {
         if (DEBUG) {
             Log.d(TAG, "loadBucketInfos()");
         }
@@ -119,7 +145,7 @@ public class ImageLoader {
         cursor.close();
     }
 
-    void loadImageInfos() {
+    private void loadImageInfos() {
         int size = mImageManager.getNumOfBucketInfos();
         for (int i = 0; i < size; i++) {
             BucketInfo bucketInfo = mImageManager.getBucketInfo(i);
@@ -207,6 +233,8 @@ public class ImageLoader {
         }
 
         cursor.close();
+
+        mIsImageLoaded = true;
     }
 
     private static void setImageSize(ImageInfo imageInfo) {

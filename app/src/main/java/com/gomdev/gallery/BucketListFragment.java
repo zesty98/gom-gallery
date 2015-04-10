@@ -87,11 +87,19 @@ public class BucketListFragment extends Fragment {
 
         super.onResume();
 
+        ImageManager imageManager = ImageManager.getInstance();
+        if (imageManager != mImageManager) {
+            mAdapter.notifyDataSetChanged();
+            mImageManager = imageManager;
+        }
+
+        mImageLoader = ImageLoader.getInstance();
         mImageLoader.setLoadingBitmap(sLoadingBitmap);
 
         int totalNumOfImages = mImageManager.getNumOfImages();
         if (mTotalNumOfImages != totalNumOfImages) {
             mAdapter.notifyDataSetChanged();
+            mTotalNumOfImages = totalNumOfImages;
         }
     }
 

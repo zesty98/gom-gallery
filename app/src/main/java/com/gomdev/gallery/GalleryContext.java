@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.RectF;
-import android.util.Log;
 
 class GalleryContext {
     private static final String CLASS = "GalleryContext";
@@ -17,14 +16,10 @@ class GalleryContext {
     static GalleryContext newInstance(Context context) {
         sGalleryContext = new GalleryContext();
         ImageManager.newInstance(context);
-        ImageLoader.newInstance(context);
-
-        Log.d(TAG, "GalleryContext() context=" + context);
+        ImageLoader imageLoader = ImageLoader.newInstance(context);
 
         if (!(context instanceof MainActivity)) {
-            ImageLoader imageLoader = ImageLoader.getInstance();
-            imageLoader.loadBucketInfos();
-            imageLoader.loadImageInfos();
+            imageLoader.checkAndLoadImages();
         }
 
         PackageInfo packageInfo;

@@ -115,7 +115,7 @@ public class ImageViewActivity extends FragmentActivity implements View.OnClickL
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
+        getMenuInflater().inflate(R.menu.detail_view_menu, menu);
         return true;
     }
 

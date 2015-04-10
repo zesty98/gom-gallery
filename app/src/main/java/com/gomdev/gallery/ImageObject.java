@@ -11,8 +11,10 @@ class ImageObject extends GalleryObject {
     private float mScale = 1f;
     private float mPrevScale = 1f;
     private float mNextScale = 1f;
+
     private float mStartOffsetY = 0f;
     private float mNextStartOffsetY = 0f;
+
     private float mAlpha = 1f;
 
     private long mAnimationStartTime = 0L;

@@ -101,14 +101,6 @@ public class IntroRenderer implements GLSurfaceView.Renderer {
     private int mWidth = 0;
     private int mHeight = 0;
 
-//    private float mShadowRadius = 0f;
-//    private float mShadowDx = 0f;
-//    private float mShadowDy = 0f;
-//    private float mTextSize = 0f;
-//    private float mTextMargin = 0f;
-//
-//    private int mTextColor = 0;
-
     private ParticleSet mParticleSet = new ParticleSet();
 
     IntroRenderer(Context context) {
@@ -185,7 +177,6 @@ public class IntroRenderer implements GLSurfaceView.Renderer {
             float gomStartY = gomHeight * 0.7f;
 
             float pointSize = Math.round(gomWidth / NUM_OF_POINT_IN_GOM_WIDTH);
-            ;
             int numOfPointsInWidth = (int) Math.ceil(gomWidth / pointSize);
             float temp = numOfPointsInWidth * gomHeight / gomWidth;
             int numOfPointsInHeight = (int) Math.ceil(temp);

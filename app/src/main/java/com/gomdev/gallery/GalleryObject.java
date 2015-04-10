@@ -91,9 +91,7 @@ class GalleryObject extends GLESObject {
     }
 
     void setTranslate(float x, float y) {
-        mTranslateX = x;
-        mTranslateY = y;
-        mTranslateZ = 0f;
+        this.setTranslate(x, y, 0f);
     }
 
     void setTranslate(float x, float y, float z) {

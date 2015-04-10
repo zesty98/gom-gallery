@@ -57,12 +57,17 @@ public class ImageListActivity extends Activity {
         GalleryUtils.setDefaultInfo(this);
 
         mImageManager = ImageManager.getInstance();
+        if (mImageManager == null) {
+            mImageManager = ImageManager.newInstance(this);
+        }
 
         GalleryUtils.setSystemUiVisibility(this, VisibleMode.VISIBLE_TRANSPARENT_MODE);
 
         int bucketPosition = getIntent().getIntExtra(GalleryConfig.BUCKET_INDEX, 0);
         BucketInfo bucketInfo = mImageManager.getBucketInfo(bucketPosition);
         getActionBar().setTitle(bucketInfo.getName());
+
+        mImageManager.setCurrentBucketInfo(bucketPosition);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             GalleryUtils.setActionBarElevation(this);
@@ -235,10 +240,15 @@ public class ImageListActivity extends Activity {
         switch (mode) {
             case ALBUME_VIEW_MODE:
                 menu.removeItem(R.id.action_delete);
+                menu.removeItem(R.id.action_share);
+                if (menu.findItem(R.id.action_sort) == null) {
+                    getMenuInflater().inflate(R.menu.album_view_menu, menu);
+                }
                 break;
             case DETAIL_VIEW_MODE:
+                menu.removeItem(R.id.action_sort);
                 if (menu.findItem(R.id.action_delete) == null) {
-                    getMenuInflater().inflate(R.menu.main, menu);
+                    getMenuInflater().inflate(R.menu.detail_view_menu, menu);
                 }
                 break;
             default:
@@ -260,6 +270,9 @@ public class ImageListActivity extends Activity {
         } else if (id == R.id.action_share) {
             share();
             return true;
+        } else if (id == R.id.action_sort) {
+            AlbumViewOptionDialog dialog = new AlbumViewOptionDialog();
+            dialog.show(getFragmentManager(), "sort by");
         }
 
         return super.onOptionsItemSelected(item);

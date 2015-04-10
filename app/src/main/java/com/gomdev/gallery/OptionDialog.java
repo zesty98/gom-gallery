@@ -29,7 +29,7 @@ public class OptionDialog extends DialogFragment {
         };
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(R.string.option_dialog_title)
+        builder.setTitle(R.string.albumview_option_dialog_title)
                 .setItems(list, new DialogInterface.OnClickListener() {
 
                     @Override

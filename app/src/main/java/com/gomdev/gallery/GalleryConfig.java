@@ -15,6 +15,21 @@ public class GalleryConfig {
         FULLSCREEN_MODE
     }
 
+    enum SortBy {
+        DESCENDING(0),
+        ASCENDING(1);
+
+        private final int mIndex;
+
+        SortBy(int index) {
+            mIndex = index;
+        }
+
+        int getIndex() {
+            return mIndex;
+        }
+    }
+
     private GalleryConfig() {
 
     }
@@ -27,6 +42,8 @@ public class GalleryConfig {
     static final String PREF_NAME = "gom_gallery_pref_name";
     static final String PREF_NUM_OF_COLUMNS_IN_PORTRAIT = "num_of_columns_portrait";
     static final String PREF_NUM_OF_COLUMNS_IN_LANDSCAPE = "num_of_columns_landscape";
+
+    static final String PREF_SORT_BY = "sort_by";
 
     static final int DEFAULT_NUM_OF_COLUMNS = 3;
 

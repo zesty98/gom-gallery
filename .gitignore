@@ -6,3 +6,4 @@ local.properties
 .gradle/
 import-summary.txt
 app/src/main/java/com/gomdev/gles/
+*.apk

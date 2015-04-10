@@ -2,8 +2,6 @@ package com.gomdev.gallery;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.os.AsyncTask;
@@ -11,7 +9,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 
 public class MainActivity extends Activity {
     private static final String CLASS = "MainActivity";
@@ -96,8 +93,7 @@ public class MainActivity extends Activity {
 
             mStartTick = System.nanoTime();
 
-            imageLoader.loadBucketInfos();
-            imageLoader.loadImageInfos();
+            imageLoader.checkAndLoadImages();
 
             Log.d(TAG, "init() loading duration=" + ((System.nanoTime() - mStartTick) / 1000000));
             return null;
