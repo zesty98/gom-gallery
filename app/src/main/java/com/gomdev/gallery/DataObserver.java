@@ -40,14 +40,14 @@ class DataObserver extends ContentObserver {
         }
 
 
-        int count = sReferenceCount.getAndIncrement();
-        if (count == 0) {
-            if (DEBUG) {
-                Log.d(TAG, "registerContentObserver() >>> registerContentObserver");
-            }
-
-            context.getContentResolver().registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, true, sContentObserver);
-        }
+//        int count = sReferenceCount.getAndIncrement();
+//        if (count == 0) {
+//            if (DEBUG) {
+//                Log.d(TAG, "registerContentObserver() >>> registerContentObserver");
+//            }
+//
+//            context.getContentResolver().registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, true, sContentObserver);
+//        }
     }
 
     static void unregisterContentObserver(Context context) {
@@ -55,15 +55,15 @@ class DataObserver extends ContentObserver {
             Log.d(TAG, "unregisterContentObserver()");
         }
 
-        int count = sReferenceCount.decrementAndGet();
-
-        if (count == 0) {
-            if (DEBUG) {
-                Log.d(TAG, "unregisterContentObserver() >>> unregisterContentObserver");
-            }
-
-            context.getContentResolver().unregisterContentObserver(sContentObserver);
-        }
+//        int count = sReferenceCount.decrementAndGet();
+//
+//        if (count == 0) {
+//            if (DEBUG) {
+//                Log.d(TAG, "unregisterContentObserver() >>> unregisterContentObserver");
+//            }
+//
+//            context.getContentResolver().unregisterContentObserver(sContentObserver);
+//        }
     }
 
 }
