@@ -142,12 +142,10 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
             mAlbumViewGestureDetector.resetOnScrolling();
         }
 
-        if (isOnScrolling == false) {
-            mGalleryObjects.updateTexture(currentTime);
-        }
+        mGalleryObjects.updateTexture(currentTime);
 
-        mGalleryObjects.checkVisibility(isOnScrolling);
-        mGalleryObjects.update(isOnScrolling);
+        mGalleryObjects.checkVisibility();
+        mGalleryObjects.update();
         mScrollbar.update(isOnScrolling);
     }
 

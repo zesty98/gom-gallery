@@ -591,8 +591,20 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         setPositionCoord(index, imageInfo);
 
-        ImageObject object = (ImageObject) textureMappingInfo.getObject();
-        object.setTexture(mDummyTexture);
+        final ImageObject object = (ImageObject) textureMappingInfo.getObject();
+        final Bitmap bitmap = imageInfo.getBitmap();
+        if (bitmap != null) {
+            mSurfaceView.queueEvent(new Runnable() {
+                @Override
+                public void run() {
+                    GLESTexture dummyTexture = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, bitmap.getWidth(), bitmap.getHeight()).load(bitmap);
+                    object.setTexture(dummyTexture);
+                }
+            });
+
+        } else {
+            object.setTexture(mDummyTexture);
+        }
 
         ImageLoader.getInstance().loadBitmap(imageInfo, texture, mRequestWidth, mRequestHeight);
     }
@@ -718,7 +730,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 break;
             case ACTION_UP:
                 if (mIsDown == true) {
-
                     if (mIsAtEdge == false) {
                         mDragDistance = (int) (event.getX() - mDownX);
                     }

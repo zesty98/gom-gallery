@@ -14,18 +14,30 @@ class GalleryTexture implements BitmapContainer {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
+    enum State {
+        NONE,
+        DECODING,
+        QUEUING,
+        LOADED
+    }
+
     private GLESTexture mTexture = null;
     private GLESTexture.Builder mBuilder = null;
     private BitmapDrawable mDrawable = null;
 
+    private State mState = State.NONE;
+
     private ImageLoadingListener mImageLoadingListener;
 
-    boolean mIsTextureLoadingFinished = false;
-    boolean mIsTextureLoadingStarted = false;
+    volatile boolean mIsTextureLoadingFinished = false;
+    volatile boolean mIsTextureLoadingStarted = false;
     private int mIndex = 0;
 
     GalleryTexture(int width, int height) {
-        mBuilder = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, width, height);
+        synchronized (this) {
+            setState(State.NONE);
+            mBuilder = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, width, height);
+        }
     }
 
     GLESTexture getTexture() {
@@ -37,7 +49,10 @@ class GalleryTexture implements BitmapContainer {
         mDrawable = drawable;
 
         if (drawable instanceof AsyncDrawable) {
-            mIsTextureLoadingStarted = true;
+            synchronized (this) {
+                setState(State.DECODING);
+                mIsTextureLoadingStarted = true;
+            }
             return;
         }
 
@@ -46,7 +61,10 @@ class GalleryTexture implements BitmapContainer {
         }
 
         if (mIsTextureLoadingFinished == false) {
-            mImageLoadingListener.onImageLoaded(mIndex, this);
+            synchronized (this) {
+                setState(State.QUEUING);
+                mImageLoadingListener.onImageLoaded(mIndex, this);
+            }
         }
         mIsTextureLoadingFinished = true;
     }
@@ -56,7 +74,8 @@ class GalleryTexture implements BitmapContainer {
         return mDrawable;
     }
 
-    void load(Bitmap bitmap) {
+    synchronized void load(Bitmap bitmap) {
+        setState(State.LOADED);
         mTexture = mBuilder.load(bitmap);
     }
 
@@ -74,5 +93,17 @@ class GalleryTexture implements BitmapContainer {
 
     boolean isTextureLoadingNeeded() {
         return (mIsTextureLoadingFinished == false) && (mIsTextureLoadingStarted == false);
+    }
+
+    boolean isOnTextureLoading() {
+        return (mIsTextureLoadingFinished == false) && (mIsTextureLoadingStarted == true);
+    }
+
+    private void setState(State state) {
+        mState = state;
+    }
+
+    synchronized State getState() {
+        return mState;
     }
 }

@@ -159,8 +159,6 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
 
             if (bitmap == null) {
-                ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
-
                 int width = mWidth / 10;
                 int height = mHeight / 10;
 
@@ -179,15 +177,15 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         }
     }
 
-    void checkVisibility(boolean parentVisibility, boolean isOnScrolling) {
+    void checkVisibility(boolean parentVisibility) {
         if (parentVisibility == true) {
-            handleVisibleObjects(isOnScrolling);
+            handleVisibleObjects();
         } else {
-            handleInvisibleObjects(isOnScrolling);
+            handleInvisibleObjects();
         }
     }
 
-    private void handleVisibleObjects(boolean isOnScrolling) {
+    private void handleVisibleObjects() {
         float translateY = mGridInfo.getTranslateY();
         float viewportTop = mHeight * 0.5f - translateY;
         float viewportBottom = viewportTop - mHeight;
@@ -213,11 +211,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
                 object.setVisibility(true);
 
-                if (isOnScrolling == false) {
-                    if (object.isTexturMapped() == false) {
-                        mapTexture(i);
-                        object.setTextureMapping(true);
-                    }
+                if (object.isTexturMapped() == false) {
+                    mapTexture(i);
+                    object.setTextureMapping(true);
                 }
             } else {
                 object.setVisibility(false);
@@ -232,7 +228,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         }
     }
 
-    private void handleInvisibleObjects(boolean isOnScrolling) {
+    private void handleInvisibleObjects() {
         int size = mObjects.size();
         for (int i = 0; i < size; i++) {
             ImageObject object = mObjects.get(i);
@@ -246,7 +242,6 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private void mapTexture(int index) {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
-
 
         ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
         GalleryTexture texture = textureMappingInfo.getTexture();
@@ -269,9 +264,20 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
         GalleryTexture texture = textureMappingInfo.getTexture();
 
-        BitmapWorker.cancelWork(texture);
-        mWaitingTextures.remove(texture);
+        if (texture == null) {
+            return;
+        }
 
+        GalleryTexture.State state = texture.getState();
+
+        switch (state) {
+            case DECODING:
+                BitmapWorker.cancelWork(texture);
+                break;
+            case QUEUING:
+                mWaitingTextures.remove(texture);
+                break;
+        }
         textureMappingInfo.setTexture(null);
     }
 
@@ -598,6 +604,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         } else {
             imageWidth = bitmap.getWidth();
             imageHeight = bitmap.getHeight();
+
+            ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
+            imageInfo.setBitmap(bitmap);
         }
 
         float[] texCoord = GalleryUtils.calcTexCoord(imageWidth, imageHeight);
@@ -613,13 +622,18 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         int size = mTextureMappingInfos.size();
         for (int i = 0; i < size; i++) {
             TextureMappingInfo info = mTextureMappingInfos.get(i);
+
             GalleryTexture texture = info.getTexture();
-            if (texture != null) {
-                BitmapWorker.cancelWork(texture);
+            if (texture == null) {
+                continue;
+            }
 
-                mWaitingTextures.remove(texture);
+            GalleryTexture.State state = texture.getState();
 
-                info.setTexture(null);
+            switch (state) {
+                case DECODING:
+                    BitmapWorker.cancelWork(texture);
+                    break;
             }
         }
     }

@@ -113,10 +113,19 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     // Rendering
 
-    void update(boolean isOnScrolling) {
-        checkVisibility(isOnScrolling);
+    void update() {
+        checkVisibility();
 
-        update();
+        if (mAnimator != null && mAnimator.doAnimation() == true) {
+            mSurfaceView.requestRender();
+        }
+
+        int size = mAnimationObjects.size();
+        for (int i = 0; i < size; i++) {
+            DateLabelObject object = mAnimationObjects.get(i);
+            ImageObjects imageObjects = object.getImageObjects();
+            imageObjects.update();
+        }
     }
 
     // this function should be called on GLThread
@@ -148,7 +157,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         }
     }
 
-    void checkVisibility(boolean isOnScrolling) {
+    void checkVisibility() {
         float translateY = mGridInfo.getTranslateY();
         float viewportTop = mHeight * 0.5f - translateY;
         float viewportBottom = viewportTop - mHeight;
@@ -181,14 +190,12 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             if (bottom < viewportTop && top > viewportBottom) {
                 parentNode.setVisibility(true);
 
-                if (isOnScrolling == false) {
-                    if (object.isTexturMapped() == false) {
-                        mapTexture(i);
-                        object.setTextureMapping(true);
-                    }
+                if (object.isTexturMapped() == false) {
+                    mapTexture(i);
+                    object.setTextureMapping(true);
                 }
 
-                imageObjects.checkVisibility(true, isOnScrolling);
+                imageObjects.checkVisibility(true);
             } else {
                 parentNode.setVisibility(false);
 
@@ -199,21 +206,8 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
                     }
                 }
 
-                imageObjects.checkVisibility(false, isOnScrolling);
+                imageObjects.checkVisibility(false);
             }
-        }
-    }
-
-    private void update() {
-        if (mAnimator != null && mAnimator.doAnimation() == true) {
-            mSurfaceView.requestRender();
-        }
-
-        int size = mAnimationObjects.size();
-        for (int i = 0; i < size; i++) {
-            DateLabelObject object = mAnimationObjects.get(i);
-            ImageObjects imageObjects = object.getImageObjects();
-            imageObjects.update();
         }
     }
 
@@ -240,9 +234,21 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
         GalleryTexture texture = textureMappingInfo.getTexture();
-        BitmapWorker.cancelWork(texture);
-        mWaitingTextures.remove(texture);
 
+        if (texture == null) {
+            return;
+        }
+
+        GalleryTexture.State state = texture.getState();
+
+        switch (state) {
+            case DECODING:
+                BitmapWorker.cancelWork(texture);
+                break;
+            case QUEUING:
+                mWaitingTextures.remove(texture);
+                break;
+        }
         textureMappingInfo.setTexture(null);
     }
 
@@ -622,13 +628,18 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         for (int i = 0; i < size; i++) {
             TextureMappingInfo info = mTextureMappingInfos.get(i);
+
             GalleryTexture texture = info.getTexture();
-            if (texture != null) {
-                BitmapWorker.cancelWork(texture);
+            if (texture == null) {
+                continue;
+            }
 
-                mWaitingTextures.remove(texture);
+            GalleryTexture.State state = texture.getState();
 
-                info.setTexture(null);
+            switch (state) {
+                case DECODING:
+                    BitmapWorker.cancelWork(texture);
+                    break;
             }
         }
 

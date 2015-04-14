@@ -1,6 +1,9 @@
 package com.gomdev.gallery;
 
+import android.graphics.Bitmap;
+
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 
 class ImageInfo implements Serializable, GalleryInfo {
     static final String CLASS = "ImageInfo";
@@ -14,6 +17,8 @@ class ImageInfo implements Serializable, GalleryInfo {
     private String mImagePath = null;
     private int mWidth;
     private int mHeight;
+
+    private WeakReference<Bitmap> mBitmapRef = null;
 
     ImageInfo(long id, int orientation) {
         mImageID = id;
@@ -58,6 +63,18 @@ class ImageInfo implements Serializable, GalleryInfo {
 
     void setHeight(int height) {
         mHeight = height;
+    }
+
+    void setBitmap(Bitmap bitmap) {
+        mBitmapRef = new WeakReference<Bitmap>(bitmap);
+    }
+
+    Bitmap getBitmap() {
+        if (mBitmapRef != null) {
+            return mBitmapRef.get();
+        }
+
+        return null;
     }
 
     @Override

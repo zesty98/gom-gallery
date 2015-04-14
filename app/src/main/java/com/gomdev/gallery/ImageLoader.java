@@ -280,6 +280,7 @@ public class ImageLoader {
                                 mLoadingBitmap, task);
                 container.setBitmapDrawable(asyncDrawable);
                 task.execute(imageInfo);
+//                AsyncTaskUtil.executeInParallel(task, imageInfo);
             }
         }
     }
@@ -499,6 +500,10 @@ public class ImageLoader {
         protected BitmapDrawable doInBackground(GalleryInfo... params) {
             mGalleryInfo = params[0];
             ImageInfo imageInfo = (ImageInfo) params[0];
+
+            if (isCancelled() == true) {
+                return null;
+            }
 
             ImageLoader mImageLoader = ImageLoader.getInstance();
             Bitmap bitmap;
