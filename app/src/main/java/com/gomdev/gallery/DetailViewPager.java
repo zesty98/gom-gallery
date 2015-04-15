@@ -258,61 +258,62 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             }
         } else {
             if (mIsOnSwipeAnimation == true) {
-                mIsOnScroll = false;
-                mIsAtEdge = false;
-                mDragDistance = 0;
-
-                if (mFocusDirection != FocusDirection.NONE) {
-                    if (mIsFitScreen == false && mCurrentImageInfo != null) {
-                        mIsFitScreen = true;
-                        setPositionCoord(DetailViewIndex.CURRENT_INDEX.getIndex(), mCurrentImageInfo);
-                    }
-                }
-
-                changePosition();
-
-                mGalleryContext.setImageIndexingInfo(mCurrentImageIndexingInfo);
-                updateActionBarTitle();
+                onSwipingFinished();
             }
             mIsOnSwipeAnimation = false;
         }
 
         if (mIsOnScroll == true) {
-            float normalizedValue = Math.abs((float) mDragDistance / mWidth);
+            changeScaleAndAlpha();
+        }
+    }
 
-            for (DetailViewIndex index : DetailViewIndex.values()) {
-                float scale = 1f;
-                float alpha = 1f;
+    private void changeScaleAndAlpha() {
+        float normalizedValue = Math.abs((float) mDragDistance / mWidth);
 
-                switch (index) {
-                    case PREV_INDEX:
-                        scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * normalizedValue;
-                        alpha = normalizedValue;
-                        break;
-                    case CURRENT_INDEX:
-                        scale = MAX_SCALE + (MIN_SCALE - MAX_SCALE) * normalizedValue;
-                        alpha = 1f - normalizedValue;
-                        break;
-                    case NEXT_INDEX:
-                        scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * normalizedValue;
-                        alpha = normalizedValue;
-                        break;
-                    default:
-                        scale = 1f;
-                }
+        for (DetailViewIndex index : DetailViewIndex.values()) {
+            float scale = 1f;
+            float alpha = 1f;
+
+            switch (index) {
+                case PREV_INDEX:
+                    scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * normalizedValue;
+                    alpha = normalizedValue;
+                    break;
+                case CURRENT_INDEX:
+                    scale = MAX_SCALE + (MIN_SCALE - MAX_SCALE) * normalizedValue;
+                    alpha = 1f - normalizedValue;
+                    break;
+                case NEXT_INDEX:
+                    scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * normalizedValue;
+                    alpha = normalizedValue;
+                    break;
+                default:
+                    scale = 1f;
+            }
 
 
-                int i = index.getIndex();
-                ImageObject object = (ImageObject) mTextureMappingInfos[i].getObject();
+            int i = index.getIndex();
+            ImageObject object = (ImageObject) mTextureMappingInfos[i].getObject();
 
-                object.setScale(scale);
-                object.setAlpha(alpha);
+            object.setScale(scale);
+            object.setAlpha(alpha);
 
-                if (mIsAtEdge == true && index != DetailViewIndex.CURRENT_INDEX) {
-                    object.setAlpha(0f);
-                }
+            if (mIsAtEdge == true && index != DetailViewIndex.CURRENT_INDEX) {
+                object.setAlpha(0f);
             }
         }
+    }
+
+    private void onSwipingFinished() {
+        mIsOnScroll = false;
+        mIsAtEdge = false;
+        mDragDistance = 0;
+
+        changePosition();
+
+        mGalleryContext.setImageIndexingInfo(mCurrentImageIndexingInfo);
+        updateActionBarTitle();
     }
 
     private void updateActionBarTitle() {
@@ -989,8 +990,17 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     }
 
     ImageObject getCurrentDetailObject() {
+
+        mScroller.abortAnimation();
+        if (mIsOnSwipeAnimation == true) {
+            onSwipingFinished();
+        }
+        mIsOnSwipeAnimation = false;
+
         return (ImageObject) mTextureMappingInfos[DetailViewIndex.CURRENT_INDEX.getIndex()].getObject();
     }
+
+
 
     ImageIndexingInfo getCurrentImageIndexingInfo() {
         return mCurrentImageIndexingInfo;
