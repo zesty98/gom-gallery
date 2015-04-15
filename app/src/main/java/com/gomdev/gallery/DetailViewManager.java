@@ -357,6 +357,9 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
         mCurrentDetailObject = mPager.getCurrentDetailObject();
         mCurrentImageIndexingInfo = mPager.getCurrentImageIndexingInfo();
 
+        ImageInfo imageInfo = mImageManager.getImageInfo(mCurrentImageIndexingInfo);
+        calcTexCoordInfo(imageInfo);
+
         setupSelectionFinishingAnimationInfo();
 
         mBackupListener = mCurrentDetailObject.getListener();
