@@ -354,6 +354,7 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
             Log.d(TAG, "finish()");
         }
 
+        mPager.onFinish();
         mCurrentDetailObject = mPager.getCurrentDetailObject();
         mCurrentImageIndexingInfo = mPager.getCurrentImageIndexingInfo();
 
@@ -554,8 +555,6 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
 
                 mRenderer.onFinished(true);
             } else {
-//                mHandler.sendEmptyMessage(ImageListActivity.INVALIDATE_OPTION_MENU);
-
                 mPager.show();
                 mRenderer.onFinished(false);
             }

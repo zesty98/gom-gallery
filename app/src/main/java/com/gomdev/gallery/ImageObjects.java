@@ -604,9 +604,6 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         } else {
             imageWidth = bitmap.getWidth();
             imageHeight = bitmap.getHeight();
-
-            ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
-            imageInfo.setBitmap(bitmap);
         }
 
         float[] texCoord = GalleryUtils.calcTexCoord(imageWidth, imageHeight);

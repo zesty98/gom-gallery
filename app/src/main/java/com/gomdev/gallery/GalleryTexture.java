@@ -3,6 +3,7 @@ package com.gomdev.gallery;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.opengl.GLES20;
+import android.util.Log;
 
 import com.gomdev.gles.GLESTexture;
 
@@ -31,6 +32,9 @@ class GalleryTexture implements BitmapContainer {
 
     volatile boolean mIsTextureLoadingFinished = false;
     volatile boolean mIsTextureLoadingStarted = false;
+
+    private boolean mIsThumbnail = false;
+
     private int mIndex = 0;
 
     GalleryTexture(int width, int height) {
@@ -52,6 +56,7 @@ class GalleryTexture implements BitmapContainer {
             synchronized (this) {
                 setState(State.DECODING);
                 mIsTextureLoadingStarted = true;
+                mIsTextureLoadingFinished = false;
             }
             return;
         }
@@ -66,6 +71,7 @@ class GalleryTexture implements BitmapContainer {
                 mImageLoadingListener.onImageLoaded(mIndex, this);
             }
         }
+
         mIsTextureLoadingFinished = true;
     }
 
@@ -95,15 +101,19 @@ class GalleryTexture implements BitmapContainer {
         return (mIsTextureLoadingFinished == false) && (mIsTextureLoadingStarted == false);
     }
 
-    boolean isOnTextureLoading() {
-        return (mIsTextureLoadingFinished == false) && (mIsTextureLoadingStarted == true);
-    }
-
     private void setState(State state) {
         mState = state;
     }
 
     synchronized State getState() {
         return mState;
+    }
+
+    void setThumbnail(boolean isThumbnail) {
+        mIsThumbnail = isThumbnail;
+    }
+
+    boolean isThumbnail() {
+        return mIsThumbnail;
     }
 }

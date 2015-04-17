@@ -38,7 +38,9 @@ class GalleryObject extends GLESObject {
 
     void setTexture(GalleryTexture texture) {
         GLESTexture prevTexture = getTexture();
-        prevTexture.destroy();
+        if (prevTexture != null) {
+            prevTexture.destroy();
+        }
 
         this.setTexture(texture.getTexture());
     }
