@@ -106,7 +106,7 @@ public class MainActivity extends Activity {
             }
 
             long currentTick = System.nanoTime();
-            long durationInMS = (currentTick - mStartTick) / 1000000;
+            long durationInMS = (currentTick - mStartTick) / 1000000L;
 
             if (durationInMS < GalleryConfig.MAINACTIVITY_DURATION) {
                 try {

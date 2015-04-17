@@ -59,7 +59,7 @@ public class GalleryConfig {
     static final long SCROLLBAR_ANIMATION_DURATION = 300L;
 
     static final long INTRO_ANIMATION_DURATION = 1300L;
-    static final long MAINACTIVITY_DURATION = INTRO_ANIMATION_DURATION + 700L;
+    static final long MAINACTIVITY_DURATION = INTRO_ANIMATION_DURATION + 1000L;
 
     static final float ACTIONBAR_ELEVATION = 4f;    // dpi
 }

@@ -127,8 +127,6 @@ public class IntroRenderer implements GLSurfaceView.Renderer {
         mRoot.addChild(mIntroObject);
 
         mAnimator = new GLESAnimator(mAnimatorCB);
-        mAnimator.setValues(0f, 1f);
-        mAnimator.setDuration(0L, GalleryConfig.INTRO_ANIMATION_DURATION);
     }
 
     // rendering
@@ -167,10 +165,14 @@ public class IntroRenderer implements GLSurfaceView.Renderer {
 
         GLESTexture gomTexture = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, (int) gomWidth, (int) gomHeight)
                 .setWrapMode(GLES20.GL_CLAMP_TO_EDGE)
-                .setFilter(GLES20.GL_NEAREST, GLES20.GL_NEAREST)
+                .setFilter(GLES20.GL_LINEAR, GLES20.GL_LINEAR)
                 .load(gomBitmap);
         mIntroObject.setTexture(gomTexture);
         gomBitmap.recycle();
+
+        float ratio = gomHeight / gomWidth;
+        gomWidth = width * 0.5f;
+        gomHeight = gomWidth * ratio;
 
         {
             float gomStartX = -gomWidth * 0.5f;
@@ -198,6 +200,8 @@ public class IntroRenderer implements GLSurfaceView.Renderer {
             setUniforms(mParticleSet);
         }
 
+        mAnimator.setValues(0f, 1f);
+        mAnimator.setDuration(0L, GalleryConfig.INTRO_ANIMATION_DURATION);
         mAnimator.start();
     }
 
