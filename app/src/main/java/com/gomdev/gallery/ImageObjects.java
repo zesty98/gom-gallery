@@ -166,7 +166,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             }
             texture.load(bitmap);
 
-            object.setTexture(texture.getTexture());
+            object.setTexture(texture);
 
             object.setAnimationStartTime(currentTime);
             object.setIsOnAlphaAnimation(true);
@@ -259,7 +259,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     private void unmapTexture(int index, ImageObject object) {
-        object.setTexture(mDummyTexture);
+        object.setDummyTexture(mDummyTexture);
 
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
         GalleryTexture texture = textureMappingInfo.getTexture();
@@ -340,7 +340,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setVisibility(false);
             object.setShader(mShader);
 
-            object.setTexture(mDummyTexture);
+            object.setDummyTexture(mDummyTexture);
         }
 
         size = mTextureMappingInfos.size();

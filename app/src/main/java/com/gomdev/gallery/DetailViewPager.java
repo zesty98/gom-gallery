@@ -27,6 +27,7 @@ import com.gomdev.gles.GLESObject;
 import com.gomdev.gles.GLESObjectListener;
 import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESTexture;
+import com.gomdev.gles.GLESTexture2D;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVector3;
@@ -144,6 +145,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private boolean mIsOnSwipeAnimation = false;
     private boolean mIsOnScroll = false;
     private boolean mIsFinished = false;
+    private boolean mNeedToPopulate = false;
 
     private int mMinFlingVelocity = 0;
     private int mMinDistanceForFling = 0;
@@ -183,7 +185,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
     private void init() {
         reset();
-        clear();
+
+        mWaitingTextures.clear();
+
         setGridInfo(mGridInfo);
 
         mGalleryContext = GalleryContext.getInstance();
@@ -208,10 +212,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         mFocusDirection = FocusDirection.NONE;
 
-        mWaitingTextures.clear();
-    }
-
-    private void clear() {
         mWaitingTextures.clear();
     }
 
@@ -259,11 +259,16 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             }
             ImageObject object = (ImageObject) textureMappingInfo.getObject();
 
-            object.setTexture(texture.getTexture());
+            object.setTexture(texture);
         }
 
         if (mWaitingTextures.size() > 0) {
             mSurfaceView.requestRender();
+        }
+
+        if (mNeedToPopulate == true) {
+            mNeedToPopulate = false;
+            prePopulate();
         }
     }
 
@@ -503,7 +508,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             mDetailObject.setTranslate(0f, 0f);
             mDetailObject.setScale(MAX_SCALE);
             mDetailObject.setAlpha(1f);
-            Log.d(TAG, "gomLoading setupObjects() >>> hideDetailObject()");
             hideDetailObject();
         }
 
@@ -621,6 +625,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             texture = new GalleryTexture(imageInfo.getWidth(), imageInfo.getHeight());
             texture.setIndex(index);
             texture.setImageLoadingListener(this);
+
             textureMappingInfo.setTexture(texture);
         }
 
@@ -633,7 +638,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         texture.setThumbnail(isThumbnail);
         if (isThumbnail == true) {
             if (texture.isTextureLoadingNeeded() == true) {
-                object.setTexture(mDummyTexture);
+                object.setDummyTexture(mDummyTexture);
                 ImageLoader.getInstance().loadThumbnail(imageInfo, texture);
             }
         } else {
@@ -739,7 +744,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             mDetailObject.setGLState(glState);
             mDetailObject.setListener(mDetailImageObjectListener);
             mDetailObject.setIndex(CURRENT_DETAIL_INDEX);
-            Log.d(TAG, "gomLoading createScene() >>> hideDetailObject()");
             hideDetailObject();
 
             mDetailTextureMappingInfo = new TextureMappingInfo(mDetailObject);
@@ -836,7 +840,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
     private void handleAnimation() {
         if (DEBUG) {
-            Log.d(TAG, "\ngomLoading handleAnimation()");
+            Log.d(TAG, "handleAnimation()");
         }
 
         if (mIsAtEdge == true) {
@@ -853,9 +857,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         }
 
         mIsOnSwipeAnimation = true;
+        mNeedToPopulate = true;
         mScrollState = ScrollState.ON_FLING;
-
-        prePopulate();
     }
 
     private void handleEdgeAnimation() {
@@ -1192,7 +1195,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     void onFinish() {
         mIsFinished = true;
 
-        clear();
+        mWaitingTextures.clear();
 
         mScroller.abortAnimation();
         if (mIsOnSwipeAnimation == true) {
@@ -1202,6 +1205,23 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mScrollState = ScrollState.STABLE;
 
         hideDetailObject();
+    }
+
+    void destroyTextures() {
+        for (int i = 0; i < NUM_OF_DETAIL_OBJECTS; i++) {
+            TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(i);
+            ImageObject object = (ImageObject) textureMappingInfo.getObject();
+            GalleryTexture texture = object.getGalleryTexture();
+            if (texture != null) {
+                texture.destroy();
+            }
+        }
+
+        ImageObject object = (ImageObject) mDetailTextureMappingInfo.getObject();
+        GalleryTexture texture = object.getGalleryTexture();
+        if (texture != null) {
+            texture.destroy();
+        }
     }
 
     static String convert(int index) {
@@ -1422,10 +1442,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         @Override
         public void apply(GLESObject object) {
-            ImageObject imageObject = (ImageObject) object;
-
-//            int location = mTextureShader.getUniformLocation("uAlpha");
-//            GLES20.glUniform1f(location, imageObject.getAlpha());
         }
     };
 

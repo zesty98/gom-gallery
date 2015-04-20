@@ -141,7 +141,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             mReusableBitmaps.add(bitmap);
 
-            object.setTexture(texture.getTexture());
+            object.setTexture(texture);
         }
 
         if (mWaitingTextures.size() > 0) {
@@ -230,7 +230,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     void unmapTexture(int index, GalleryObject object) {
-        object.setTexture(mDummyTexture);
+        object.setDummyTexture(mDummyTexture);
 
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
         GalleryTexture texture = textureMappingInfo.getTexture();
@@ -327,7 +327,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mDateLabelObjects.get(i);
             object.setShader(mShader);
-            object.setTexture(mDummyTexture);
+            object.setDummyTexture(mDummyTexture);
             object.setTextureMapping(false);
 
             ImageObjects imageObjects = object.getImageObjects();

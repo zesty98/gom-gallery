@@ -3,7 +3,6 @@ package com.gomdev.gallery;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.opengl.GLES20;
-import android.util.Log;
 
 import com.gomdev.gles.GLESTexture;
 
@@ -46,6 +45,10 @@ class GalleryTexture implements BitmapContainer {
 
     GLESTexture getTexture() {
         return mTexture;
+    }
+
+    void destroy() {
+        mTexture.destroy();
     }
 
     @Override

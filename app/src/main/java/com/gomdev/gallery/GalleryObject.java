@@ -13,6 +13,8 @@ class GalleryObject extends GLESObject {
 
     private int mIndex = -1;
 
+    private GalleryTexture mTexture = null;
+
     private float mLeft = 0f;
     private float mTop = 0f;
 
@@ -37,12 +39,27 @@ class GalleryObject extends GLESObject {
     }
 
     void setTexture(GalleryTexture texture) {
-        GLESTexture prevTexture = getTexture();
-        if (prevTexture != null) {
-            prevTexture.destroy();
+        if (mTexture != null) {
+            mTexture.destroy();
+            mTexture = null;
         }
 
+        mTexture = texture;
+
         this.setTexture(texture.getTexture());
+    }
+
+    void setDummyTexture(GLESTexture texture) {
+        super.setTexture(texture);
+
+        if (mTexture != null) {
+            mTexture.destroy();
+            mTexture = null;
+        }
+    }
+
+    GalleryTexture getGalleryTexture() {
+        return mTexture;
     }
 
     void setIndex(int index) {

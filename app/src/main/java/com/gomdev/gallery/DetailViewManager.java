@@ -408,6 +408,10 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
         mPager.setHandler(handler);
     }
 
+    void destroyTextures() {
+        mPager.destroyTextures();
+    }
+
     // member class
 
 

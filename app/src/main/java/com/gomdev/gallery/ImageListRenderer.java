@@ -53,6 +53,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     private GLESShader mColorShader = null;
 
     private boolean mIsSurfaceChanged = false;
+    private boolean mNeedToClearDetailView = false;
 
     private long mCurrentTime = 0L;
 
@@ -125,6 +126,11 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
         mGLESRenderer.updateScene(mSM);
         mGLESRenderer.drawScene(mSM);
+
+        if (mNeedToClearDetailView == true) {
+            mNeedToClearDetailView = false;
+            mDetailViewManager.destroyTextures();
+        }
     }
 
 
@@ -367,6 +373,8 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         }
 
         if (isDetailViewFinished == true) {
+            mNeedToClearDetailView = true;
+
             mDetailViewManager.hide();
 
             mViewManager = mAlbumViewManager;
