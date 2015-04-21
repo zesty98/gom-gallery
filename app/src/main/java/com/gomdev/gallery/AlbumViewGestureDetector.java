@@ -24,6 +24,9 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
     private final static float MAX_ROTATION_ANGLE = 15f;
     private final static float MAX_TRANSLATE_Z_DP = -70f; // dp
 
+    private final static float SCROLL_SCALE_UP_1X = 10f;
+    private final static float SCROLL_SCALE_UP_3X = SCROLL_SCALE_UP_1X * 3f;
+
     private final Context mContext;
     private final GridInfo mGridInfo;
 
@@ -37,6 +40,9 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
     private OverScroller mScroller;
     private boolean mIsOnScrolling = false;
     private boolean mIsOnFling = false;
+
+    private boolean m2ndPointerDown = false;
+    private boolean m3rdPointerDown = false;
 
     private RectF mCurrentViewport = null;   // OpenGL ES coordinate
     private RectF mScrollerStartViewport = new RectF();
@@ -253,26 +259,44 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
         return dist;
     }
 
+
     boolean onTouchEvent(MotionEvent event) {
         mSurfaceView.requestRender();
 
         final int action = MotionEventCompat.getActionMasked(event);
-        switch (action) {
+        switch (action & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
                 mIsOnScrolling = true;
+
                 break;
             case MotionEvent.ACTION_UP:
                 mIsOnScrolling = false;
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
+                if (m2ndPointerDown == false && event.getPointerCount() == 2) {
+                    m2ndPointerDown = true;
+                }
+
+                if (m2ndPointerDown == true && event.getPointerCount() == 3) {
+                    m3rdPointerDown = true;
+                }
+
                 mIsOnScrolling = false;
                 break;
             case MotionEvent.ACTION_POINTER_UP:
+                if (event.getPointerCount() == 3) {
+                    m3rdPointerDown = false;
+                } else if (event.getPointerCount() == 2) {
+                    m2ndPointerDown = false;
+                }
+
                 mIsOnScrolling = false;
                 break;
         }
 
-        return mGestureDetector.onTouchEvent(event);
+        boolean result = mGestureDetector.onTouchEvent(event);
+
+        return result;
     }
 
     void update() {
@@ -405,6 +429,11 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
             mIsOnScrolling = true;
 
             float viewportOffsetY = -distanceY;
+            if (m2ndPointerDown == true && m3rdPointerDown == true) {
+                viewportOffsetY *= SCROLL_SCALE_UP_3X;
+            } else if (m2ndPointerDown == true) {
+                viewportOffsetY *= SCROLL_SCALE_UP_1X;
+            }
             setViewportBottomLeft(mCurrentViewport.left,
                     (mCurrentViewport.bottom + viewportOffsetY), true);
 

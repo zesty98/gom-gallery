@@ -26,6 +26,9 @@ class AlbumViewScaleGestureDetector implements GridInfoChangeListener {
     private int mMinNumOfColumns;
     private int mMaxNumOfColumns;
 
+    private int mMinDragDistanceToScale = 0;
+    private int mThresholdToRecognizingScale = 0;
+
     AlbumViewScaleGestureDetector(Context context, GridInfo gridInfo) {
         mContext = context;
         mGridInfo = gridInfo;
@@ -33,6 +36,9 @@ class AlbumViewScaleGestureDetector implements GridInfoChangeListener {
         setGridInfo(gridInfo);
 
         mScaleGestureDetector = new ScaleGestureDetector(context, mScaleGestureListener);
+
+        mMinDragDistanceToScale = mContext.getResources().getDimensionPixelSize(R.dimen.min_drag_distance);
+        mThresholdToRecognizingScale = mMinDragDistanceToScale / 4;
     }
 
     private void setGridInfo(GridInfo gridInfo) {
@@ -75,18 +81,19 @@ class AlbumViewScaleGestureDetector implements GridInfoChangeListener {
     private final ScaleGestureDetector.OnScaleGestureListener mScaleGestureListener
             = new ScaleGestureDetector.SimpleOnScaleGestureListener() {
         private float mLastSpan;
-        private int mDragDistance = 0;
+
 
         @Override
         public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
             mLastSpan = scaleGestureDetector.getCurrentSpan();
-            mDragDistance = mContext.getResources().getDimensionPixelSize(R.dimen.drag_distance);
-            mAlbumViewManager.onScaleBegin();
+
             return true;
         }
 
         @Override
         public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
+
+
             float span = scaleGestureDetector.getCurrentSpan();
 
             float focusX = scaleGestureDetector.getFocusX();
@@ -94,7 +101,14 @@ class AlbumViewScaleGestureDetector implements GridInfoChangeListener {
 
             float dragDistance = span - mLastSpan;
             float absDragDistance = Math.abs(dragDistance);
-            if (absDragDistance > mDragDistance) {
+
+            if (absDragDistance > mThresholdToRecognizingScale) {
+                mAlbumViewManager.onScaleBegin();
+            }
+
+            if (absDragDistance > mMinDragDistanceToScale) {
+
+
                 mLastSpan = span;
 
                 int numOfColumns = mNumOfColumns;
