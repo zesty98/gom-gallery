@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.gomdev.gallery.BucketListActivity" >
+
+    <item
+        android:id="@+id/action_sort"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/action_sort"/>
+    <item
+        android:id="@+id/action_selection"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/action_selection"/>
+
+</menu>

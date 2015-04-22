@@ -4,6 +4,14 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.RectF;
+import android.util.Log;
+
+import com.gomdev.gallery.GalleryConfig.AlbumViewMode;
+import com.gomdev.gallery.GalleryConfig.ImageViewMode;
+
+import java.util.Comparator;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 class GalleryContext {
     private static final String CLASS = "GalleryContext";
@@ -53,10 +61,13 @@ class GalleryContext {
     private ImageIndexingInfo mImageIndexingInfo = new ImageIndexingInfo(0, 0, 0);
     private RectF mCurrentViewport = null;
 
-    private GalleryConfig.ImageViewMode mImageViewMode = GalleryConfig.ImageViewMode.ALBUME_VIEW_MODE;
+    private ImageViewMode mImageViewMode = ImageViewMode.ALBUME_VIEW_MODE;
+    private AlbumViewMode mAlbumViewMode = AlbumViewMode.NORMAL_MODE;
+
+    private SortedSet<ImageIndexingInfo> mCheckedImageIndexingInfos = null;
 
     private GalleryContext() {
-
+        mCheckedImageIndexingInfos = new TreeSet<>(mImageIndexingInfoComparator);
     }
 
     int getDefaultColumnWidth() {
@@ -131,11 +142,73 @@ class GalleryContext {
         return mCurrentViewport;
     }
 
-    void setImageViewMode(GalleryConfig.ImageViewMode mode) {
+    void setImageViewMode(ImageViewMode mode) {
         mImageViewMode = mode;
     }
 
-    GalleryConfig.ImageViewMode getImageViewMode() {
+    ImageViewMode getImageViewMode() {
         return mImageViewMode;
     }
+
+    void setAlbumViewMode(AlbumViewMode mode) {
+        mAlbumViewMode = mode;
+
+        if (mode == AlbumViewMode.NORMAL_MODE) {
+            mCheckedImageIndexingInfos.clear();
+        }
+    }
+
+    AlbumViewMode getAlbumViewMode() {
+        return mAlbumViewMode;
+    }
+
+    void checkImageIndexingInfo(ImageIndexingInfo info) {
+        mCheckedImageIndexingInfos.add(info);
+
+        dumpCheckedImageIndexingInfos();
+    }
+
+    void uncheckImageIndexingInfo(ImageIndexingInfo info) {
+        mCheckedImageIndexingInfos.remove(info);
+
+        dumpCheckedImageIndexingInfos();
+    }
+
+    SortedSet<ImageIndexingInfo> getCheckedImageIndexingInfos() {
+        return mCheckedImageIndexingInfos;
+    }
+
+    void dumpCheckedImageIndexingInfos() {
+        if (DEBUG) {
+            Log.d(TAG, "dumpCheckedImageIndexingInfos()");
+            for (ImageIndexingInfo info : mCheckedImageIndexingInfos) {
+                Log.d(TAG, "\t " + info);
+            }
+        }
+    }
+
+    private Comparator<ImageIndexingInfo> mImageIndexingInfoComparator = new Comparator<ImageIndexingInfo>() {
+        @Override
+        public int compare(ImageIndexingInfo info1, ImageIndexingInfo info2) {
+            if (info1.mBucketIndex < info2.mBucketIndex) {
+                return 1;
+            } else if (info1.mBucketIndex > info2.mBucketIndex) {
+                return -1;
+            }
+
+            if (info1.mDateLabelIndex < info2.mDateLabelIndex) {
+                return 1;
+            } else if (info1.mDateLabelIndex > info2.mDateLabelIndex) {
+                return -1;
+            }
+
+            if (info1.mImageIndex < info2.mImageIndex) {
+                return 1;
+            } else if (info1.mImageIndex > info2.mImageIndex) {
+                return -1;
+            }
+
+            return 0;
+        }
+    };
 }

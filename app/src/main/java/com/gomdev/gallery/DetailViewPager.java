@@ -27,7 +27,6 @@ import com.gomdev.gles.GLESObject;
 import com.gomdev.gles.GLESObjectListener;
 import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESTexture;
-import com.gomdev.gles.GLESTexture2D;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVector3;
@@ -679,7 +678,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         }
 
         if (DEBUG) {
-            Log.d(TAG, "setPositionCoord() index=" + index);
+            Log.d(TAG, "setPositionCoord() index=" + convert(index));
             Log.d(TAG, "\t imageWidth=" + imageWidth + " imageHeight=" + imageHeight);
             Log.d(TAG, "\t right=" + right + " top=" + top);
         }
@@ -1069,7 +1068,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     @Override
     public void onImageLoaded(int index, GalleryTexture texture) {
         if (DEBUG) {
-            Log.d(TAG, "onImageLoaded() index=" + index);
+            Log.d(TAG, "onImageLoaded() index=" + convert(index));
         }
 
         mWaitingTextures.add(texture);
@@ -1144,9 +1143,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
     void show() {
         if (DEBUG) {
-            if (mTextureMappingInfos.get(CURRENT_INDEX).getObject().getVisibility() == false) {
-                Log.d(TAG, "show()");
-            }
+            Log.d(TAG, "show()");
         }
 
         for (int i = 0; i < NUM_OF_DETAIL_OBJECTS; i++) {
@@ -1193,6 +1190,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     }
 
     void onFinish() {
+        if (DEBUG) {
+            Log.d(TAG, "onFinish()");
+        }
+
         mIsFinished = true;
 
         mWaitingTextures.clear();
@@ -1208,6 +1209,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     }
 
     void destroyTextures() {
+        if (DEBUG) {
+            Log.d(TAG, "destroyTextures()");
+        }
+
         for (int i = 0; i < NUM_OF_DETAIL_OBJECTS; i++) {
             TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(i);
             ImageObject object = (ImageObject) textureMappingInfo.getObject();

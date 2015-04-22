@@ -9,6 +9,11 @@ public class GalleryConfig {
         DETAIL_VIEW_MODE
     }
 
+    enum AlbumViewMode {
+        NORMAL_MODE,
+        MULTI_SELECTION_MODE
+    }
+
     enum VisibleMode {
         VISIBLE_MODE,
         VISIBLE_TRANSPARENT_MODE,

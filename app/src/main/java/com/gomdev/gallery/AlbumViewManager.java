@@ -1,7 +1,10 @@
 package com.gomdev.gallery;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
+import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -13,8 +16,13 @@ import com.gomdev.gles.GLESGLState;
 import com.gomdev.gles.GLESNode;
 import com.gomdev.gles.GLESNodeListener;
 import com.gomdev.gles.GLESShader;
+import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESVector3;
+
+import com.gomdev.gallery.GalleryConfig.AlbumViewMode;
+
+import java.util.LinkedList;
 
 /**
  * Created by gomdev on 14. 12. 31..
@@ -28,6 +36,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
     private final GridInfo mGridInfo;
 
     private GallerySurfaceView mSurfaceView = null;
+    private Handler mHandler = null;
 
     private GalleryObjects mGalleryObjects = null;
     private Scrollbar mScrollbar = null;
@@ -68,6 +77,8 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
     private boolean mIsSurfaceChanged = false;
 
+
+
     AlbumViewManager(Context context, GridInfo gridInfo) {
         if (DEBUG) {
             Log.d(TAG, "ObjectManager()");
@@ -107,6 +118,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
         mScrollbar = new Scrollbar(mContext, mGridInfo);
         mScrollbar.setColor(0.3f, 0.3f, 0.3f, 0.7f);
+
 
         mScaleAnimator = new GLESAnimator(new ScaleAnimatorCallback());
         mScaleAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
@@ -205,7 +217,13 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         mGalleryObjects.setImageShader(mTextureShader);
         mScrollbar.setShader(mColorShader);
 
+        Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.check_white_80);
+        GLESTexture checkTexture = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, bitmap.getWidth(), bitmap.getHeight())
+                .load(bitmap);
+
         mGalleryObjects.onSurfaceCreated();
+
+        mGalleryObjects.setCheckTexture(checkTexture);
     }
 
     // initialization
@@ -253,6 +271,11 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         mAlbumViewGestureDetector.setSurfaceView(surfaceView);
     }
 
+    void setHandler(Handler handler) {
+        mHandler = handler;
+        mAlbumViewGestureDetector.setHandler(handler);
+    }
+
     // resume / pause
 
     void onResume() {
@@ -275,7 +298,13 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
             return true;
         }
 
-        boolean retVal = mAlbumViewScaleGestureDetector.onTouchEvent(event);
+        boolean retVal = false;
+
+        AlbumViewMode albumViewMode = mGalleryContext.getAlbumViewMode();
+
+        if (albumViewMode == AlbumViewMode.NORMAL_MODE) {
+            retVal = mAlbumViewScaleGestureDetector.onTouchEvent(event);
+        }
 
         if (mIsOnScale == false) {
             retVal = mAlbumViewGestureDetector.onTouchEvent(event) || retVal;
@@ -377,6 +406,20 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
     void hide() {
         mAlbumViewNode.hide();
+    }
+
+    boolean finish() {
+        AlbumViewMode albumViewMode = mGalleryContext.getAlbumViewMode();
+        if (albumViewMode == AlbumViewMode.NORMAL_MODE) {
+            return true;
+        }
+
+        mGalleryContext.setAlbumViewMode(AlbumViewMode.NORMAL_MODE);
+        mHandler.sendEmptyMessage(ImageListActivity.INVALIDATE_OPTION_MENU);
+
+        mSurfaceView.requestRender();
+
+        return false;
     }
 
 

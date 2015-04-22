@@ -22,6 +22,8 @@ class ImageObject extends GalleryObject {
 
     private boolean mPrevVisibility = false;
 
+    private boolean mIsChecked = false;
+
     ImageObject(String name) {
         super(name);
     }
@@ -97,5 +99,13 @@ class ImageObject extends GalleryObject {
 
     long getAnimationStartTime() {
         return mAnimationStartTime;
+    }
+
+    void setCheck(boolean isChecked) {
+        mIsChecked = isChecked;
+    }
+
+    boolean isChecked() {
+        return mIsChecked;
     }
 }

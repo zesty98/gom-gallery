@@ -340,6 +340,15 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         }
     }
 
+    void setCheckTexture(GLESTexture texture) {
+        int size = mDateLabelObjects.size();
+        for (int i = 0; i < size; i++) {
+            DateLabelObject object = mDateLabelObjects.get(i);
+            ImageObjects imageObjects = object.getImageObjects();
+            imageObjects.setCheckTexture(texture);
+        }
+    }
+
     @Override
     public void onColumnWidthChanged() {
         if (DEBUG) {
@@ -708,7 +717,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             Bitmap bitmap = mReusableBitmaps.poll();
             if (bitmap == null) {
                 bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            } else {
             }
 
             bitmap = GLESUtils.drawTextToBitmap(x, y,

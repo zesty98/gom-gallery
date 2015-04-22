@@ -8,6 +8,7 @@ import android.util.Log;
 import android.util.SparseArray;
 
 import com.gomdev.gles.GLESCamera;
+import com.gomdev.gles.GLESConfig;
 import com.gomdev.gles.GLESGLState;
 import com.gomdev.gles.GLESObject;
 import com.gomdev.gles.GLESObjectListener;
@@ -17,6 +18,9 @@ import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
+import com.gomdev.gallery.GalleryConfig.AlbumViewMode;
+
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -48,6 +52,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private GallerySurfaceView mSurfaceView = null;
     private AlbumViewManager mAlbumViewManager = null;
+    private GalleryContext mGalleryContext = null;
     private ImageLoader mImageLoader = null;
     private GalleryNode mParentNode = null;
     private GLESCamera mCamera = null;
@@ -57,6 +62,10 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     private GLESShader mShader = null;
     private GLESGLState mGLState = null;
     private GLESTexture mDummyTexture = null;
+
+    private int mCheckIndex = 0;
+    private GLESTexture mCheckTexture = null;
+    private FloatBuffer mCheckTexCoordBuffer = null;
 
     private int mWidth = 0;
     private int mHeight = 0;
@@ -100,6 +109,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private void init() {
         mImageLoader = ImageLoader.getInstance();
+        mGalleryContext = GalleryContext.getInstance();
 
         mVisibilityPadding = GLESUtils.getPixelFromDpi(mContext, VISIBILITY_PADDING_DP);
     }
@@ -319,6 +329,19 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             mEndOffsetY = top - mColumnWidth;
         }
+
+        createCheckTexCoord();
+    }
+
+    private void createCheckTexCoord() {
+        float[] texCoord = new float[] {
+                0f, 1f,
+                1f, 1f,
+                0f, 0f,
+                1f, 0f
+        };
+
+        mCheckTexCoordBuffer = GLESUtils.makeFloatBuffer(texCoord);
     }
 
     // onSurfaceCreated
@@ -347,6 +370,10 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         for (int i = 0; i < size; i++) {
             mTextureMappingInfos.get(i).setTexture(null);
         }
+    }
+
+    void setCheckTexture(GLESTexture texture) {
+        mCheckTexture = texture;
     }
 
     @Override
@@ -566,6 +593,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         location = mShader.getUniformLocation("uDefaultColor");
         GLES20.glUniform4f(location, DUMMY_TEXTURE_R, DUMMY_TEXTURE_G, DUMMY_TEXTURE_B, DUMMY_TEXTURE_A);
+
+        mCheckIndex = mShader.getAttribLocation("aTexCoord2");
     }
 
     void setGLState(GLESGLState state) {
@@ -725,6 +754,43 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             location = mShader.getUniformLocation("uDefaultColor");
             GLES20.glUniform4f(location, DUMMY_TEXTURE_R, DUMMY_TEXTURE_G, DUMMY_TEXTURE_B, DUMMY_TEXTURE_A);
+
+            AlbumViewMode mode = mGalleryContext.getAlbumViewMode();
+            if (mode == AlbumViewMode.MULTI_SELECTION_MODE) {
+
+                location = mShader.getUniformLocation("uUseCheckTexture");
+                boolean isChecked = imageObject.isChecked();
+                if (isChecked == true) {
+                    GLES20.glUniform1i(location, 1);
+
+                    location = mShader.getUniformLocation("uTexture");
+                    GLES20.glUniform1i(location, 0);
+
+                    location = mShader.getUniformLocation("uTexture2");
+                    GLES20.glUniform1i(location, 1);
+
+                    GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
+                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mCheckTexture.getTextureID());
+
+                    GLES20.glEnableVertexAttribArray(mCheckIndex);
+                    GLES20.glVertexAttribPointer(mCheckIndex,
+                            2, GLES20.GL_FLOAT, false,
+                            2 * GLESConfig.FLOAT_SIZE_BYTES,
+                            mCheckTexCoordBuffer);
+
+                } else {
+                    GLES20.glUniform1i(location, 0);
+
+                    GLES20.glDisableVertexAttribArray(mCheckIndex);
+                }
+            } else {
+                location = mShader.getUniformLocation("uUseCheckTexture");
+                GLES20.glUniform1i(location, 0);
+
+                imageObject.setCheck(false);
+
+                GLES20.glDisableVertexAttribArray(mCheckIndex);
+            }
         }
     };
 }

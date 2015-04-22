@@ -5,6 +5,8 @@
     <string name="action_delete">Delete</string>
     <string name="action_share">Share</string>
     <string name="action_sort">Sort by</string>
+    <string name="action_selection">Select</string>
+    <string name="action_selection_delete">Delete</string>
     <string name="imageview_description">Image Thumbnail</string>
     <string name="albumview_option_dialog_title">Sort by</string>
 

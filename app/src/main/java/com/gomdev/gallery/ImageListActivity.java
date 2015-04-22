@@ -22,6 +22,11 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import com.gomdev.gallery.GalleryConfig.VisibleMode;
+import com.gomdev.gallery.GalleryConfig.ImageViewMode;
+import com.gomdev.gallery.GalleryConfig.AlbumViewMode;
+
+import java.util.Iterator;
+import java.util.SortedSet;
 
 public class ImageListActivity extends Activity {
     static final String CLASS = "ImageListActivity";
@@ -151,7 +156,7 @@ public class ImageListActivity extends Activity {
         BucketInfo bucketInfo = mImageManager.getBucketInfo(indexingInfo.mBucketIndex);
         DateLabelInfo dateLabelInfo = bucketInfo.get(indexingInfo.mDateLabelIndex);
 
-        GalleryConfig.ImageViewMode mode = mGalleryContext.getImageViewMode();
+        ImageViewMode mode = mGalleryContext.getImageViewMode();
         switch (mode) {
             case ALBUME_VIEW_MODE:
                 getActionBar().setTitle(bucketInfo.getName());
@@ -235,18 +240,23 @@ public class ImageListActivity extends Activity {
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        GalleryConfig.ImageViewMode mode = mGalleryContext.getImageViewMode();
+        ImageViewMode mode = mGalleryContext.getImageViewMode();
 
         switch (mode) {
             case ALBUME_VIEW_MODE:
-                menu.removeItem(R.id.action_delete);
-                menu.removeItem(R.id.action_share);
-                if (menu.findItem(R.id.action_sort) == null) {
-                    getMenuInflater().inflate(R.menu.album_view_menu, menu);
+                AlbumViewMode albumViewMode = mGalleryContext.getAlbumViewMode();
+                if (albumViewMode == AlbumViewMode.NORMAL_MODE) {
+                    if (menu.findItem(R.id.action_sort) == null) {
+                        getMenuInflater().inflate(R.menu.album_view_normal_menu, menu);
+                    }
+                } else {
+                    if (menu.findItem(R.id.action_selection_delete) == null) {
+                        getMenuInflater().inflate(R.menu.album_view_selection_menu, menu);
+                    }
                 }
+
                 break;
             case DETAIL_VIEW_MODE:
-                menu.removeItem(R.id.action_sort);
                 if (menu.findItem(R.id.action_delete) == null) {
                     getMenuInflater().inflate(R.menu.detail_view_menu, menu);
                 }
@@ -273,6 +283,11 @@ public class ImageListActivity extends Activity {
         } else if (id == R.id.action_sort) {
             AlbumViewOptionDialog dialog = new AlbumViewOptionDialog();
             dialog.show(getFragmentManager(), "sort by");
+        } else if (id == R.id.action_selection) {
+            GalleryContext.getInstance().setAlbumViewMode(AlbumViewMode.MULTI_SELECTION_MODE);
+            invalidateOptionsMenu();
+        } else if (id == R.id.action_selection_delete) {
+            deleteCheckedObjects();
         }
 
         return super.onOptionsItemSelected(item);
@@ -282,6 +297,11 @@ public class ImageListActivity extends Activity {
         GalleryContext galleryContext = GalleryContext.getInstance();
         ImageIndexingInfo imageIndexingInfo = galleryContext.getImageIndexingInfo();
 
+        deleteImage(imageIndexingInfo);
+    }
+
+    private void deleteImage(ImageIndexingInfo imageIndexingInfo) {
+        GalleryContext galleryContext = GalleryContext.getInstance();
         boolean isBucketDeleted = ImageManager.getInstance().deleteImage(imageIndexingInfo);
 
         if (isBucketDeleted == true) {
@@ -289,12 +309,26 @@ public class ImageListActivity extends Activity {
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         } else {
-            galleryContext.setImageViewMode(GalleryConfig.ImageViewMode.ALBUME_VIEW_MODE);
+            galleryContext.setImageViewMode(ImageViewMode.ALBUME_VIEW_MODE);
             Intent intent = new Intent(this, ImageListActivity.class);
             intent.putExtra(GalleryConfig.BUCKET_INDEX, imageIndexingInfo.mBucketIndex);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         }
+    }
+
+    private void deleteCheckedObjects() {
+        GalleryContext galleryContext = GalleryContext.getInstance();
+        SortedSet<ImageIndexingInfo> set = galleryContext.getCheckedImageIndexingInfos();
+
+        Iterator<ImageIndexingInfo> iter = set.iterator();
+
+        while(iter.hasNext()) {
+            ImageIndexingInfo imageIndexingInfo = iter.next();
+            deleteImage(imageIndexingInfo);
+        }
+
+        galleryContext.setAlbumViewMode(AlbumViewMode.NORMAL_MODE);
     }
 
     private void share() {

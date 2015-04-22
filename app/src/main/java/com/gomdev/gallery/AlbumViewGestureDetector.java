@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.Handler;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.util.Log;
@@ -11,6 +12,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.OverScroller;
 
+import com.gomdev.gallery.GalleryConfig.AlbumViewMode;
 import com.gomdev.gles.GLESUtils;
 
 /**
@@ -29,6 +31,8 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
 
     private final Context mContext;
     private final GridInfo mGridInfo;
+
+    private Handler mHandler = null;
 
     private GallerySurfaceView mSurfaceView = null;
     private GalleryContext mGalleryContext = null;
@@ -117,6 +121,10 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
 
     void setAlbumViewManager(AlbumViewManager manager) {
         mAlbumViewManager = manager;
+    }
+
+    void setHandler(Handler handler) {
+        mHandler = handler;
     }
 
     void surfaceChanged(int width, int height) {
@@ -378,15 +386,29 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
             float y = e.getY();
 
             ImageIndexingInfo imageIndexingInfo = mAlbumViewManager.getSelectedImageIndex(x, y);
-            if (imageIndexingInfo.mImageIndex == -1) {
-                return false;
+
+            AlbumViewMode albumViewMode = mGalleryContext.getAlbumViewMode();
+            if (albumViewMode == AlbumViewMode.MULTI_SELECTION_MODE) {
+                ImageObject imageObject = mAlbumViewManager.getImageObject(imageIndexingInfo);
+                boolean isChecked = imageObject.isChecked();
+                if (isChecked == true) {
+                    imageObject.setCheck(false);
+                    mGalleryContext.uncheckImageIndexingInfo(imageIndexingInfo);
+                } else {
+                    imageObject.setCheck(true);
+                    mGalleryContext.checkImageIndexingInfo(imageIndexingInfo);
+                }
+            } else {
+                if (imageIndexingInfo.mImageIndex == -1) {
+                    return false;
+                }
+
+                invalidateViewport();
+
+                mGalleryContext.setImageIndexingInfo(imageIndexingInfo);
+                mGalleryContext.setCurrentViewport(mCurrentViewport);
+                mRenderer.onImageSelected(imageIndexingInfo);
             }
-
-            invalidateViewport();
-
-            mGalleryContext.setImageIndexingInfo(imageIndexingInfo);
-            mGalleryContext.setCurrentViewport(mCurrentViewport);
-            mRenderer.onImageSelected(imageIndexingInfo);
 
             return true;
         }
@@ -394,29 +416,21 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
 
         @Override
         public void onLongPress(MotionEvent e) {
+            mGalleryContext.setAlbumViewMode(AlbumViewMode.MULTI_SELECTION_MODE);
+            mHandler.sendEmptyMessage(ImageListActivity.INVALIDATE_OPTION_MENU);
+
             float x = e.getX();
             float y = e.getY();
 
-            int numOfColumns = mNumOfColumns;
-            if (mToScaleDown == true) {
-                numOfColumns++;
+            ImageIndexingInfo imageIndexingInfo = mAlbumViewManager.getSelectedImageIndex(x, y);
+            ImageObject imageObject = mAlbumViewManager.getImageObject(imageIndexingInfo);
+            boolean isChecked = imageObject.isChecked();
+            if (isChecked == true) {
+                imageObject.setCheck(false);
+                mGalleryContext.uncheckImageIndexingInfo(imageIndexingInfo);
             } else {
-                numOfColumns--;
-            }
-
-            if (numOfColumns > mMaxNumOfColumns) {
-                numOfColumns = mMaxNumOfColumns - 1;
-                mToScaleDown = false;
-            }
-
-            if (numOfColumns < mMinNumOfColumns) {
-                numOfColumns = mMinNumOfColumns + 1;
-                mToScaleDown = true;
-            }
-
-            if (numOfColumns != mNumOfColumns) {
-                mAlbumViewManager.resize(x, y);
-                mGridInfo.resize(numOfColumns);
+                imageObject.setCheck(true);
+                mGalleryContext.checkImageIndexingInfo(imageIndexingInfo);
             }
 
             mSurfaceView.requestRender();

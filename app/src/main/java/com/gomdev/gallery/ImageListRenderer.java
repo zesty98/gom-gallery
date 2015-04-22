@@ -21,6 +21,8 @@ import com.gomdev.gles.GLESShaderConstant;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
+import java.nio.FloatBuffer;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -51,6 +53,8 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     private GLESShader mTextureCustomShader = null;
     private GLESShader mTextureAlphaShader = null;
     private GLESShader mColorShader = null;
+
+    private FloatBuffer mCheckTexCoordBuffer = null;
 
     private boolean mIsSurfaceChanged = false;
     private boolean mNeedToClearDetailView = false;
@@ -197,10 +201,12 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
         mAlbumViewManager.onSurfaceCreated();
         mDetailViewManager.onSurfaceCreated();
+
+        createCheckTexCoord();
     }
 
     private boolean createShader() {
-        mTextureCustomShader = createTextureShader(R.raw.texture_20_vs, R.raw.texture_custom_20_fs);
+        mTextureCustomShader = createTextureCustomShader(R.raw.texture_custom_20_vs, R.raw.texture_custom_20_fs);
         if (mTextureCustomShader == null) {
             return false;
         }
@@ -246,6 +252,26 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         return textureShader;
     }
 
+    private GLESShader createTextureCustomShader(int vsResID, int fsResID) {
+        GLESShader textureShader = new GLESShader(mContext);
+
+        String vsSource = GLESUtils.getStringFromReosurce(mContext, vsResID);
+        String fsSource = GLESUtils.getStringFromReosurce(mContext, fsResID);
+
+        textureShader.setShaderSource(vsSource, fsSource);
+        if (textureShader.load() == false) {
+            return null;
+        }
+
+        String attribName = GLESShaderConstant.ATTRIB_POSITION;
+        textureShader.setPositionAttribIndex(attribName);
+
+        attribName = GLESShaderConstant.ATTRIB_TEXCOORD;
+        textureShader.setTexCoordAttribIndex(attribName);
+
+        return textureShader;
+    }
+
     private GLESShader createColorShader(int vsResID, int fsResID) {
         GLESShader colorShader = new GLESShader(mContext);
 
@@ -264,6 +290,17 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         colorShader.setColorAttribIndex(attribName);
 
         return colorShader;
+    }
+
+    private void createCheckTexCoord() {
+        float[] texCoord = new float[]{
+                0f, 1f,
+                1f, 1f,
+                0f, 0f,
+                1f, 0f
+        };
+
+        mCheckTexCoordBuffer = GLESUtils.makeFloatBuffer(texCoord);
     }
 
     // touch
@@ -358,7 +395,10 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
         ImageViewMode mode = mGalleryContext.getImageViewMode();
         if (mode == GalleryConfig.ImageViewMode.ALBUME_VIEW_MODE) {
-            ((ImageListActivity) mContext).onFinished();
+            boolean isAlbumViewFinished = mAlbumViewManager.finish();
+            if (isAlbumViewFinished == true) {
+                ((ImageListActivity) mContext).onFinished();
+            }
             return;
         }
 
@@ -391,6 +431,7 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     void setHandler(Handler handler) {
         mHandler = handler;
 
+        mAlbumViewManager.setHandler(handler);
         mDetailViewManager.setHandler(handler);
     }
 }
