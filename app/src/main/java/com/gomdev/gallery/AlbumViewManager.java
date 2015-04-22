@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
+import com.gomdev.gallery.GalleryConfig.AlbumViewMode;
 import com.gomdev.gles.GLESAnimator;
 import com.gomdev.gles.GLESAnimatorCallback;
 import com.gomdev.gles.GLESCamera;
@@ -19,10 +20,6 @@ import com.gomdev.gles.GLESShader;
 import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESVector3;
-
-import com.gomdev.gallery.GalleryConfig.AlbumViewMode;
-
-import java.util.LinkedList;
 
 /**
  * Created by gomdev on 14. 12. 31..
@@ -76,7 +73,6 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
     private int mHeight = 0;
 
     private boolean mIsSurfaceChanged = false;
-
 
 
     AlbumViewManager(Context context, GridInfo gridInfo) {

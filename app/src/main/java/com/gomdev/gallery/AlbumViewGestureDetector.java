@@ -59,8 +59,6 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
     private int mColumnWidth = 0;
     private int mSpacing = 0;
     private int mNumOfColumns = 0;
-    private int mMinNumOfColumns;
-    private int mMaxNumOfColumns;
 
     private float mSurfaceBufferTop = 0f;
     private float mSurfaceBufferBottom = 0f;
@@ -104,8 +102,6 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
         mMaxDistance = (columnWidth + mGridInfo.getSpacing()) * 10f;
 
         mNumOfColumns = gridInfo.getNumOfColumns();
-        mMinNumOfColumns = gridInfo.getMinNumOfColumns();
-        mMaxNumOfColumns = gridInfo.getMaxNumOfColumns();
 
         gridInfo.addListener(this);
     }

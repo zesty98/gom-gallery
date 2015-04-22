@@ -48,7 +48,10 @@ class GalleryTexture implements BitmapContainer {
     }
 
     void destroy() {
-        mTexture.destroy();
+        if (mTexture != null) {
+            mTexture.destroy();
+        }
+        mTexture = null;
     }
 
     @Override

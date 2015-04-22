@@ -7,6 +7,7 @@ import android.opengl.GLES20;
 import android.util.Log;
 import android.util.SparseArray;
 
+import com.gomdev.gallery.GalleryConfig.AlbumViewMode;
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESConfig;
 import com.gomdev.gles.GLESGLState;
@@ -17,8 +18,6 @@ import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
-
-import com.gomdev.gallery.GalleryConfig.AlbumViewMode;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -334,7 +333,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     private void createCheckTexCoord() {
-        float[] texCoord = new float[] {
+        float[] texCoord = new float[]{
                 0f, 1f,
                 1f, 1f,
                 0f, 0f,

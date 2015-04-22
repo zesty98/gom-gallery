@@ -21,8 +21,6 @@ import com.gomdev.gles.GLESShaderConstant;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
-import java.nio.FloatBuffer;
-
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -53,8 +51,6 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
     private GLESShader mTextureCustomShader = null;
     private GLESShader mTextureAlphaShader = null;
     private GLESShader mColorShader = null;
-
-    private FloatBuffer mCheckTexCoordBuffer = null;
 
     private boolean mIsSurfaceChanged = false;
     private boolean mNeedToClearDetailView = false;
@@ -201,8 +197,6 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
 
         mAlbumViewManager.onSurfaceCreated();
         mDetailViewManager.onSurfaceCreated();
-
-        createCheckTexCoord();
     }
 
     private boolean createShader() {
@@ -290,17 +284,6 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         colorShader.setColorAttribIndex(attribName);
 
         return colorShader;
-    }
-
-    private void createCheckTexCoord() {
-        float[] texCoord = new float[]{
-                0f, 1f,
-                1f, 1f,
-                0f, 0f,
-                1f, 0f
-        };
-
-        mCheckTexCoordBuffer = GLESUtils.makeFloatBuffer(texCoord);
     }
 
     // touch

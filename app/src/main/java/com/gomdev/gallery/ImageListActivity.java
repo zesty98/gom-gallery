@@ -21,9 +21,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
-import com.gomdev.gallery.GalleryConfig.VisibleMode;
-import com.gomdev.gallery.GalleryConfig.ImageViewMode;
 import com.gomdev.gallery.GalleryConfig.AlbumViewMode;
+import com.gomdev.gallery.GalleryConfig.ImageViewMode;
+import com.gomdev.gallery.GalleryConfig.VisibleMode;
 
 import java.util.Iterator;
 import java.util.SortedSet;
@@ -318,12 +318,14 @@ public class ImageListActivity extends Activity {
     }
 
     private void deleteCheckedObjects() {
+        Log.d(TAG, "\ndeleteCheckedObjects()");
+
         GalleryContext galleryContext = GalleryContext.getInstance();
         SortedSet<ImageIndexingInfo> set = galleryContext.getCheckedImageIndexingInfos();
 
         Iterator<ImageIndexingInfo> iter = set.iterator();
 
-        while(iter.hasNext()) {
+        while (iter.hasNext()) {
             ImageIndexingInfo imageIndexingInfo = iter.next();
             deleteImage(imageIndexingInfo);
         }
