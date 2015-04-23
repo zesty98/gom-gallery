@@ -527,12 +527,10 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
     void deleteDateLabel(int index) {
         mGalleryObjects.deleteDateLabel(index);
-        mGridInfo.deleteDateLabelInfo();
     }
 
     void deleteImage(ImageIndexingInfo indexingInfo) {
         mGalleryObjects.deleteImage(indexingInfo);
-        mGridInfo.deleteImageInfo();
     }
 
     private GLESNodeListener mImageNodeListener = new GLESNodeListener() {

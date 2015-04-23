@@ -13,7 +13,7 @@ import com.gomdev.gallery.GalleryConfig.SortBy;
 /**
  * Created by gomdev on 15. 3. 5..
  */
-public class AlbumViewOptionDialog extends DialogFragment {
+public class AlbumViewSortOptionDialog extends DialogFragment {
     static final String CLASS = "AlbumViewOptionDialog";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
@@ -34,7 +34,7 @@ public class AlbumViewOptionDialog extends DialogFragment {
         final int sortBy = pref.getInt(GalleryConfig.PREF_SORT_BY, SortBy.DESCENDING.getIndex());
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(R.string.albumview_option_dialog_title)
+        builder.setTitle(R.string.albumview_sort_option_dialog_title)
                 .setSingleChoiceItems(list, sortBy, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

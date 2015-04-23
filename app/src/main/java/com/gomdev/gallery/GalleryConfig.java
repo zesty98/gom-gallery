@@ -20,6 +20,13 @@ public class GalleryConfig {
         FULLSCREEN_MODE
     }
 
+    enum DeletedInfo {
+        BUCKET,
+        DATELABEL,
+        IMAGE,
+        NONE
+    }
+
     enum SortBy {
         DESCENDING(0),
         ASCENDING(1);

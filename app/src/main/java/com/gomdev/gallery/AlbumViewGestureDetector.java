@@ -382,6 +382,9 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
             float y = e.getY();
 
             ImageIndexingInfo imageIndexingInfo = mAlbumViewManager.getSelectedImageIndex(x, y);
+            if (imageIndexingInfo.mImageIndex == -1) {
+                return true;
+            }
 
             AlbumViewMode albumViewMode = mGalleryContext.getAlbumViewMode();
             if (albumViewMode == AlbumViewMode.MULTI_SELECTION_MODE) {
@@ -419,6 +422,10 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
             float y = e.getY();
 
             ImageIndexingInfo imageIndexingInfo = mAlbumViewManager.getSelectedImageIndex(x, y);
+            if (imageIndexingInfo.mImageIndex == -1) {
+                return;
+            }
+
             ImageObject imageObject = mAlbumViewManager.getImageObject(imageIndexingInfo);
             boolean isChecked = imageObject.isChecked();
             if (isChecked == true) {

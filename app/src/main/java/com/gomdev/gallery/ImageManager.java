@@ -2,10 +2,15 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import com.gomdev.gallery.GalleryConfig.DeletedInfo;
 
 /**
  * Created by gomdev on 15. 1. 22..
@@ -121,9 +126,7 @@ class ImageManager {
         return imageInfo;
     }
 
-    boolean deleteImage(ImageIndexingInfo imageIndexingInfo) {
-        boolean isBucketDeleted = false;
-
+    void deleteImage(ImageIndexingInfo imageIndexingInfo, Set<DeletedInfo> deletedInfo) {
         DateLabelInfo dateLabelInfo = mCurrentBucketInfo.get(imageIndexingInfo.mDateLabelIndex);
         ImageInfo imageInfo = dateLabelInfo.get(imageIndexingInfo.mImageIndex);
 
@@ -133,31 +136,30 @@ class ImageManager {
                 new String[]{String.valueOf(imageInfo.getImageID())
                 });
         if (num == 0) {
-            Toast.makeText(mContext, "Delete Failed : Image",
-                    Toast.LENGTH_SHORT)
-                    .show();
-            return false;
+            deletedInfo.add(DeletedInfo.NONE);
+            return;
         }
 
         dateLabelInfo.deleteImageInfo(imageIndexingInfo.mImageIndex);
-
         mAlbumViewManager.deleteImage(imageIndexingInfo);
+
+        deletedInfo.add(DeletedInfo.IMAGE);
 
         if (dateLabelInfo.getNumOfImages() == 0) {
             mCurrentBucketInfo.deleteDateLabel(imageIndexingInfo.mDateLabelIndex);
             mAlbumViewManager.deleteDateLabel(imageIndexingInfo.mDateLabelIndex);
 
+            deletedInfo.add(DeletedInfo.DATELABEL);
+
             if (mCurrentBucketInfo.getNumOfDateInfos() == 0) {
                 delete(imageIndexingInfo.mBucketIndex);
                 mCurrentBucketInfo = mBucketInfos.get(0);
 
-                isBucketDeleted = true;
+                deletedInfo.add(DeletedInfo.BUCKET);
             }
         }
 
         mNumOfImages--;
-
-        return isBucketDeleted;
     }
 
     private void delete(int index) {

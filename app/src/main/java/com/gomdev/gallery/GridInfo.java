@@ -74,6 +74,7 @@ class GridInfo {
     }
 
     private void setNumOfColumnsToDateInfo(int numOfColumns) {
+        mNumOfDateInfos = mBucketInfo.getNumOfDateInfos();
         for (int i = 0; i < mNumOfDateInfos; i++) {
             mBucketInfo.get(i).setNumOfColumns(numOfColumns);
         }
@@ -197,32 +198,28 @@ class GridInfo {
     }
 
     void deleteImageInfo() {
-        synchronized (GalleryContext.sLockObject) {
-            setNumOfColumnsToDateInfo(mNumOfColumns);
+        setNumOfColumnsToDateInfo(mNumOfColumns);
 
-            mNumOfRows = calcNumOfRows();
-            mScrollableHeight = calcScrollableHeight();
+        mNumOfRows = calcNumOfRows();
+        mScrollableHeight = calcScrollableHeight();
 
-            int size = mListeners.size();
-            for (int i = 0; i < size; i++) {
-                mListeners.get(i).onImageDeleted();
-            }
+        int size = mListeners.size();
+        for (int i = 0; i < size; i++) {
+            mListeners.get(i).onImageDeleted();
         }
     }
 
     void deleteDateLabelInfo() {
-        synchronized (GalleryContext.sLockObject) {
-            mNumOfDateInfos = mBucketInfo.getNumOfDateInfos();
+        mNumOfDateInfos = mBucketInfo.getNumOfDateInfos();
 
-            setNumOfColumnsToDateInfo(mNumOfColumns);
+        setNumOfColumnsToDateInfo(mNumOfColumns);
 
-            mNumOfRows = calcNumOfRows();
-            mScrollableHeight = calcScrollableHeight();
+        mNumOfRows = calcNumOfRows();
+        mScrollableHeight = calcScrollableHeight();
 
-            int size = mListeners.size();
-            for (int i = 0; i < size; i++) {
-                mListeners.get(i).onDateLabelDeleted();
-            }
+        int size = mListeners.size();
+        for (int i = 0; i < size; i++) {
+            mListeners.get(i).onDateLabelDeleted();
         }
     }
 

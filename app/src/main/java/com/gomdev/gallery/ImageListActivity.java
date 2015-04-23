@@ -1,7 +1,10 @@
 package com.gomdev.gallery;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ContentUris;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.PixelFormat;
@@ -20,12 +23,16 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import com.gomdev.gallery.GalleryConfig.AlbumViewMode;
+import com.gomdev.gallery.GalleryConfig.DeletedInfo;
 import com.gomdev.gallery.GalleryConfig.ImageViewMode;
 import com.gomdev.gallery.GalleryConfig.VisibleMode;
 
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.SortedSet;
 
 public class ImageListActivity extends Activity {
@@ -37,11 +44,17 @@ public class ImageListActivity extends Activity {
     final static int SET_SYSTEM_UI_FLAG_VISIBLE = 103;
     final static int UPDATE_ACTION_BAR_TITLE = 104;
     final static int INVALIDATE_OPTION_MENU = 105;
+    final static int DISMISS_PROGRESS_DIALOG = 106;
+    final static int UPDATE_PROGRESS_DIALOG = 107;
+    final static int FAIL_IMAGE_DELETION_FROM_DATABASE = 108;
+    final static int DELETE_BUCKET = 109;
 
     private GallerySurfaceView mSurfaceView = null;
     private GalleryContext mGalleryContext = null;
     private ImageManager mImageManager = null;
     private GridInfo mGridInfo = null;
+
+    private ProgressDialog mProgressDialog = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -148,6 +161,11 @@ public class ImageListActivity extends Activity {
                         }
                     }
                 });
+
+        mProgressDialog = new ProgressDialog(this);
+        mProgressDialog.setTitle("Deleting");
+        mProgressDialog.setMessage("...");
+        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
     }
 
 
@@ -275,31 +293,32 @@ public class ImageListActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_delete) {
-            delete();
+            showDeleteAlertDialog(true);
             return true;
         } else if (id == R.id.action_share) {
             share();
             return true;
         } else if (id == R.id.action_sort) {
-            AlbumViewOptionDialog dialog = new AlbumViewOptionDialog();
+            AlbumViewSortOptionDialog dialog = new AlbumViewSortOptionDialog();
             dialog.show(getFragmentManager(), "sort by");
         } else if (id == R.id.action_selection) {
             GalleryContext.getInstance().setAlbumViewMode(AlbumViewMode.MULTI_SELECTION_MODE);
             invalidateOptionsMenu();
         } else if (id == R.id.action_selection_delete) {
-            long tick = System.nanoTime();
-            deleteCheckedObjects();
-            Log.d(TAG, "onOptionsItemSelected() deleteCheckedObjects() duration=" + (System.nanoTime() - tick) / 1000000L);
+            showDeleteAlertDialog(false);
         }
 
         return super.onOptionsItemSelected(item);
     }
 
     private void delete() {
+        Set<DeletedInfo> deletedInfo = new HashSet<>();
+
         GalleryContext galleryContext = GalleryContext.getInstance();
         ImageIndexingInfo imageIndexingInfo = galleryContext.getImageIndexingInfo();
 
-        boolean isBucketDeleted = deleteImage(imageIndexingInfo);
+        ImageManager.getInstance().deleteImage(imageIndexingInfo, deletedInfo);
+        boolean isBucketDeleted = deletedInfo.contains(DeletedInfo.BUCKET);
         if (isBucketDeleted == true) {
             Intent intent = new Intent(this, BucketListActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -313,31 +332,101 @@ public class ImageListActivity extends Activity {
         }
     }
 
-    private boolean deleteImage(ImageIndexingInfo imageIndexingInfo) {
-        boolean isBucketDeleted = ImageManager.getInstance().deleteImage(imageIndexingInfo);
-        return isBucketDeleted;
+    private void showDeleteAlertDialog(final boolean isDetailView) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        if (isDetailView == true) {
+            builder.setMessage("Selected file will be deleted. Delete?");
+        } else {
+            builder.setMessage("Selected files will be deleted. Delete?");
+        }
+        builder.setTitle(R.string.albumview_delete_option_dialog_title);
+        builder.setPositiveButton(R.string.OK, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int id) {
+                if (isDetailView == true) {
+                    delete();
+                } else {
+                    executeDeletion();
+                }
+            }
+        });
+        builder.setNegativeButton(R.string.Cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int id) {
+                if (isDetailView == false) {
+                    GalleryContext.getInstance().setAlbumViewMode(AlbumViewMode.NORMAL_MODE);
+                    invalidateOptionsMenu();
+                    mSurfaceView.requestRender();
+                }
+            }
+        });
+        builder.show();
+    }
+
+    private void executeDeletion() {
+        long tick = System.nanoTime();
+
+        mProgressDialog.show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                deleteCheckedObjects();
+            }
+        }).start();
+
+        if (DEBUG) {
+            Log.d(TAG, "onOptionsItemSelected() deleteCheckedObjects() duration=" + (System.nanoTime() - tick) / 1000000L);
+        }
     }
 
     private void deleteCheckedObjects() {
+        Set<DeletedInfo> deletedInfo = new HashSet<>();
+
         GalleryContext galleryContext = GalleryContext.getInstance();
         SortedSet<ImageIndexingInfo> set = galleryContext.getCheckedImageIndexingInfos();
-
         Iterator<ImageIndexingInfo> iter = set.iterator();
 
-        ImageIndexingInfo imageIndexingInfo = null;
-        while (iter.hasNext()) {
-            imageIndexingInfo = iter.next();
-            boolean isBucketDeleted = deleteImage(imageIndexingInfo);
-            if (isBucketDeleted == true) {
-                Intent intent = new Intent(this, BucketListActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
-                return;
+        synchronized (GalleryContext.sLockObject) {
+            int size = set.size();
+
+            ImageIndexingInfo imageIndexingInfo = null;
+            for (int i = 0; iter.hasNext(); i++) {
+                imageIndexingInfo = iter.next();
+
+                ImageManager.getInstance().deleteImage(imageIndexingInfo, deletedInfo);
+                boolean isNotDeleted = deletedInfo.contains(DeletedInfo.NONE);
+                if (isNotDeleted == true) {
+                    mHandler.sendEmptyMessage(FAIL_IMAGE_DELETION_FROM_DATABASE);
+                }
+
+                boolean isBucketDeleted = deletedInfo.contains(DeletedInfo.BUCKET);
+                if (isBucketDeleted == true) {
+                    mHandler.sendEmptyMessage(DELETE_BUCKET);
+                    return;
+                }
+
+                Message msg = mHandler.obtainMessage(UPDATE_PROGRESS_DIALOG);
+                String str = (i + 1) + " / " + size;
+                msg.obj = str;
+                mHandler.sendMessage(msg);
+            }
+
+            boolean isImageDeleted = deletedInfo.contains(DeletedInfo.IMAGE);
+            if (isImageDeleted == true) {
+                mGridInfo.deleteImageInfo();
+            }
+
+            boolean isDateLabelDeleted = deletedInfo.contains(DeletedInfo.DATELABEL);
+            if (isDateLabelDeleted == true) {
+                mGridInfo.deleteDateLabelInfo();
             }
         }
 
+        mHandler.sendEmptyMessage(DISMISS_PROGRESS_DIALOG);
+
         galleryContext.setImageViewMode(ImageViewMode.ALBUME_VIEW_MODE);
         galleryContext.setAlbumViewMode(AlbumViewMode.NORMAL_MODE);
+
         invalidateOptionsMenu();
 
         mSurfaceView.requestRender();
@@ -374,6 +463,24 @@ public class ImageListActivity extends Activity {
                     break;
                 case INVALIDATE_OPTION_MENU:
                     invalidateOptionsMenu();
+                    break;
+                case UPDATE_PROGRESS_DIALOG:
+                    mProgressDialog.setMessage((String) msg.obj);
+                    break;
+                case DISMISS_PROGRESS_DIALOG:
+                    if (mProgressDialog != null) {
+                        mProgressDialog.dismiss();
+                    }
+                    break;
+                case FAIL_IMAGE_DELETION_FROM_DATABASE:
+                    Toast.makeText(ImageListActivity.this, "Delete Failed : Image",
+                            Toast.LENGTH_SHORT)
+                            .show();
+                    break;
+                case DELETE_BUCKET:
+                    Intent intent = new Intent(ImageListActivity.this, BucketListActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
                     break;
                 default:
             }

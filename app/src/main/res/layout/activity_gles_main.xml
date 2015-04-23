@@ -5,5 +5,4 @@
     android:layout_height="match_parent"
     tools:context="com.gomdev.gallery.BucketListActivity"
     tools:ignore="MergeRootFrame">
-
 </FrameLayout>

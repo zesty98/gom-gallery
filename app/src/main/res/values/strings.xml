@@ -8,6 +8,9 @@
     <string name="action_selection">Select</string>
     <string name="action_selection_delete">Delete</string>
     <string name="imageview_description">Image Thumbnail</string>
-    <string name="albumview_option_dialog_title">Sort by</string>
+    <string name="albumview_sort_option_dialog_title">Sort by</string>
+    <string name="albumview_delete_option_dialog_title">Delete</string>
+    <string name="OK">OK</string>
+    <string name="Cancel">Cancel</string>
 
 </resources>
