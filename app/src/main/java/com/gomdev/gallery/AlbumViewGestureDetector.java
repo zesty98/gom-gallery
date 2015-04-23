@@ -172,9 +172,9 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
     }
 
     @Override
-    public void onNumOfImageInfosChanged() {
+    public void onImageDeleted() {
         if (DEBUG) {
-            Log.d(TAG, "onNumOfImageInfosChanged()");
+            Log.d(TAG, "onImageDeleted()");
         }
 
         mScrollableHeight = mGridInfo.getScrollableHeight();
@@ -186,9 +186,9 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
     }
 
     @Override
-    public void onNumOfDateLabelInfosChanged() {
+    public void onDateLabelDeleted() {
         if (DEBUG) {
-            Log.d(TAG, "onNumOfDateLabelInfosChanged()");
+            Log.d(TAG, "onDateLabelDeleted()");
         }
 
         mScrollableHeight = mGridInfo.getScrollableHeight();

@@ -16,6 +16,7 @@ class DateLabelInfo implements Serializable, GalleryInfo {
     private int mIndex = 0;
 
     private int mNumOfRows = 0;
+    private int mNumOfColumns = 0;
 
     private int mImageIndex = 0;
 
@@ -62,6 +63,7 @@ class DateLabelInfo implements Serializable, GalleryInfo {
     }
 
     void setNumOfColumns(int numOfColumns) {
+        mNumOfColumns = numOfColumns;
         mNumOfRows = (int) Math.ceil((double) mImageInfos.size() / numOfColumns);
     }
 
@@ -72,11 +74,12 @@ class DateLabelInfo implements Serializable, GalleryInfo {
     void deleteImageInfo(int index) {
         mImageInfos.remove(index);
 
-
         int size = mImageInfos.size();
         for (int i = index; i < size; i++) {
             ImageInfo imageInfo = mImageInfos.get(i);
             imageInfo.setIndex(index++);
         }
+
+        setNumOfColumns(mNumOfColumns);
     }
 }

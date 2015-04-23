@@ -910,18 +910,18 @@ public class DetailViewPager_backup implements GridInfoChangeListener, ImageLoad
     }
 
     @Override
-    public void onNumOfImageInfosChanged() {
+    public void onImageDeleted() {
         if (DEBUG) {
-            Log.d(TAG, "onNumOfImageInfosChanged()");
+            Log.d(TAG, "onImageDeleted()");
         }
 
         mCurrentImageIndexingInfo = null;
     }
 
     @Override
-    public void onNumOfDateLabelInfosChanged() {
+    public void onDateLabelDeleted() {
         if (DEBUG) {
-            Log.d(TAG, "onNumOfDateLabelInfosChanged()");
+            Log.d(TAG, "onDateLabelDeleted()");
         }
     }
 

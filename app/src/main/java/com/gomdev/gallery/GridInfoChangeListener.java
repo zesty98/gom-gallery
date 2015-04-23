@@ -6,7 +6,7 @@ package com.gomdev.gallery;
 public interface GridInfoChangeListener {
     public void onColumnWidthChanged();
 
-    public void onNumOfImageInfosChanged();
+    public void onImageDeleted();
 
-    public void onNumOfDateLabelInfosChanged();
+    public void onDateLabelDeleted();
 }

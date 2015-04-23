@@ -199,12 +199,12 @@ class Scrollbar implements GridInfoChangeListener {
     }
 
     @Override
-    public void onNumOfImageInfosChanged() {
+    public void onImageDeleted() {
         calcScrollbarHeight();
     }
 
     @Override
-    public void onNumOfDateLabelInfosChanged() {
+    public void onDateLabelDeleted() {
         calcScrollbarHeight();
     }
 

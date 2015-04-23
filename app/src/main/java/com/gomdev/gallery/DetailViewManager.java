@@ -273,16 +273,16 @@ public class DetailViewManager implements GridInfoChangeListener, ViewManager {
     }
 
     @Override
-    public void onNumOfImageInfosChanged() {
+    public void onImageDeleted() {
         if (DEBUG) {
-            Log.d(TAG, "onNumOfImageInfosChanged()");
+            Log.d(TAG, "onImageDeleted()");
         }
     }
 
     @Override
-    public void onNumOfDateLabelInfosChanged() {
+    public void onDateLabelDeleted() {
         if (DEBUG) {
-            Log.d(TAG, "onNumOfDateLabelInfosChanged()");
+            Log.d(TAG, "onDateLabelDeleted()");
         }
     }
 

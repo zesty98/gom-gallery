@@ -71,11 +71,11 @@ class AlbumViewScaleGestureDetector implements GridInfoChangeListener {
     }
 
     @Override
-    public void onNumOfImageInfosChanged() {
+    public void onImageDeleted() {
     }
 
     @Override
-    public void onNumOfDateLabelInfosChanged() {
+    public void onDateLabelDeleted() {
     }
 
     private final ScaleGestureDetector.OnScaleGestureListener mScaleGestureListener

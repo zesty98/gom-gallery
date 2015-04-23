@@ -287,7 +287,9 @@ public class ImageListActivity extends Activity {
             GalleryContext.getInstance().setAlbumViewMode(AlbumViewMode.MULTI_SELECTION_MODE);
             invalidateOptionsMenu();
         } else if (id == R.id.action_selection_delete) {
+            long tick = System.nanoTime();
             deleteCheckedObjects();
+            Log.d(TAG, "onOptionsItemSelected() deleteCheckedObjects() duration=" + (System.nanoTime() - tick) / 1000000L);
         }
 
         return super.onOptionsItemSelected(item);
@@ -297,13 +299,7 @@ public class ImageListActivity extends Activity {
         GalleryContext galleryContext = GalleryContext.getInstance();
         ImageIndexingInfo imageIndexingInfo = galleryContext.getImageIndexingInfo();
 
-        deleteImage(imageIndexingInfo);
-    }
-
-    private void deleteImage(ImageIndexingInfo imageIndexingInfo) {
-        GalleryContext galleryContext = GalleryContext.getInstance();
-        boolean isBucketDeleted = ImageManager.getInstance().deleteImage(imageIndexingInfo);
-
+        boolean isBucketDeleted = deleteImage(imageIndexingInfo);
         if (isBucketDeleted == true) {
             Intent intent = new Intent(this, BucketListActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -317,20 +313,34 @@ public class ImageListActivity extends Activity {
         }
     }
 
-    private void deleteCheckedObjects() {
-        Log.d(TAG, "\ndeleteCheckedObjects()");
+    private boolean deleteImage(ImageIndexingInfo imageIndexingInfo) {
+        boolean isBucketDeleted = ImageManager.getInstance().deleteImage(imageIndexingInfo);
+        return isBucketDeleted;
+    }
 
+    private void deleteCheckedObjects() {
         GalleryContext galleryContext = GalleryContext.getInstance();
         SortedSet<ImageIndexingInfo> set = galleryContext.getCheckedImageIndexingInfos();
 
         Iterator<ImageIndexingInfo> iter = set.iterator();
 
+        ImageIndexingInfo imageIndexingInfo = null;
         while (iter.hasNext()) {
-            ImageIndexingInfo imageIndexingInfo = iter.next();
-            deleteImage(imageIndexingInfo);
+            imageIndexingInfo = iter.next();
+            boolean isBucketDeleted = deleteImage(imageIndexingInfo);
+            if (isBucketDeleted == true) {
+                Intent intent = new Intent(this, BucketListActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                return;
+            }
         }
 
+        galleryContext.setImageViewMode(ImageViewMode.ALBUME_VIEW_MODE);
         galleryContext.setAlbumViewMode(AlbumViewMode.NORMAL_MODE);
+        invalidateOptionsMenu();
+
+        mSurfaceView.requestRender();
     }
 
     private void share() {

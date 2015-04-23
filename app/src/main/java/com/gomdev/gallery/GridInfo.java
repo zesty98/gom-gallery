@@ -205,7 +205,7 @@ class GridInfo {
 
             int size = mListeners.size();
             for (int i = 0; i < size; i++) {
-                mListeners.get(i).onNumOfImageInfosChanged();
+                mListeners.get(i).onImageDeleted();
             }
         }
     }
@@ -221,7 +221,7 @@ class GridInfo {
 
             int size = mListeners.size();
             for (int i = 0; i < size; i++) {
-                mListeners.get(i).onNumOfDateLabelInfosChanged();
+                mListeners.get(i).onDateLabelDeleted();
             }
         }
     }

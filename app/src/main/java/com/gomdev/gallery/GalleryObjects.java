@@ -51,6 +51,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     private GLESGLState mDateLabelGLState = null;
     private GLESGLState mImageGLState = null;
     private GLESShader mShader = null;
+    private GLESNode mParentNode = null;
 
     private int mNumOfDateInfos = 0;
     private int mDateLabelHeight = 0;
@@ -66,6 +67,8 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private int mWidth = 0;
     private int mHeight = 0;
+    private float mHalfWidth = 0f;
+    private float mHalfHeight = 0f;
 
     private List<TextureMappingInfo> mTextureMappingInfos = new ArrayList<>();
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
@@ -159,7 +162,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     void checkVisibility() {
         float translateY = mGridInfo.getTranslateY();
-        float viewportTop = mHeight * 0.5f - translateY;
+        float viewportTop = mHalfHeight - translateY;
         float viewportBottom = viewportTop - mHeight;
 
         int size = mDateLabelObjects.size();
@@ -184,7 +187,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             if (i + 1 < size) {
                 bottom = mDateLabelObjects.get(i + 1).getTop() - mSpacing;
             } else {
-                bottom = mHeight * 0.5f - mGridInfo.getScrollableHeight();
+                bottom = mHalfHeight - mGridInfo.getScrollableHeight();
             }
 
             if (bottom < viewportTop && top > viewportBottom) {
@@ -262,6 +265,9 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         mWidth = width;
         mHeight = height;
 
+        mHalfWidth = width * 0.5f;
+        mHalfHeight = height * 0.5f;
+
         mLoadingBitmap = GLESUtils.makeBitmap(16, 16, Bitmap.Config.ARGB_8888, Color.WHITE);
 
         int size = mDateLabelObjects.size();
@@ -286,7 +292,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             object.setCamera(camera);
 
-            float left = mSpacing - mWidth * 0.5f;
+            float left = mSpacing - mHalfWidth;
             float top = yOffset;
             float width = mWidth - mSpacing * 2f;
             float height = mDateLabelHeight;
@@ -376,7 +382,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private void changeDateLabelObjectPosition() {
         int index = 0;
-        float yOffset = mHeight * 0.5f - mSystemBarHeight;
+        float yOffset = mHalfHeight - mSystemBarHeight;
 
         int size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
@@ -387,7 +393,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setPrevLeftTop(object.getLeft(), prevTop);
             imageObjects.setPrevStartOffsetY(prevTop - mDateLabelHeight - mSpacing);
 
-            float nextLeft = mSpacing - mWidth * 0.5f;
+            float nextLeft = mSpacing - mHalfWidth;
             float nextTop = yOffset;
 
             object.setNextLeftTop(nextLeft, nextTop);
@@ -413,11 +419,11 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         mAnimator.setValues(fromAlpha, toAlpha);
         mAnimator.setDuration(GalleryConfig.DATE_LABEL_ANIMATION_START_OFFSET, GalleryConfig.DATE_LABEL_ANIMATION_END_OFFSET);
 
-        float viewportTop = mHeight * 0.5f - mGridInfo.getTranslateY();
+        float viewportTop = mHalfHeight - mGridInfo.getTranslateY();
         float viewportBottom = viewportTop - mHeight;
 
         float nextTranslateY = mAlbumViewManager.getNextTranslateY();
-        float nextViewportTop = mHeight * 0.5f - nextTranslateY;
+        float nextViewportTop = mHalfHeight - nextTranslateY;
         float nextViewportBottom = nextViewportTop - mHeight;
 
         int size = mDateLabelObjects.size();
@@ -457,35 +463,52 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     @Override
-    public void onNumOfImageInfosChanged() {
+    public void onImageDeleted() {
         if (DEBUG) {
-            Log.d(TAG, "onNumOfImageInfosChanged()");
+            Log.d(TAG, "onImageDeleted()");
         }
+
+        changeDateLabelPosition();
+    }
+
+    private void changeDateLabelPosition() {
+        float yOffset = mHalfHeight - mSystemBarHeight;
+
+        float left = mSpacing - mHalfWidth;
+        float top = 0f;
+        float width = mWidth - mSpacing * 2f;
+        float height = mDateLabelHeight;
+        float halfWidth = width * 0.5f;
+        float halfHeight = height * 0.5f;
 
         int size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mDateLabelObjects.get(i);
-            ImageObjects imageObjects = object.getImageObjects();
 
-            imageObjects.onNumOfImageInfosChanged();
+            top = yOffset;
+
+            object.setLeftTop(left, top);
+            object.setTranslate(left + halfWidth, top - halfHeight);
+
+            yOffset -= (mDateLabelHeight + mSpacing);
+
+            DateLabelInfo dateLabelInfo = mBucketInfo.get(i);
+            yOffset -= (dateLabelInfo.getNumOfRows() * (mColumnWidth + mSpacing));
+
+            ImageObjects imageObjects = object.getImageObjects();
+            imageObjects.setStartOffsetY(top - mDateLabelHeight - mSpacing);
         }
     }
 
     @Override
-    public void onNumOfDateLabelInfosChanged() {
+    public void onDateLabelDeleted() {
         if (DEBUG) {
-            Log.d(TAG, "onNumOfDateLabelInfosChanged()");
+            Log.d(TAG, "onDateLabelDeleted()");
         }
 
         mNumOfDateInfos = mGridInfo.getNumOfDateInfos();
 
-        int size = mDateLabelObjects.size();
-        for (int i = 0; i < size; i++) {
-            DateLabelObject object = mDateLabelObjects.get(i);
-            ImageObjects imageObjects = object.getImageObjects();
-
-            imageObjects.onNumOfDateLabelInfosChanged();
-        }
+        changeDateLabelPosition();
     }
 
 
@@ -495,6 +518,8 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         if (DEBUG) {
             Log.d(TAG, "createObjects()");
         }
+
+        mParentNode = parentNode;
 
         for (int i = 0; i < mNumOfDateInfos; i++) {
             GalleryNode node = new GalleryNode("node" + i);
@@ -616,7 +641,9 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         mTextureMappingInfos.remove(index);
 
-        mDateLabelObjects.remove(index);
+        DateLabelObject object = mDateLabelObjects.remove(index);
+        mParentNode.removeChild(object);
+
     }
 
     void deleteImage(ImageIndexingInfo indexingInfo) {

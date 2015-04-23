@@ -68,6 +68,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private int mWidth = 0;
     private int mHeight = 0;
+    private float mHalfWidth = 0f;
+    private float mHalfHeight = 0f;
 
     private int mSpacing = 0;
     private int mNumOfColumns = 0;
@@ -137,13 +139,12 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     void update() {
         if (mNeedToSetTranslate == true) {
+            mNeedToSetTranslate = false;
             setTranslate();
         }
     }
 
     private void setTranslate() {
-        mNeedToSetTranslate = false;
-
         int size = mObjects.size();
         for (int i = 0; i < size; i++) {
             ImageObject object = mObjects.get(i);
@@ -196,7 +197,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private void handleVisibleObjects() {
         float translateY = mGridInfo.getTranslateY();
-        float viewportTop = mHeight * 0.5f - translateY;
+        float viewportTop = mHalfHeight - translateY;
         float viewportBottom = viewportTop - mHeight;
 
         int size = mObjects.size();
@@ -299,6 +300,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         mWidth = width;
         mHeight = height;
+
+        mHalfWidth = width * 0.5f;
+        mHalfHeight = height * 0.5f;
     }
 
     void setupObjects(GLESCamera camera) {
@@ -308,25 +312,37 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         mCamera = camera;
 
+        float halfColumnWidth = mColumnWidth * 0.5f;
+        float halfDefaultColumnWidth = mDefaultColumnWidth * 0.5f;
+
+        int xPosition = 0;
+        int yPosition = 0;
+
         int size = mObjects.size();
         for (int i = 0; i < size; i++) {
             ImageObject object = mObjects.get(i);
             object.setCamera(mCamera);
 
-            float left = mSpacing + (i % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
-            float top = -((i / mNumOfColumns) * (mColumnWidth + mSpacing));
+            float left = mSpacing + xPosition * (mColumnWidth + mSpacing) - mHalfWidth;
+            float top = -(yPosition * (mColumnWidth + mSpacing));
 
             object.setLeftTop(left, top);
 
-            object.setTranslate(left - (-mColumnWidth * 0.5f), mStartOffsetY + top - (mColumnWidth * 0.5f));
+            object.setTranslate(left - (-halfColumnWidth), mStartOffsetY + top - (halfColumnWidth));
             object.setScale(mScale);
             object.setAlpha(1.0f);
 
             GLESVertexInfo vertexInfo = object.getVertexInfo();
-            float[] vertex = GLESUtils.makePositionCoord(-mDefaultColumnWidth * 0.5f, mDefaultColumnWidth * 0.5f, mDefaultColumnWidth, mDefaultColumnWidth);
+            float[] vertex = GLESUtils.makePositionCoord(-halfDefaultColumnWidth, halfDefaultColumnWidth, mDefaultColumnWidth, mDefaultColumnWidth);
             vertexInfo.setBuffer(mShader.getPositionAttribIndex(), vertex, 3);
 
             mEndOffsetY = top - mColumnWidth;
+
+            xPosition++;
+            if (xPosition >= mNumOfColumns) {
+                xPosition = 0;
+                yPosition++;
+            }
         }
 
         createCheckTexCoord();
@@ -405,7 +421,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             float prevScale = (float) mPrevColumnWidth / mDefaultColumnWidth;
             object.setPrevScale(prevScale);
 
-            float nextLeft = mSpacing + (i % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
+            float nextLeft = mSpacing + (i % mNumOfColumns) * (mColumnWidth + mSpacing) - mHalfWidth;
             float nextTop = -((i / mNumOfColumns) * (mColumnWidth + mSpacing));
             object.setNextLeftTop(nextLeft, nextTop);
 
@@ -431,11 +447,11 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             return;
         }
 
-        float viewportTop = mHeight * 0.5f - mGridInfo.getTranslateY();
+        float viewportTop = mHalfHeight - mGridInfo.getTranslateY();
         float viewportBottom = viewportTop - mHeight;
 
         float nextTranslateY = mAlbumViewManager.getNextTranslateY();
-        float nextViewportTop = mHeight * 0.5f - nextTranslateY;
+        float nextViewportTop = mHalfHeight - nextTranslateY;
         float nextViewportBottom = nextViewportTop - mHeight;
 
         int size = mObjects.size();
@@ -462,30 +478,47 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     @Override
-    public void onNumOfImageInfosChanged() {
+    public void onImageDeleted() {
         if (DEBUG) {
-            Log.d(TAG, "onNumOfImageInfosChanged()");
+            Log.d(TAG, "onImageDeleted() dateLabel index=" + mDateLabelInfo.getIndex());
         }
 
         mNumOfImages = mDateLabelInfo.getNumOfImages();
 
-        int size = mObjects.size();
-        for (int i = 0; i < size; i++) {
-            ImageObject object = mObjects.get(i);
-
-            float left = mSpacing + (i % mNumOfColumns) * (mColumnWidth + mSpacing) - mWidth * 0.5f;
-            float top = -((i / mNumOfColumns) * (mColumnWidth + mSpacing));
-            object.setLeftTop(left, top);
-
-            float scale = (float) mColumnWidth / mDefaultColumnWidth;
-            object.setScale(scale);
-
-            mEndOffsetY = top - mDefaultColumnWidth * scale;
-        }
+        changeObjectPosition();
     }
 
     @Override
-    public void onNumOfDateLabelInfosChanged() {
+    public void onDateLabelDeleted() {
+        changeObjectPosition();
+    }
+
+    private void changeObjectPosition() {
+        float halfColumnWidth = mColumnWidth * 0.5f;
+
+        int size = mObjects.size();
+        int xPosition = 0;
+        int yPosition = 0;
+        for (int i = 0; i < size; i++) {
+            ImageObject object = mObjects.get(i);
+
+            float left = mSpacing + xPosition * (mColumnWidth + mSpacing) - mHalfWidth;
+            float top = -(yPosition * (mColumnWidth + mSpacing));
+
+            object.setLeftTop(left, top);
+
+            object.setTranslate(left - (-halfColumnWidth), mStartOffsetY + top - (halfColumnWidth));
+            object.setScale(mScale);
+            object.setAlpha(1.0f);
+
+            mEndOffsetY = top - mColumnWidth;
+
+            xPosition++;
+            if (xPosition >= mNumOfColumns) {
+                xPosition = 0;
+                yPosition++;
+            }
+        }
     }
 
     // initialization
@@ -538,6 +571,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         mStartOffsetY = startOffsetY;
 
         mNeedToSetTranslate = true;
+
 
         int size = mObjects.size();
         for (int i = 0; i < size; i++) {
@@ -612,7 +646,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         mTextureMappingInfos.remove(index);
 
-        mObjects.remove(index);
+        ImageObject object = mObjects.remove(index);
+        mParentNode.removeChild(object);
     }
 
     @Override
@@ -717,6 +752,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         @Override
         public void update(GLESObject object) {
             ImageObject imageObject = (ImageObject) object;
+
             GLESTransform transform = object.getTransform();
             transform.setIdentity();
             transform.setTranslate(
