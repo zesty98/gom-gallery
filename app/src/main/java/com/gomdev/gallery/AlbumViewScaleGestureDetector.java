@@ -127,6 +127,10 @@ class AlbumViewScaleGestureDetector implements GridInfoChangeListener {
                 }
             }
 
+            if (absDragDistance > mThresholdToRecognizingScale) {
+                mAlbumViewManager.onScaleEnd();
+            }
+
             mSurfaceView.requestRender();
 
             return true;
@@ -134,7 +138,7 @@ class AlbumViewScaleGestureDetector implements GridInfoChangeListener {
 
         @Override
         public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
-            mAlbumViewManager.onScaleEnd();
+//            mAlbumViewManager.onScaleEnd();
         }
     };
 }

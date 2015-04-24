@@ -319,7 +319,9 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
         mFocusY = focusY;
         ImageIndexingInfo imageIndexingInfo = getNearestImageIndex(focusX, focusY);
-        Log.d(TAG, "resize() mCenterObject indexing info " + imageIndexingInfo);
+        if (DEBUG) {
+            Log.d(TAG, "resize() mCenterObject indexing info " + imageIndexingInfo);
+        }
         mCenterObject = getImageObject(imageIndexingInfo);
 
         mGalleryContext.setImageIndexingInfo(imageIndexingInfo);
