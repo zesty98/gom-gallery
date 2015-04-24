@@ -272,6 +272,9 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
             case MotionEvent.ACTION_DOWN:
                 mIsOnScrolling = true;
 
+                m2ndPointerDown = false;
+                m3rdPointerDown = false;
+
                 break;
             case MotionEvent.ACTION_UP:
                 mIsOnScrolling = false;
