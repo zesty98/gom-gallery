@@ -418,9 +418,6 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
 
         @Override
         public void onLongPress(MotionEvent e) {
-            mGalleryContext.setAlbumViewMode(AlbumViewMode.MULTI_SELECTION_MODE);
-            mHandler.sendEmptyMessage(ImageListActivity.INVALIDATE_OPTION_MENU);
-
             float x = e.getX();
             float y = e.getY();
 
@@ -428,6 +425,9 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
             if (imageIndexingInfo.mImageIndex == -1) {
                 return;
             }
+
+            mGalleryContext.setAlbumViewMode(AlbumViewMode.MULTI_SELECTION_MODE);
+            mHandler.sendEmptyMessage(ImageListActivity.INVALIDATE_OPTION_MENU);
 
             ImageObject imageObject = mAlbumViewManager.getImageObject(imageIndexingInfo);
             boolean isChecked = imageObject.isChecked();
