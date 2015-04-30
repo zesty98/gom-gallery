@@ -184,6 +184,32 @@ class GalleryUtils {
         return vertexInfo;
     }
 
+    static GLESVertexInfo createScrollbarVertexInfo(GLESShader shader,
+                                                float x, float y,
+                                                float width, float height) {
+        float left = x;
+        float right = x + width;
+        float top = y;
+        float bottom = y - height;
+        float z = 0.0f;
+
+        float[] position = {
+                left, bottom, z,
+                right, bottom, z,
+                left, top, z,
+                right, top, z
+        };
+
+        GLESVertexInfo vertexInfo = new GLESVertexInfo();
+
+        vertexInfo.setBuffer(shader.getPositionAttribIndex(), position, 3);
+
+        vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
+        vertexInfo.setPrimitiveMode(GLESVertexInfo.PrimitiveMode.TRIANGLE_STRIP);
+
+        return vertexInfo;
+    }
+
     static float[] calcTexCoord(int width, int height) {
         float minS = 0f;
         float minT = 0f;

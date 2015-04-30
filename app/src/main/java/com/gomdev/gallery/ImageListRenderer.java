@@ -220,8 +220,14 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
             return false;
         }
 
-        mAlbumViewManager.setColorShader(mColorShader);
         mDetailViewManager.setColorShader(mColorShader);
+
+        GLESShader scrollbarShader = createScrollbarShader(R.raw.scrollbar_20_vs, R.raw.scrollbar_alpha_20_fs);
+        if (scrollbarShader == null) {
+            return false;
+        }
+
+        mAlbumViewManager.setScrollbarShader(scrollbarShader);
 
         return true;
     }
@@ -284,6 +290,23 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         colorShader.setColorAttribIndex(attribName);
 
         return colorShader;
+    }
+
+    private GLESShader createScrollbarShader(int vsResID, int fsResID) {
+        GLESShader scrollbarShader = new GLESShader(mContext);
+
+        String vsSource = GLESUtils.getStringFromReosurce(mContext, vsResID);
+        String fsSource = GLESUtils.getStringFromReosurce(mContext, fsResID);
+
+        scrollbarShader.setShaderSource(vsSource, fsSource);
+        if (scrollbarShader.load() == false) {
+            return null;
+        }
+
+        String attribName = GLESShaderConstant.ATTRIB_POSITION;
+        scrollbarShader.setPositionAttribIndex(attribName);
+
+        return scrollbarShader;
     }
 
     // touch

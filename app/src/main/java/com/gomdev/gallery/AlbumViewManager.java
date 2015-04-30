@@ -10,6 +10,7 @@ import android.view.MotionEvent;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
 import com.gomdev.gallery.GalleryConfig.AlbumViewMode;
+import com.gomdev.gallery.Scrollbar.ScrollbarMode;
 import com.gomdev.gles.GLESAnimator;
 import com.gomdev.gles.GLESAnimatorCallback;
 import com.gomdev.gles.GLESCamera;
@@ -27,7 +28,7 @@ import com.gomdev.gles.GLESVector3;
 class AlbumViewManager implements GridInfoChangeListener, ViewManager {
     static final String CLASS = "AlbumViewManager";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
-    static final boolean DEBUG = GalleryConfig.DEBUG;
+    static final boolean DEBUG = true;//GalleryConfig.DEBUG;
 
     private final Context mContext;
     private final GridInfo mGridInfo;
@@ -42,7 +43,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
     private GLESShader mTextureShader = null;
     private GLESShader mTextureAlphaShader = null;
-    private GLESShader mColorShader = null;
+    private GLESShader mScrollbarShader = null;
 
     private GLESAnimator mScaleAnimator = null;
     private boolean mIsOnAnimation = false;
@@ -74,6 +75,8 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
     private boolean mIsSurfaceChanged = false;
 
+    private int mSystemBarHeight = 0;
+    private boolean mIsScrollbarSelected = false;
 
     AlbumViewManager(Context context, GridInfo gridInfo) {
         if (DEBUG) {
@@ -114,7 +117,6 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
         mScrollbar = new Scrollbar(mContext, mGridInfo);
         mScrollbar.setColor(0.3f, 0.3f, 0.3f, 0.7f);
-
 
         mScaleAnimator = new GLESAnimator(new ScaleAnimatorCallback());
         mScaleAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
@@ -178,7 +180,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
     void onSurfaceChanged(int width, int height) {
         if (DEBUG) {
-            Log.d(TAG, "onSurfaceChanged()");
+            Log.d(TAG, "onSurfaceChanged() width=" + width + " height=" + height);
         }
 
         mWidth = width;
@@ -211,7 +213,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
         mGalleryObjects.setDateLabelShader(mTextureAlphaShader);
         mGalleryObjects.setImageShader(mTextureShader);
-        mScrollbar.setShader(mColorShader);
+        mScrollbar.setShader(mScrollbarShader);
 
         Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.check_white_80);
         GLESTexture checkTexture = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, bitmap.getWidth(), bitmap.getHeight())
@@ -220,6 +222,8 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         mGalleryObjects.onSurfaceCreated();
 
         mGalleryObjects.setCheckTexture(checkTexture);
+
+        mSystemBarHeight = GalleryUtils.getActionBarHeight(mContext) + GalleryUtils.getStatusBarHeight(mContext);
     }
 
     // initialization
@@ -249,8 +253,8 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         mTextureShader = shader;
     }
 
-    void setColorShader(GLESShader shader) {
-        mColorShader = shader;
+    void setScrollbarShader(GLESShader shader) {
+        mScrollbarShader = shader;
     }
 
     void setSurfaceView(GallerySurfaceView surfaceView) {
@@ -288,6 +292,8 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
     // touch
 
+
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (mIsOnAnimation == true) {
@@ -303,10 +309,52 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         }
 
         if (mIsOnScale == false) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                mIsScrollbarSelected = isScrollbarSelected(event);
+                if (mIsScrollbarSelected == true) {
+                    mScrollbar.setScrollbarMode(ScrollbarMode.SCROLLBAR_DRAGGING);
+                }
+            }
+
+            if (mIsScrollbarSelected == true && event.getAction() == MotionEvent.ACTION_UP) {
+                mScrollbar.setScrollbarMode(ScrollbarMode.NORMAL);
+            }
+
+            mAlbumViewGestureDetector.setScrollbarMode(mScrollbar.getScrollbarMode());
+            mAlbumViewGestureDetector.setScrollbarHeight(mScrollbar.getScrollbarHeight());
             retVal = mAlbumViewGestureDetector.onTouchEvent(event) || retVal;
         }
 
         return retVal;
+    }
+
+    private boolean isScrollbarSelected(MotionEvent event) {
+        int pointerCount = event.getPointerCount();
+        if (pointerCount != 1) {
+            return false;
+        }
+
+        float x = event.getX();
+        float y = event.getY() - mSystemBarHeight;
+
+        x = x - mWidth * 0.5f;
+
+        float padding = mScrollbar.getScrollbarWidth(ScrollbarMode.SCROLLBAR_DRAGGING);
+
+        float scrollbarLeft = mWidth * 0.5f - padding * 2f;
+        float scrollbarRight = mWidth * 0.5f;
+
+        float scrollbarHeight = mScrollbar.getScrollbarHeight();
+        float scrollbarPosY = -mScrollbar.getScrollbarPosY();
+        float scrollbarTop = scrollbarPosY - padding;
+        float scrollbarBottom = scrollbarHeight + scrollbarPosY + padding;
+
+        if (x >= scrollbarLeft && x <= scrollbarRight &&
+                y >= scrollbarTop && y <= scrollbarBottom) {
+            return true;
+        }
+
+        return false;
     }
 
 

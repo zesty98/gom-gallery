@@ -13,7 +13,9 @@ import android.view.MotionEvent;
 import android.widget.OverScroller;
 
 import com.gomdev.gallery.GalleryConfig.AlbumViewMode;
+import com.gomdev.gallery.Scrollbar.ScrollbarMode;
 import com.gomdev.gles.GLESUtils;
+
 
 /**
  * Created by gomdev on 14. 12. 29..
@@ -72,6 +74,9 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
     private float mTranslateZ = 0f;
 
     private int mHeight = 0;
+
+    private ScrollbarMode mScrollbarMode = ScrollbarMode.NORMAL;
+    private float mScrollbarHeight = 0f;
 
     AlbumViewGestureDetector(Context context, GridInfo gridInfo) {
         if (DEBUG) {
@@ -240,6 +245,14 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
         float translateY = (mSurfaceBufferTop - top);
 
         return translateY;
+    }
+
+    void setScrollbarMode(ScrollbarMode mode) {
+        mScrollbarMode = mode;
+    }
+
+    void setScrollbarHeight(float scrollbarHeight) {
+        mScrollbarHeight = scrollbarHeight;
     }
 
     private float getDistanceOfSelectedImage(ImageIndexingInfo imageIndexingInfo) {
@@ -448,14 +461,20 @@ class AlbumViewGestureDetector implements GridInfoChangeListener {
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             mIsOnScrolling = true;
 
-            float viewportOffsetY = -distanceY;
-            if (m2ndPointerDown == true && m3rdPointerDown == true) {
-                viewportOffsetY *= SCROLL_SCALE_UP_3X;
-            } else if (m2ndPointerDown == true) {
-                viewportOffsetY *= SCROLL_SCALE_UP_1X;
+            if (mScrollbarMode == ScrollbarMode.NORMAL) {
+                float viewportOffsetY = -distanceY;
+                if (m2ndPointerDown == true && m3rdPointerDown == true) {
+                    viewportOffsetY *= SCROLL_SCALE_UP_3X;
+                } else if (m2ndPointerDown == true) {
+                    viewportOffsetY *= SCROLL_SCALE_UP_1X;
+                }
+                setViewportBottomLeft(mCurrentViewport.left,
+                        (mCurrentViewport.bottom + viewportOffsetY), true);
+            } else if (mScrollbarMode == ScrollbarMode.SCROLLBAR_DRAGGING) {
+                float viewportOffsetY = distanceY * ((float) (mScrollableHeight) / (mHeight - mActionBarHeight - mScrollbarHeight * 0.5f));
+                setViewportBottomLeft(mCurrentViewport.left,
+                        (mCurrentViewport.bottom + viewportOffsetY), true);
             }
-            setViewportBottomLeft(mCurrentViewport.left,
-                    (mCurrentViewport.bottom + viewportOffsetY), true);
 
             return true;
         }

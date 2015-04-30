@@ -27,12 +27,28 @@ class Scrollbar implements GridInfoChangeListener {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
+    enum ScrollbarMode {
+        NORMAL(0),
+        SCROLLBAR_DRAGGING(1),
+        NUM_OF_MODE(2);
+
+        private final int mIndex;
+
+        ScrollbarMode(int index) {
+            mIndex = index;
+        }
+
+        int getIndex() {
+            return mIndex;
+        }
+    }
+
     private final Context mContext;
     private final GridInfo mGridInfo;
 
     private GallerySurfaceView mSurfaceView = null;
-    private GLESObject mScrollbarObject = null;
-    private GLESShader mColorShader = null;
+    private GLESObject mObject = null;
+    private GLESShader mShader = null;
     private GLESGLState mGLState = null;
 
     private GLESAnimator mAnimator = null;
@@ -40,10 +56,10 @@ class Scrollbar implements GridInfoChangeListener {
     private int mWidth = 0;
     private int mHeight = 0;
 
-    private float mRed = 0f;
-    private float mGreen = 0f;
-    private float mBlue = 0f;
-    private float mAlpha = 1f;
+    private float[] mRed = new float[ScrollbarMode.NUM_OF_MODE.getIndex()];
+    private float[] mGreen = new float[ScrollbarMode.NUM_OF_MODE.getIndex()];
+    private float[] mBlue = new float[ScrollbarMode.NUM_OF_MODE.getIndex()];
+    private float[] mAlpha = new float[ScrollbarMode.NUM_OF_MODE.getIndex()];
 
     private float mBlendingAlpha = 1f;
 
@@ -54,11 +70,20 @@ class Scrollbar implements GridInfoChangeListener {
 
     private float mScrollbarRegionTop = 0f;
     private float mScrollbarRegionLeft = 0f;
-    private int mScrollbarRegionWidth = 0;
-    private int mScrollbarRegionHeight = 0;
+    private float[] mScrollbarRegionWidth = new float[ScrollbarMode.NUM_OF_MODE.getIndex()];
+    private float mScrollbarRegionHeight = 0f;
+
     private float mScrollbarHeight = 0;
     private float mScrollableDistance = 0f;
     private float mScrollbarMinHeight = 0f;
+
+    private float mScrollDistance = 0f;
+    private ScrollbarMode mScrollbarMode = ScrollbarMode.NORMAL;
+
+    private FloatBuffer mNormalBuffer = null;
+    private FloatBuffer mDraggingBuffer = null;
+
+    private boolean mIsPrevScrolling = false;
 
     private boolean mIsVisible = true;
 
@@ -92,6 +117,16 @@ class Scrollbar implements GridInfoChangeListener {
 
         mAnimator = new GLESAnimator(1f, 0f, new ScrollbarAnimatorCallback());
         mAnimator.setDuration(0L, GalleryConfig.SCROLLBAR_ANIMATION_DURATION);
+
+        int index = ScrollbarMode.SCROLLBAR_DRAGGING.getIndex();
+        int color = mContext.getResources().getColor(R.color.actionBarTitleText);
+        mAlpha[index] = 0.8f;
+        mRed[index] = (color & 0x00FF0000) >> 16;
+        mRed[index] /= 255f;
+        mGreen[index] = (color & 0x0000FF00) >> 8;
+        mGreen[index] /= 255f;
+        mBlue[index] = (color & 0x000000FF);
+        mBlue[index] /= 255f;
     }
 
     void update(boolean isOnScrolling) {
@@ -105,20 +140,62 @@ class Scrollbar implements GridInfoChangeListener {
 
         if (mAnimator.doAnimation() == true) {
             mSurfaceView.requestRender();
-            return;
         }
 
-        if (isOnScrolling == false) {
+        if (isOnScrolling == false && mIsPrevScrolling == true) {
             mAnimator.cancel();
             mAnimator.setValues(1f, 0f);
             mAnimator.start();
         }
+
+        if (mNeedToUpdateColor == true) {
+            mNeedToUpdateColor = false;
+
+            changeMode();
+        }
+
+        mIsPrevScrolling = isOnScrolling;
+    }
+
+    private synchronized void changeMode() {
+        mShader.useProgram();
+
+        int index = mScrollbarMode.getIndex();
+        int location = mShader.getUniformLocation("uColor");
+        GLES20.glUniform4f(location, mRed[index], mGreen[index], mBlue[index], mAlpha[index]);
+
+        GLESVertexInfo vertexInfo = mObject.getVertexInfo();
+
+        switch (mScrollbarMode) {
+            case NORMAL:
+                vertexInfo.setBuffer(mShader.getPositionAttribIndex(), mNormalBuffer);
+
+                mScrollbarRegionLeft = mWidth * 0.5f - mScrollbarRegionWidth[index] - mSpacing * 2;
+
+                mAnimator.cancel();
+                mAnimator.setValues(1f, 0f);
+                mAnimator.start();
+
+                break;
+            case SCROLLBAR_DRAGGING:
+                vertexInfo.setBuffer(mShader.getPositionAttribIndex(), mDraggingBuffer);
+
+                mScrollbarRegionLeft = mWidth * 0.5f - mScrollbarRegionWidth[index] - mSpacing * 2;
+
+                mAnimator.cancel();
+                mBlendingAlpha = 1.0f;
+                mObject.show();
+
+                break;
+        }
+
+        mSurfaceView.requestRender();
     }
 
     private void calcScrollbarHeight() {
         float scrollableHeight = mGridInfo.getScrollableHeight();
         if (scrollableHeight > mHeight) {
-            mScrollbarHeight = ((float) mScrollbarRegionHeight / scrollableHeight) * mScrollbarRegionHeight;
+            mScrollbarHeight = (mScrollbarRegionHeight / scrollableHeight) * mScrollbarRegionHeight;
         } else {
             mScrollbarHeight = mScrollbarRegionHeight;
         }
@@ -144,10 +221,15 @@ class Scrollbar implements GridInfoChangeListener {
             mIsVisible = true;
         }
 
-        mScrollbarRegionWidth = mContext.getResources().getDimensionPixelSize(R.dimen.gridview_scrollbar_width);
+        int index = ScrollbarMode.NORMAL.getIndex();
+        mScrollbarRegionWidth[index] = mContext.getResources().getDimensionPixelSize(R.dimen.gridview_scrollbar_width);
         mScrollbarRegionHeight = height - mSystemBarHeight - mSpacing * 2;
+
         mScrollbarRegionTop = height * 0.5f - mSystemBarHeight - mSpacing;
-        mScrollbarRegionLeft = -width * 0.5f + (mSpacing + mColumnWidth) * mNumOfColumns - mScrollbarRegionWidth;
+        mScrollbarRegionLeft = mWidth * 0.5f - mScrollbarRegionWidth[index] - mSpacing * 2;
+
+        index = ScrollbarMode.SCROLLBAR_DRAGGING.getIndex();
+        mScrollbarRegionWidth[index] = mScrollbarRegionWidth[ScrollbarMode.NORMAL.getIndex()] * 2.5f;
 
         calcScrollbarHeight();
         calcScrollableDistance();
@@ -169,31 +251,23 @@ class Scrollbar implements GridInfoChangeListener {
         mColumnWidth = mGridInfo.getColumnWidth();
         mNumOfColumns = mGridInfo.getNumOfColumns();
 
-        if (mScrollbarObject == null) {
+        if (mObject == null) {
             return;
         }
 
-        mScrollbarRegionLeft = -mWidth * 0.5f + (mSpacing + mColumnWidth) * mNumOfColumns - mScrollbarRegionWidth;
+        int index = ScrollbarMode.NORMAL.getIndex();
+        mScrollbarRegionLeft = mWidth * 0.5f - mScrollbarRegionWidth[index] - mSpacing * 2;;
 
-        GLESVertexInfo vertexInfo = mScrollbarObject.getVertexInfo();
-        FloatBuffer position = (FloatBuffer) vertexInfo.getBuffer(mColorShader.getPositionAttribIndex());
+        GLESVertexInfo vertexInfo = mObject.getVertexInfo();
+        FloatBuffer position = (FloatBuffer) vertexInfo.getBuffer(mShader.getPositionAttribIndex());
 
         calcScrollbarHeight();
 
         float top = position.get(7);
         float bottom = top - mScrollbarHeight;
-        float left = mScrollbarRegionLeft;
-        float right = mScrollbarRegionLeft + mScrollbarRegionWidth;
 
-        position.put(0, left);
         position.put(1, bottom);
-
-        position.put(3, right);
         position.put(4, bottom);
-
-        position.put(6, left);
-
-        position.put(9, right);
 
         mScrollableDistance = bottom + (mHeight * 0.5f - mSpacing);
     }
@@ -208,60 +282,107 @@ class Scrollbar implements GridInfoChangeListener {
         calcScrollbarHeight();
     }
 
+    // initialize
+
     void setSurfaceView(GallerySurfaceView surfaceView) {
         mSurfaceView = surfaceView;
     }
 
     void setColor(float r, float g, float b, float a) {
-        mRed = r;
-        mGreen = g;
-        mBlue = b;
-        mAlpha = a;
+        int index = ScrollbarMode.NORMAL.getIndex();
+        mRed[index] = r;
+        mGreen[index] = g;
+        mBlue[index] = b;
+        mAlpha[index] = a;
     }
 
-
     GLESObject createObject(GLESNode parent) {
-        mScrollbarObject = new GLESObject("scrollbar");
-        parent.addChild(mScrollbarObject);
+        mObject = new GLESObject("scrollbar");
+        parent.addChild(mObject);
 
-        mScrollbarObject.setListener(mScrollbarListener);
-        mScrollbarObject.setGLState(mGLState);
+        mObject.setListener(mScrollbarListener);
+        mObject.setGLState(mGLState);
 
 
-        return mScrollbarObject;
+        return mObject;
     }
 
     void setupObject(GLESCamera camera) {
-        mScrollbarObject.setCamera(camera);
-        mScrollbarObject.setShader(mColorShader);
+        mObject.setCamera(camera);
+        mObject.setShader(mShader);
 
-        GLESVertexInfo vertexInfo = GalleryUtils.createColorVertexInfo(mColorShader,
-                mScrollbarRegionLeft, mScrollbarRegionTop,
-                mScrollbarRegionWidth, mScrollbarHeight,
-                mRed, mGreen, mBlue, mAlpha);
-        mScrollbarObject.setVertexInfo(vertexInfo, false, false);
+        int index = ScrollbarMode.SCROLLBAR_DRAGGING.getIndex();
+        GLESVertexInfo vertexInfo = GalleryUtils.createScrollbarVertexInfo(mShader,
+                0f, 0f,
+                mScrollbarRegionWidth[index], mScrollbarHeight);
+        mDraggingBuffer = (FloatBuffer) vertexInfo.getBuffer(mShader.getPositionAttribIndex());
 
-        mScrollbarObject.hide();
+        index = ScrollbarMode.NORMAL.getIndex();
+        vertexInfo = GalleryUtils.createScrollbarVertexInfo(mShader,
+                0f, 0f,
+                mScrollbarRegionWidth[index], mScrollbarHeight);
+        mNormalBuffer = (FloatBuffer) vertexInfo.getBuffer(mShader.getPositionAttribIndex());
+
+        mObject.setVertexInfo(vertexInfo, false, false);
+
+        mObject.hide();
     }
 
     void setShader(GLESShader shader) {
-        mColorShader = shader;
+        mShader = shader;
 
         shader.useProgram();
 
         int location = shader.getUniformLocation("uAlpha");
         GLES20.glUniform1f(location, 1.0f);
+
+        int index = ScrollbarMode.NORMAL.getIndex();
+        location = shader.getUniformLocation("uColor");
+        GLES20.glUniform4f(location, mRed[index], mGreen[index], mBlue[index], mAlpha[index]);
+    }
+
+    float getScrollbarHeight() {
+        return mScrollbarHeight;
+    }
+
+    float getScrollbarPosY() {
+        return mScrollDistance;
+    }
+
+    float getScrollbarWidth(ScrollbarMode mode) {
+        int index = mode.getIndex();
+        return mScrollbarRegionWidth[index];
+    }
+
+    private boolean mNeedToUpdateColor = false;
+
+    synchronized void setScrollbarMode(ScrollbarMode mode) {
+        int scrollableHeight = mGridInfo.getScrollableHeight();
+        if (scrollableHeight < mHeight) {
+            mode = ScrollbarMode.NORMAL;
+        }
+
+        if (mScrollbarMode != mode) {
+            mNeedToUpdateColor = true;
+            mSurfaceView.requestRender();
+        }
+
+        mScrollbarMode = mode;
+    }
+
+    synchronized ScrollbarMode getScrollbarMode() {
+        return mScrollbarMode;
     }
 
     void show() {
-        if (mScrollbarObject != null && mIsVisible == true) {
-            mScrollbarObject.show();
+        if (mObject != null && mIsVisible == true) {
+            mObject.show();
         }
     }
 
     void hide() {
-        if (mScrollbarObject != null) {
-            mScrollbarObject.hide();
+        if (mObject != null) {
+            mObject.hide();
         }
     }
 
@@ -282,13 +403,16 @@ class Scrollbar implements GridInfoChangeListener {
 
             if (scrollableHeight > mHeight) {
                 float scrollDistance = (translateY / (scrollableHeight - mHeight)) * mScrollableDistance;
-                transform.setTranslate(0f, -scrollDistance, 0f);
+                transform.setTranslate(mScrollbarRegionLeft, -scrollDistance + mScrollbarRegionTop, 0f);
+                mScrollDistance = -scrollDistance;
+            } else {
+                mScrollDistance = 0f;
             }
         }
 
         @Override
         public void apply(GLESObject object) {
-            int location = mColorShader.getUniformLocation("uAlpha");
+            int location = mShader.getUniformLocation("uAlpha");
             GLES20.glUniform1f(location, mBlendingAlpha);
         }
     };
@@ -307,7 +431,7 @@ class Scrollbar implements GridInfoChangeListener {
 
         @Override
         public void onFinished() {
-            mScrollbarObject.hide();
+            mObject.hide();
         }
     }
 }
