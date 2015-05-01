@@ -1219,6 +1219,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             GalleryTexture texture = object.getGalleryTexture();
             if (texture != null) {
                 texture.destroy();
+                textureMappingInfo.setTexture(null);
             }
         }
 
@@ -1226,6 +1227,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         GalleryTexture texture = object.getGalleryTexture();
         if (texture != null) {
             texture.destroy();
+            mDetailTextureMappingInfo.setTexture(null);
         }
     }
 
