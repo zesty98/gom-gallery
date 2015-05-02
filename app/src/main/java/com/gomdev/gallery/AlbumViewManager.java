@@ -215,7 +215,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         mGalleryObjects.setImageShader(mTextureShader);
         mScrollbar.setShader(mScrollbarShader);
 
-        Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.check_white_80);
+        Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.check_black_55);
         GLESTexture checkTexture = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, bitmap.getWidth(), bitmap.getHeight())
                 .load(bitmap);
 
