@@ -89,6 +89,12 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         ON_SCALE_ANIMATION,
     }
 
+    private enum DetailViewState {
+        FIT_SCREEN,
+        ORIGINAL_SIZE_SMALL,
+        ORIGINAL_SIZE_LARGE
+    }
+
     private static final Interpolator sInterpolator = new Interpolator() {
         public float getInterpolation(float t) {
             t -= 1.0f;
@@ -109,6 +115,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private GLESShader mTextureShader = null;
     private GLESTexture mDummyTexture = null;
     private GLESNode mViewPagerNode = null;
+    private GLESNode mLargeImageNode = null;
 
     private DateLabelInfo mSelectedDateLabelInfo = null;
     private ImageIndexingInfo mCurrentImageIndexingInfo = null;
@@ -118,6 +125,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
     private FocusDirection mFocusDirection = FocusDirection.NONE;
     private ScrollState mScrollState = ScrollState.STABLE;
+    private DetailViewState mDetailViewState = DetailViewState.FIT_SCREEN;
 
     private boolean mIsFirstImage = false;
     private boolean mIsLastImage = false;
@@ -131,6 +139,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
     private TextureMappingInfo mDetailTextureMappingInfo = null;
     private ImageObject mDetailObject = null;
+
+    private LargeImage mLargeImage = null;
+    private boolean mNeedToLoadLargeImage = false;
 
     // touch or gesture
     private boolean mIsDown = false;
@@ -160,7 +171,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private ImageInfo mCurrentImageInfo = null;
     private GLESAnimator mScaleAnimator = null;
 
-    private boolean mIsFitScreen = true;
     private volatile boolean mIsOnScaleAnimation = false;
     private boolean mIsDetailObjectShown = false;
     private boolean mVisibility = false;
@@ -201,13 +211,15 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mMaxFlingVelocity = configuration.getScaledMaximumFlingVelocity();
         mMinDistanceForFling = (int) (MIN_DISTANCE_FOR_FLING * density);
         mMaxDragDistanceAtEdge = (int) (MAX_DISTANCE_AT_EDGE * density);
+
+        mLargeImage = new LargeImage(mContext);
     }
 
     private void reset() {
         mIsFirstImage = false;
         mIsLastImage = false;
         mIsActionBarShown = false;
-        mIsFitScreen = true;
+        mDetailViewState = DetailViewState.FIT_SCREEN;
 
         mFocusDirection = FocusDirection.NONE;
 
@@ -223,6 +235,13 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     void update() {
         if (mIsFinished == true) {
             return;
+        }
+
+        if (mNeedToLoadLargeImage == true && mDetailViewState == DetailViewState.ORIGINAL_SIZE_LARGE) {
+            mLargeImage.updateTexture();
+
+            mLargeImageNode.show();
+            mViewPagerNode.hide();
         }
 
         GalleryTexture texture = mWaitingTextures.poll();
@@ -438,6 +457,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         mRequestWidth = mWidth / 2;
         mRequestHeight = mHeight / 2;
+
+        mLargeImage.onSurfaceChanged(width, height);
     }
 
     // onSurfaceCreated
@@ -453,6 +474,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         }
 
         mDetailObject.setShader(mTextureShader);
+
+        mLargeImage.setShader(mTextureShader);
     }
 
     // initialization
@@ -509,6 +532,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             mDetailObject.setAlpha(1f);
             hideDetailObject();
         }
+
+        mLargeImage.setCamera(camera);
 
         if (mCurrentImageIndexingInfo != null) {
             loadTextures();
@@ -647,6 +672,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         }
     }
 
+    private void loadOriginalSizeBitmap(ImageInfo imageInfo, GLESTexture texture) {
+
+    }
+
     private void setPositionCoord(int index, ImageInfo imageInfo) {
         int imageWidth = imageInfo.getWidth();
         int imageHeight = imageInfo.getHeight();
@@ -664,7 +693,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         float imageRatio = (float) imageWidth / imageHeight;
 
-        if (mIsFitScreen == false && (index == CURRENT_INDEX || index == CURRENT_DETAIL_INDEX)) {
+        if ((mDetailViewState != DetailViewState.FIT_SCREEN) &&
+                (index == CURRENT_INDEX || index == CURRENT_DETAIL_INDEX)) {
             top = mCurrentImageInfo.getHeight() * 0.5f;
             right = mCurrentImageInfo.getWidth() * 0.5f;
         } else {
@@ -747,6 +777,13 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
             mDetailTextureMappingInfo = new TextureMappingInfo(mDetailObject);
         }
+
+        mLargeImageNode = new GLESNode("ViewPagerNode");
+        node.addChild(mLargeImageNode);
+        mLargeImageNode.hide();
+        mNeedToLoadLargeImage = false;
+
+        mLargeImage.setParentNode(mLargeImageNode);
     }
 
     // touch
@@ -759,9 +796,14 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         boolean retVal = mGestureDetector.onTouchEvent(event);
 
-        if (mIsFitScreen == false) {
-            handlePanning(event);
-            return true;
+        switch (mDetailViewState) {
+            case ORIGINAL_SIZE_SMALL:
+                return true;
+            case ORIGINAL_SIZE_LARGE:
+//                handlePanning(event);
+                mLargeImage.onTouchEvent(event);
+                mSurfaceView.requestRender();
+                return true;
         }
 
         if (retVal == true) {
@@ -1035,6 +1077,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         hideDetailObject();
         loadTexture(CURRENT_DETAIL_INDEX, mCurrentImageIndexingInfo, false);
+        ImageInfo imageInfo = ImageManager.getInstance().getImageInfo(mCurrentImageIndexingInfo);
         mDetailObject.setTranslate(0f, 0f);
         mDetailObject.setScale(MAX_SCALE);
         mDetailObject.setAlpha(1f);
@@ -1199,13 +1242,24 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mWaitingTextures.clear();
 
         mScroller.abortAnimation();
+
+        if (mScaleAnimator != null) {
+            mScaleAnimator.cancel();
+        }
+
         if (mIsOnSwipeAnimation == true) {
             onSwipingFinished();
         }
+
         mIsOnSwipeAnimation = false;
         mScrollState = ScrollState.STABLE;
 
         hideDetailObject();
+
+        mViewPagerNode.show();
+        mLargeImageNode.hide();
+        mNeedToLoadLargeImage = false;
+        mLargeImage.clearObjects();
     }
 
     void destroyTextures() {
@@ -1332,46 +1386,39 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             int width = mCurrentImageInfo.getWidth();
             int height = mCurrentImageInfo.getHeight();
             float imageRatio = (float) width / height;
-            if (imageRatio >= mScreenRatio) {
-                if (mIsFitScreen == true) {
-                    mIsFitScreen = false;
 
-                    mPrevScale = 1f;
+            if (mDetailViewState == DetailViewState.FIT_SCREEN) {
+
+                mPrevScale = 1f;
+                if (imageRatio >= mScreenRatio) {
                     mNextScale = (float) width / mWidth;
-
-                    mPrevTranslateX = 0f;
-                    mPrevTranslateY = 0f;
                 } else {
-                    mIsFitScreen = true;
-
-                    mPrevScale = 1f;
-                    mNextScale = (float) mWidth / width;
-
-                    mPrevTranslateX = mCurrentObject.getTranslateX();
-                    mPrevTranslateY = mCurrentObject.getTranslateY();
-                }
-            } else {
-                if (mIsFitScreen == true) {
-                    mIsFitScreen = false;
-
-                    mPrevScale = 1f;
                     mNextScale = (float) height / mHeight;
-
-                    mPrevTranslateX = 0f;
-                    mPrevTranslateY = 0f;
-                } else {
-                    mIsFitScreen = true;
-
-                    mPrevScale = 1f;
-                    mNextScale = (float) mHeight / height;
-
-                    mPrevTranslateX = mCurrentObject.getTranslateX();
-                    mPrevTranslateY = mCurrentObject.getTranslateY();
                 }
+
+                if (mNextScale > 1f) {
+                    mDetailViewState = DetailViewState.ORIGINAL_SIZE_LARGE;
+                } else {
+                    mDetailViewState = DetailViewState.ORIGINAL_SIZE_SMALL;
+                }
+
+                mPrevTranslateX = 0f;
+                mPrevTranslateY = 0f;
+            } else {
+                mDetailViewState = DetailViewState.FIT_SCREEN;
+
+                mPrevScale = 1f;
+                if (imageRatio >= mScreenRatio) {
+                    mNextScale = (float) mWidth / width;
+                } else {
+                    mNextScale = (float) mHeight / height;
+                }
+
+                mPrevTranslateX = mLargeImage.getTranslateX();
+                mPrevTranslateY = mLargeImage.getTranslateY();
             }
 
-            String msg;
-            if (mIsFitScreen == true) {
+            if (mDetailViewState == DetailViewState.FIT_SCREEN) {
                 Toast.makeText(mContext, "Fit Screen",
                         Toast.LENGTH_SHORT)
                         .show();
@@ -1386,8 +1433,12 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             mScaleAnimator.setDuration(0L, SCALE_ANIMATION_DURATION);
             mScaleAnimator.start();
 
+            mLargeImageNode.hide();
+            mNeedToLoadLargeImage = false;
+            mViewPagerNode.show();
+
             if (DEBUG) {
-                Log.d(TAG, "startScaleAnimation() mIsFitScreen=" + !mIsFitScreen);
+                Log.d(TAG, "startScaleAnimation() mDetailViewState=" + mDetailViewState);
                 Log.d(TAG, "\t image width=" + width + " height=" + height);
                 Log.d(TAG, "\t screen mWidth=" + mWidth + " mHeight=" + mHeight);
                 Log.d(TAG, "\t mPrevScale=" + mPrevScale + " mNextScale=" + mNextScale);
@@ -1498,6 +1549,11 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 } else {
                     setPositionCoord(CURRENT_INDEX, mCurrentImageInfo);
                 }
+            }
+
+            if (mDetailViewState == DetailViewState.ORIGINAL_SIZE_LARGE) {
+                mLargeImage.load(mCurrentImageInfo);
+                mNeedToLoadLargeImage = true;
             }
 
             mScrollState = ScrollState.STABLE;
