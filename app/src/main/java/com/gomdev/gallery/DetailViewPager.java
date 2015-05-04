@@ -237,12 +237,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             return;
         }
 
-        if (mNeedToLoadLargeImage == true && mDetailViewState == DetailViewState.ORIGINAL_SIZE_LARGE) {
-            mLargeImage.updateTexture();
-
-            mLargeImageNode.show();
-            mViewPagerNode.hide();
-        }
+        checkAndShowLargeImage();
 
         GalleryTexture texture = mWaitingTextures.poll();
 
@@ -780,8 +775,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         mLargeImageNode = new GLESNode("ViewPagerNode");
         node.addChild(mLargeImageNode);
-        mLargeImageNode.hide();
-        mNeedToLoadLargeImage = false;
+
+        hideLargeImage();
 
         mLargeImage.setParentNode(mLargeImageNode);
     }
@@ -1232,6 +1227,25 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mIsDetailObjectShown = false;
     }
 
+    private synchronized void hideLargeImage() {
+        mNeedToLoadLargeImage = false;
+        mLargeImageNode.hide();
+        mViewPagerNode.show();
+    }
+
+    private synchronized void checkAndShowLargeImage() {
+        if (mNeedToLoadLargeImage == true && mDetailViewState == DetailViewState.ORIGINAL_SIZE_LARGE) {
+            mLargeImage.updateTexture();
+            mLargeImageNode.show();
+            mViewPagerNode.hide();
+        }
+    }
+
+    private synchronized void loadLargeImage() {
+        mLargeImage.load(mCurrentImageInfo);
+        mNeedToLoadLargeImage = true;
+    }
+
     void onFinish() {
         if (DEBUG) {
             Log.d(TAG, "onFinish()");
@@ -1256,9 +1270,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         hideDetailObject();
 
-        mViewPagerNode.show();
-        mLargeImageNode.hide();
-        mNeedToLoadLargeImage = false;
+
+        hideLargeImage();
     }
 
     void destroyTextures() {
@@ -1404,8 +1417,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 mPrevTranslateX = 0f;
                 mPrevTranslateY = 0f;
             } else {
-                mDetailViewState = DetailViewState.FIT_SCREEN;
-
                 mPrevScale = 1f;
                 if (imageRatio >= mScreenRatio) {
                     mNextScale = (float) mWidth / width;
@@ -1413,8 +1424,15 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                     mNextScale = (float) mHeight / height;
                 }
 
-                mPrevTranslateX = mLargeImage.getTranslateX();
-                mPrevTranslateY = mLargeImage.getTranslateY();
+                if (mDetailViewState == DetailViewState.ORIGINAL_SIZE_LARGE) {
+                    mPrevTranslateX = mLargeImage.getTranslateX();
+                    mPrevTranslateY = mLargeImage.getTranslateY();
+                } else {
+                    mPrevTranslateX = 0f;
+                    mPrevTranslateY = 0f;
+                }
+
+                mDetailViewState = DetailViewState.FIT_SCREEN;
             }
 
             if (mDetailViewState == DetailViewState.FIT_SCREEN) {
@@ -1432,9 +1450,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             mScaleAnimator.setDuration(0L, SCALE_ANIMATION_DURATION);
             mScaleAnimator.start();
 
-            mLargeImageNode.hide();
-            mNeedToLoadLargeImage = false;
-            mViewPagerNode.show();
+            hideLargeImage();
 
             if (DEBUG) {
                 Log.d(TAG, "startScaleAnimation() mDetailViewState=" + mDetailViewState);
@@ -1551,8 +1567,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             }
 
             if (mDetailViewState == DetailViewState.ORIGINAL_SIZE_LARGE) {
-                mLargeImage.load(mCurrentImageInfo);
-                mNeedToLoadLargeImage = true;
+                loadLargeImage();
             }
 
             mScrollState = ScrollState.STABLE;
