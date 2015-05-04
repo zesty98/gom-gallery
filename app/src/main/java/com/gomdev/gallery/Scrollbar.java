@@ -256,7 +256,8 @@ class Scrollbar implements GridInfoChangeListener {
         }
 
         int index = ScrollbarMode.NORMAL.getIndex();
-        mScrollbarRegionLeft = mWidth * 0.5f - mScrollbarRegionWidth[index] - mSpacing * 2;;
+        mScrollbarRegionLeft = mWidth * 0.5f - mScrollbarRegionWidth[index] - mSpacing * 2;
+        ;
 
         GLESVertexInfo vertexInfo = mObject.getVertexInfo();
         FloatBuffer position = (FloatBuffer) vertexInfo.getBuffer(mShader.getPositionAttribIndex());

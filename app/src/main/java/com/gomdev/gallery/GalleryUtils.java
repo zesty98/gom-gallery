@@ -185,8 +185,8 @@ class GalleryUtils {
     }
 
     static GLESVertexInfo createScrollbarVertexInfo(GLESShader shader,
-                                                float x, float y,
-                                                float width, float height) {
+                                                    float x, float y,
+                                                    float width, float height) {
         float left = x;
         float right = x + width;
         float top = y;

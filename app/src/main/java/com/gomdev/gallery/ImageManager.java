@@ -2,15 +2,12 @@ package com.gomdev.gallery;
 
 import android.content.Context;
 import android.provider.MediaStore;
-import android.util.Log;
-import android.widget.Toast;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 import com.gomdev.gallery.GalleryConfig.DeletedInfo;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by gomdev on 15. 1. 22..

@@ -1259,7 +1259,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mViewPagerNode.show();
         mLargeImageNode.hide();
         mNeedToLoadLargeImage = false;
-        mLargeImage.clearObjects();
     }
 
     void destroyTextures() {

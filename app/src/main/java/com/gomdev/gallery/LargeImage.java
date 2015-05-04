@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapRegionDecoder;
 import android.graphics.Rect;
 import android.opengl.GLES20;
-import android.util.Log;
 import android.view.MotionEvent;
 
 import com.gomdev.gles.GLESCamera;
@@ -18,7 +17,6 @@ import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESVertexInfo;
 
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
@@ -53,7 +51,6 @@ public class LargeImage {
     private ImageInfo mImageInfo;
 
     private LargeImageObject[] mObjects = null;
-    private LinkedList<LargeImageObject> mObjectPool = new LinkedList<>();
 
     private GLESShader mShader = null;
     private GLESCamera mCamera = null;
@@ -94,17 +91,6 @@ public class LargeImage {
         mContext = context;
 
         mExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(CPU_COUNT);
-    }
-
-    void clearObjects() {
-        for (int i = 0; i < mNumOfObjects; i++) {
-            mObjectPool.add(mObjects[i]);
-            GLESTexture texture = mObjects[i].getTexture();
-            if (texture != null) {
-                texture.destroy();
-            }
-            mParentNode.removeChild(mObjects[i]);
-        }
     }
 
     // rendering
@@ -367,30 +353,40 @@ public class LargeImage {
         mNumOfObjectInHeight = (int) Math.ceil((float) mBitmapHeight / GRID_SIZE);
         mNumOfObjects = mNumOfObjectInWidth * mNumOfObjectInHeight;
 
-        createObjects();
+        GLESGLState state = new GLESGLState();
+        state.setCullFaceState(true);
+        state.setCullFace(GLES20.GL_BACK);
+        state.setDepthState(false);
+
+        createObjects(state);
         setupObjects();
     }
 
     private void reset() {
         mCurrentTranslateX = 0f;
         mCurrentTranslateY = 0f;
-    }
 
-    private void createObjects() {
-        mObjects = new LargeImageObject[mNumOfObjects];
-
-        GLESGLState state = new GLESGLState();
-        state.setCullFaceState(true);
-        state.setCullFace(GLES20.GL_BACK);
-        state.setDepthState(false);
+        if (mDecoder != null) {
+            mDecoder.recycle();
+        }
+        mDecoder = null;
 
         for (int i = 0; i < mNumOfObjects; i++) {
-            LargeImageObject object = mObjectPool.pollFirst();
-            if (object == null) {
-                mObjects[i] = new LargeImageObject();
-            } else {
-                mObjects[i] = object;
+            GLESTexture texture = mObjects[i].getTexture();
+            if (texture != null) {
+                texture.destroy();
             }
+            mObjects[i] = null;
+        }
+
+        mParentNode.removeAll();
+    }
+
+    private void createObjects(GLESGLState state) {
+        mObjects = new LargeImageObject[mNumOfObjects];
+
+        for (int i = 0; i < mNumOfObjects; i++) {
+            mObjects[i] = new LargeImageObject();
 
             mObjects[i].setGLState(state);
             mObjects[i].setShader(mShader);
@@ -419,8 +415,6 @@ public class LargeImage {
             for (int j = 0; j < mNumOfObjectInWidth; j++) {
                 int index = i * mNumOfObjectInWidth + j;
 
-                mObjects[index].setCamera(mCamera);
-
                 objX = -halfWidth + GRID_SIZE * j;
 
                 imageX = halfWidth + objX;
@@ -443,7 +437,8 @@ public class LargeImage {
                 GLESVertexInfo vertexInfo = GalleryUtils.createImageVertexInfo(mShader,
                         objX, objY,
                         objWidth, objHeight);
-                mObjects[index].setVertexInfo(vertexInfo, true, false);
+
+                mObjects[index].setVertexInfo(vertexInfo, false, false);
 
                 if (isInScreen(mObjects[index]) == true) {
                     rect.set(imageX, imageY, imageX + objWidth, imageY + objHeight);

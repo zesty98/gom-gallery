@@ -33,17 +33,19 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    private final int ALPAH_ANIMATION_DURATION = 300;
-    private final float VISIBILITY_PADDING_DP = 60f;    // dp
+    private static final int ALPAH_ANIMATION_DURATION = 300;
+    private static final float VISIBILITY_PADDING_DP = 60f;    // dp
 
-    private final float DUMMY_TEXTURE_R = 0.8f;
-    private final float DUMMY_TEXTURE_G = 0.8f;
-    private final float DUMMY_TEXTURE_B = 0.8f;
-    private final float DUMMY_TEXTURE_A = 1.0f;
-    private final int DUMMY_TEXTURE_COLOR = (int) (DUMMY_TEXTURE_A * 0xFF) << 24 |
+    private static final float DUMMY_TEXTURE_R = 0.8f;
+    private static final float DUMMY_TEXTURE_G = 0.8f;
+    private static final float DUMMY_TEXTURE_B = 0.8f;
+    private static final float DUMMY_TEXTURE_A = 1.0f;
+    private static final int DUMMY_TEXTURE_COLOR = (int) (DUMMY_TEXTURE_A * 0xFF) << 24 |
             (int) (DUMMY_TEXTURE_R * 0xFF) << 16 |
             (int) (DUMMY_TEXTURE_G * 0xFF) << 8 |
             (int) (DUMMY_TEXTURE_B * 0xFF);
+
+    private static GLESTexture sDummyTexture = null;
 
     private final Context mContext;
     private final GridInfo mGridInfo;
@@ -60,7 +62,6 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private GLESShader mShader = null;
     private GLESGLState mGLState = null;
-    private GLESTexture mDummyTexture = null;
 
     private int mCheckIndex = 0;
     private GLESTexture mCheckTexture = null;
@@ -269,7 +270,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     private void unmapTexture(int index, ImageObject object) {
-        object.setDummyTexture(mDummyTexture);
+        object.setDummyTexture(sDummyTexture);
 
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
         GalleryTexture texture = textureMappingInfo.getTexture();
@@ -369,7 +370,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         cancelLoading();
         clear();
 
-        mDummyTexture = GalleryUtils.createDummyTexture(DUMMY_TEXTURE_COLOR);
+        if (sDummyTexture == null) {
+            sDummyTexture = GalleryUtils.createDummyTexture(DUMMY_TEXTURE_COLOR);
+        }
 
         int size = mObjects.size();
         for (int i = 0; i < size; i++) {
@@ -378,7 +381,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setVisibility(false);
             object.setShader(mShader);
 
-            object.setDummyTexture(mDummyTexture);
+            object.setDummyTexture(sDummyTexture);
         }
 
         size = mTextureMappingInfos.size();
@@ -387,8 +390,12 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         }
     }
 
-    void setCheckTexture(GLESTexture texture) {
-        mCheckTexture = texture;
+    void onResume() {
+
+    }
+
+    void onPause() {
+        sDummyTexture = null;
     }
 
     @Override
@@ -566,6 +573,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         mAlbumViewManager = manager;
     }
 
+    void setCheckTexture(GLESTexture texture) {
+        mCheckTexture = texture;
+    }
 
     void setStartOffsetY(float startOffsetY) {
         mStartOffsetY = startOffsetY;

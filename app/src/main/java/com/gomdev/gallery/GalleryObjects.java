@@ -37,6 +37,8 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
+    private static GLESTexture sDummyTexture = null;
+
     private final Context mContext;
     private final GridInfo mGridInfo;
     private final BucketInfo mBucketInfo;
@@ -63,7 +65,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     private int mSystemBarHeight = 0;
 
     private Bitmap mLoadingBitmap = null;
-    private GLESTexture mDummyTexture = null;
 
     private int mWidth = 0;
     private int mHeight = 0;
@@ -233,7 +234,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     void unmapTexture(int index, GalleryObject object) {
-        object.setDummyTexture(mDummyTexture);
+        object.setDummyTexture(sDummyTexture);
 
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
         GalleryTexture texture = textureMappingInfo.getTexture();
@@ -327,13 +328,15 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         clear();
 
-        mDummyTexture = GalleryUtils.createDummyTexture(Color.WHITE);
+        if (sDummyTexture == null) {
+            sDummyTexture = GalleryUtils.createDummyTexture(Color.WHITE);
+        }
 
         int size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mDateLabelObjects.get(i);
             object.setShader(mShader);
-            object.setDummyTexture(mDummyTexture);
+            object.setDummyTexture(sDummyTexture);
             object.setTextureMapping(false);
 
             ImageObjects imageObjects = object.getImageObjects();
@@ -352,6 +355,21 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             DateLabelObject object = mDateLabelObjects.get(i);
             ImageObjects imageObjects = object.getImageObjects();
             imageObjects.setCheckTexture(texture);
+        }
+    }
+
+    void onResume() {
+
+    }
+
+    void onPause() {
+        sDummyTexture = null;
+
+        int size = mDateLabelObjects.size();
+        for (int i = 0; i < size; i++) {
+            DateLabelObject object = mDateLabelObjects.get(i);
+            ImageObjects imageObjects = object.getImageObjects();
+            imageObjects.onPause();
         }
     }
 

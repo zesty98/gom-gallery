@@ -28,7 +28,7 @@ import com.gomdev.gles.GLESVector3;
 class AlbumViewManager implements GridInfoChangeListener, ViewManager {
     static final String CLASS = "AlbumViewManager";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
-    static final boolean DEBUG = true;//GalleryConfig.DEBUG;
+    static final boolean DEBUG = GalleryConfig.DEBUG;
 
     private final Context mContext;
     private final GridInfo mGridInfo;
@@ -288,10 +288,11 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         if (DEBUG) {
             Log.d(TAG, "onPause()");
         }
+
+        mGalleryObjects.onPause();
     }
 
     // touch
-
 
 
     @Override
