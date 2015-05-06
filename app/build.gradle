@@ -8,8 +8,8 @@ android {
         applicationId "com.gomdev.gallery"
         minSdkVersion 16
         targetSdkVersion 21
-        versionCode 105
-        versionName "1.05"
+        versionCode 106
+        versionName "1.06"
 
         sourceSets.main {
             jniLibs.srcDir 'src/main/libs'
