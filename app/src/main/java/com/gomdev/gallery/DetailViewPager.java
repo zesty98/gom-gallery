@@ -83,10 +83,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     }
 
     private enum ScrollState {
-        ON_SCROLL,
-        ON_FLING,
         STABLE,
-        ON_SCALE_ANIMATION,
+        ON_SCROLL,
+        ON_FLING
     }
 
     private enum DetailViewState {
@@ -152,8 +151,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private VelocityTracker mVelocityTracker = null;
     private GestureDetector mGestureDetector = null;
 
-    private boolean mIsOnSwipeAnimation = false;
-    private boolean mIsOnScroll = false;
     private boolean mIsFinished = false;
     private boolean mNeedToPopulate = false;
 
@@ -264,7 +261,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             TextureMappingInfo textureMappingInfo = null;
             if (index == CURRENT_DETAIL_INDEX) {
                 textureMappingInfo = mDetailTextureMappingInfo;
-                if (mIsOnScroll == false) {
+                if (mScrollState == ScrollState.STABLE) {
                     showDetailObject();
                 }
             } else {
@@ -300,14 +297,12 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 mDragDistance = mScroller.getCurrX();
             }
         } else {
-            if (mIsOnSwipeAnimation == true) {
+            if (mScrollState == ScrollState.ON_FLING) {
                 onSwipingFinished();
             }
-            mIsOnSwipeAnimation = false;
-            mScrollState = ScrollState.STABLE;
         }
 
-        if (mIsOnScroll == true) {
+        if (mScrollState == ScrollState.ON_SCROLL || mScrollState == ScrollState.ON_FLING) {
             changeScaleAndAlpha();
         }
     }
@@ -358,7 +353,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             Log.d(TAG, "onSwipingFinished()");
         }
 
-        mIsOnScroll = false;
+        mScrollState = ScrollState.STABLE;
         mIsAtEdge = false;
         mDragDistance = 0;
 
@@ -822,8 +817,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         switch (action) {
             case ACTION_DOWN:
-                mIsOnScroll = true;
-                mScrollState = ScrollState.ON_SCROLL;
+                if (mScrollState == ScrollState.STABLE) {
+                    mScrollState = ScrollState.ON_SCROLL;
+                }
+
                 mIsDown = true;
                 mDownX = event.getX();
                 mDragDistance = 0;
@@ -846,8 +843,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 break;
             case ACTION_MOVE:
                 if (mIsDown == true) {
-                    mIsOnScroll = true;
                     mScrollState = ScrollState.ON_SCROLL;
+
                     mDragDistance = (int) (event.getX() - mDownX);
                     if (mIsFirstImage == true && mDragDistance > 0) {
                         if (mDragDistance > mMaxDragDistanceAtEdge) {
@@ -892,7 +889,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             }
         }
 
-        mIsOnSwipeAnimation = true;
         mNeedToPopulate = true;
         mScrollState = ScrollState.ON_FLING;
     }
@@ -1261,15 +1257,11 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             mScaleAnimator.cancel();
         }
 
-        if (mIsOnSwipeAnimation == true) {
+        if (mScrollState == ScrollState.ON_FLING) {
             onSwipingFinished();
         }
 
-        mIsOnSwipeAnimation = false;
-        mScrollState = ScrollState.STABLE;
-
         hideDetailObject();
-
 
         hideLargeImage();
     }
@@ -1376,8 +1368,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         }
 
         private void startScaleAnimation() {
-            mScrollState = ScrollState.ON_SCALE_ANIMATION;
-
             GalleryTexture texture = mDetailTextureMappingInfo.getTexture();
             if (texture != null && texture.getState() == GalleryTexture.State.LOADED) {
                 mIsDetailObjectShown = true;
@@ -1542,8 +1532,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             } else {
                 setPositionCoord(CURRENT_INDEX, mCurrentImageInfo);
             }
-
-            mScrollState = ScrollState.STABLE;
         }
 
         @Override
@@ -1569,8 +1557,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             if (mDetailViewState == DetailViewState.ORIGINAL_SIZE_LARGE) {
                 loadLargeImage();
             }
-
-            mScrollState = ScrollState.STABLE;
         }
     };
 }
