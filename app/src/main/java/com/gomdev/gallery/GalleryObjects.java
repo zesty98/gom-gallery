@@ -234,6 +234,17 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     void unmapTexture(int index, GalleryObject object) {
+        if (DEBUG) {
+            if (sDummyTexture == null) {
+                Log.d(TAG, "unmapTexture() sDummyTexture is null");
+            } else {
+                int textureID = sDummyTexture.getTextureID();
+                if (GLES20.glIsTexture(textureID) == false) {
+                    Log.d(TAG, "unmapTexture() sDummyTexture is invalid");
+                }
+            }
+        }
+
         object.setDummyTexture(sDummyTexture);
 
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
@@ -277,6 +288,10 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             ImageObjects imageObjects = object.getImageObjects();
             imageObjects.onSurfaceChanged(width, height);
+        }
+
+        if (sDummyTexture == null) {
+            sDummyTexture = GalleryUtils.createDummyTexture(Color.WHITE);
         }
     }
 

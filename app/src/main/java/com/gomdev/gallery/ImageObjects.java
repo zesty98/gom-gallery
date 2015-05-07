@@ -270,6 +270,17 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     private void unmapTexture(int index, ImageObject object) {
+        if (DEBUG) {
+            if (sDummyTexture == null) {
+                Log.d(TAG, "unmapTexture() sDummyTexture is null");
+            } else {
+                int textureID = sDummyTexture.getTextureID();
+                if (GLES20.glIsTexture(textureID) == false) {
+                    Log.d(TAG, "unmapTexture() sDummyTexture is invalid");
+                }
+            }
+        }
+
         object.setDummyTexture(sDummyTexture);
 
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
@@ -304,6 +315,10 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         mHalfWidth = width * 0.5f;
         mHalfHeight = height * 0.5f;
+
+        if (sDummyTexture == null) {
+            sDummyTexture = GalleryUtils.createDummyTexture(DUMMY_TEXTURE_COLOR);
+        }
     }
 
     void setupObjects(GLESCamera camera) {
