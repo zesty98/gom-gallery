@@ -19,6 +19,8 @@ import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
 
+import com.gomdev.gallery.GalleryTexture.TextureState;
+
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -290,9 +292,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             return;
         }
 
-        GalleryTexture.State state = texture.getState();
+        TextureState textureState = texture.getState();
 
-        switch (state) {
+        switch (textureState) {
             case DECODING:
                 BitmapWorker.cancelWork(texture);
                 break;
@@ -713,9 +715,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
                 continue;
             }
 
-            GalleryTexture.State state = texture.getState();
+            TextureState textureState = texture.getState();
 
-            switch (state) {
+            switch (textureState) {
                 case DECODING:
                     BitmapWorker.cancelWork(texture);
                     break;
