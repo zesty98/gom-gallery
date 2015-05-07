@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import com.gomdev.gallery.GalleryTexture.TextureState;
+
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
 import static android.view.MotionEvent.ACTION_UP;
@@ -434,7 +436,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mDetailObject.setScale(MAX_SCALE);
         mDetailObject.setAlpha(1f);
         GalleryTexture texture = mDetailTextureMappingInfo.getTexture();
-        if (texture != null && texture.getState() == GalleryTexture.State.LOADED) {
+        if (texture != null && texture.getState() == TextureState.LOADED) {
             showDetailObject();
         }
     }
@@ -638,6 +640,19 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         }
 
         GalleryTexture texture = textureMappingInfo.getTexture();
+        if (texture != null) {
+            GalleryTexture.TextureState textureState = texture.getState();
+            switch (textureState) {
+                case DECODING:
+                    BitmapWorker.cancelWork(texture);
+                    break;
+                case QUEUING:
+                    mWaitingTextures.remove(texture);
+                    break;
+            }
+            textureMappingInfo.setTexture(null);
+        }
+
         ImageInfo prevImageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
 
         if (texture == null || prevImageInfo != imageInfo || index == CURRENT_DETAIL_INDEX) {
@@ -989,19 +1004,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     }
 
     private void loadDetailTexture() {
-        GalleryTexture texture = mDetailTextureMappingInfo.getTexture();
-        if (texture != null) {
-            GalleryTexture.State state = texture.getState();
-            switch (state) {
-                case DECODING:
-                    BitmapWorker.cancelWork(texture);
-                    break;
-                case QUEUING:
-                    mWaitingTextures.remove(texture);
-                    break;
-            }
-            mDetailTextureMappingInfo.setTexture(null);
-        }
+
 
         hideDetailObject();
         loadTexture(CURRENT_DETAIL_INDEX, mCurrentImageIndexingInfo, false);
@@ -1308,7 +1311,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         private void startScaleAnimation() {
             GalleryTexture texture = mDetailTextureMappingInfo.getTexture();
-            if (texture != null && texture.getState() == GalleryTexture.State.LOADED) {
+            if (texture != null && texture.getState() == TextureState.LOADED) {
                 mIsDetailObjectShown = true;
 
                 mCurrentObject = mDetailObject;
@@ -1480,7 +1483,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
                 setPositionCoord(CURRENT_DETAIL_INDEX, mCurrentImageInfo);
             } else {
                 GalleryTexture texture = mDetailTextureMappingInfo.getTexture();
-                if (texture != null && texture.getState() == GalleryTexture.State.LOADED) {
+                if (texture != null && texture.getState() == TextureState.LOADED) {
                     mCurrentObject = mDetailObject;
                     mCurrentImageInfo = (ImageInfo) mDetailTextureMappingInfo.getGalleryInfo();
                     showDetailObject();

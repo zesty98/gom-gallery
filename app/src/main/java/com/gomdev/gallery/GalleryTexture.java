@@ -14,7 +14,7 @@ class GalleryTexture implements BitmapContainer {
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    enum State {
+    enum TextureState {
         NONE,
         DECODING,
         QUEUING,
@@ -25,7 +25,7 @@ class GalleryTexture implements BitmapContainer {
     private GLESTexture.Builder mBuilder = null;
     private BitmapDrawable mDrawable = null;
 
-    private State mState = State.NONE;
+    private TextureState mTextureState = TextureState.NONE;
 
     private ImageLoadingListener mImageLoadingListener;
 
@@ -38,7 +38,7 @@ class GalleryTexture implements BitmapContainer {
 
     GalleryTexture(int width, int height) {
         synchronized (this) {
-            setState(State.NONE);
+            setState(TextureState.NONE);
             mBuilder = new GLESTexture.Builder(GLES20.GL_TEXTURE_2D, width, height);
         }
     }
@@ -60,7 +60,7 @@ class GalleryTexture implements BitmapContainer {
 
         if (drawable instanceof AsyncDrawable) {
             synchronized (this) {
-                setState(State.DECODING);
+                setState(TextureState.DECODING);
                 mIsTextureLoadingStarted = true;
                 mIsTextureLoadingFinished = false;
             }
@@ -69,7 +69,7 @@ class GalleryTexture implements BitmapContainer {
 
         if (mIsTextureLoadingFinished == false) {
             synchronized (this) {
-                setState(State.QUEUING);
+                setState(TextureState.QUEUING);
                 mImageLoadingListener.onImageLoaded(mIndex, this);
             }
         }
@@ -83,7 +83,7 @@ class GalleryTexture implements BitmapContainer {
     }
 
     synchronized void load(Bitmap bitmap) {
-        setState(State.LOADED);
+        setState(TextureState.LOADED);
         mTexture = mBuilder.load(bitmap);
     }
 
@@ -103,12 +103,12 @@ class GalleryTexture implements BitmapContainer {
         return (mIsTextureLoadingFinished == false) && (mIsTextureLoadingStarted == false);
     }
 
-    private void setState(State state) {
-        mState = state;
+    private void setState(TextureState textureState) {
+        mTextureState = textureState;
     }
 
-    synchronized State getState() {
-        return mState;
+    synchronized TextureState getState() {
+        return mTextureState;
     }
 
     void setThumbnail(boolean isThumbnail) {
