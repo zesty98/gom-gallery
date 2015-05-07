@@ -48,6 +48,10 @@ class GalleryTexture implements BitmapContainer {
     }
 
     void destroy() {
+        if (mDrawable != null && mDrawable instanceof RecyclingBitmapDrawable) {
+            ((RecyclingBitmapDrawable) mDrawable).setIsDisplayed(false);
+        }
+
         if (mTexture != null) {
             mTexture.destroy();
         }
