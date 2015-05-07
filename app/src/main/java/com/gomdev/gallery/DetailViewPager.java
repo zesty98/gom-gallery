@@ -51,6 +51,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     static final boolean DEBUG = GalleryConfig.DEBUG;
     static final boolean DEBUG_TOUCH = GalleryConfig.DEBUG;
 
+    private static final String FIT_SCREEN = "Fit screen";
+    private static final String ORIGINAL_SIZE = "Original size";
+
     private static final int MAX_SETTLE_DURATION = 600;
     private static final int EDGE_SCROLLING_DURATION = 500;
     private static final long SCALE_ANIMATION_DURATION = 300L;
@@ -178,9 +181,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private float mPrevTranslateX = 0f;
     private float mPrevTranslateY = 0f;
 
-    // panning
-    private float mPrevX = 0f;
-    private float mPrevY = 0f;
+    private Toast mFitScreenToast = null;
+    private Toast mOriginalSizeToast = null;
 
     DetailViewPager(Context context, GridInfo gridInfo) {
         mContext = context;
@@ -210,6 +212,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mMaxDragDistanceAtEdge = (int) (MAX_DISTANCE_AT_EDGE * density);
 
         mLargeImage = new LargeImage(mContext);
+
+        mFitScreenToast = Toast.makeText(mContext, FIT_SCREEN, Toast.LENGTH_SHORT);
+        mOriginalSizeToast = Toast.makeText(mContext, ORIGINAL_SIZE, Toast.LENGTH_SHORT);
     }
 
     private void reset() {
@@ -790,7 +795,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             case ORIGINAL_SIZE_SMALL:
                 return true;
             case ORIGINAL_SIZE_LARGE:
-//                handlePanning(event);
                 mLargeImage.onTouchEvent(event);
                 mSurfaceView.requestRender();
                 return true;
@@ -932,73 +936,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         duration = Math.min(duration, MAX_SETTLE_DURATION);
         mScroller.startScroll(mDragDistance, 0, distance, 0, duration);
-    }
-
-
-    private void handlePanning(MotionEvent event) {
-        int width = mCurrentImageInfo.getWidth();
-        int height = mCurrentImageInfo.getHeight();
-
-        if (width < mWidth && height < mHeight) {
-            return;
-        }
-
-        float maxTranslateX = 0f;
-        if (width > mWidth) {
-            maxTranslateX = (width - mWidth) * 0.5f;
-        }
-
-        float maxTranslateY = 0f;
-        if (height > mHeight) {
-            maxTranslateY = (height - mHeight) * 0.5f;
-        }
-
-        float x = 0f;
-        float y = 0f;
-
-        float translateX = 0f;
-        float translateY = 0f;
-
-        int action = MotionEventCompat.getActionMasked(event);
-        switch (action) {
-            case ACTION_DOWN:
-                mPrevX = event.getX();
-                mPrevY = event.getY();
-                break;
-            case ACTION_MOVE:
-                x = event.getX();
-                y = event.getY();
-
-                translateX = mCurrentObject.getTranslateX();
-                translateX += (x - mPrevX);
-
-                if (maxTranslateX < Math.abs(translateX)) {
-                    if (translateX < 0) {
-                        translateX = -maxTranslateX;
-                    } else {
-                        translateX = maxTranslateX;
-                    }
-                }
-
-                translateY = mCurrentObject.getTranslateY();
-                translateY += (mPrevY - y);
-                if (maxTranslateY < Math.abs(translateY)) {
-                    if (translateY < 0) {
-                        translateY = -maxTranslateY;
-                    } else {
-                        translateY = maxTranslateY;
-                    }
-                }
-
-                mCurrentObject.setTranslate(translateX, translateY);
-
-                mPrevX = x;
-                mPrevY = y;
-                break;
-            case ACTION_UP:
-                break;
-            default:
-        }
     }
 
     private void prePopulate() {
@@ -1367,6 +1304,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             return true;
         }
 
+
+
         private void startScaleAnimation() {
             GalleryTexture texture = mDetailTextureMappingInfo.getTexture();
             if (texture != null && texture.getState() == GalleryTexture.State.LOADED) {
@@ -1426,13 +1365,11 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             }
 
             if (mDetailViewState == DetailViewState.FIT_SCREEN) {
-                Toast.makeText(mContext, "Fit Screen",
-                        Toast.LENGTH_SHORT)
-                        .show();
+                mOriginalSizeToast.cancel();
+                mFitScreenToast.show();
             } else {
-                Toast.makeText(mContext, "Original size",
-                        Toast.LENGTH_SHORT)
-                        .show();
+                mFitScreenToast.cancel();
+                mOriginalSizeToast.show();
             }
 
             mScaleAnimator = new GLESAnimator(mScaleAnimationCB);
