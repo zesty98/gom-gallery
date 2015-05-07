@@ -382,29 +382,8 @@ public class ImageLoader {
         options.outWidth = width;
         options.outHeight = height;
 
-        addInBitmapOptions(options, cache);
-
         String path = imageInfo.getImagePath();
         return BitmapFactory.decodeFile(path, options);
-    }
-
-
-    private static void addInBitmapOptions(BitmapFactory.Options options,
-                                           ImageCache cache) {
-        // inBitmap only works with mutable bitmaps, so force the decoder to
-        // return mutable bitmaps.
-        options.inMutable = true;
-
-        if (cache != null) {
-            // Try to find a bitmap to use for inBitmap.
-            Bitmap inBitmap = ReusableBitmaps.getInstance().getBitmapFromReusableSet(options);
-
-            if (inBitmap != null) {
-                // If a suitable bitmap has been found, set it as the value of
-                // inBitmap.
-                options.inBitmap = inBitmap;
-            }
-        }
     }
 
     private static Bitmap decodeSampledBitmap(ImageInfo imageInfo, int reqWidth, int reqHeight) {
@@ -446,8 +425,6 @@ public class ImageLoader {
 
         options.outWidth = width;
         options.outHeight = height;
-
-        addInBitmapOptions(options, cache);
 
         return BitmapFactory
                 .decodeFileDescriptor(fileDescriptor, null, options);
@@ -520,7 +497,7 @@ public class ImageLoader {
                     }
                 }
 
-                value = new RecyclingBitmapDrawable(mContext.getResources(), bitmap);
+                value = new BitmapDrawable(mContext.getResources(), bitmap);
 
                 if (bitmap != null) {
                     String imageKey = String.valueOf(imageInfo.getImageID());

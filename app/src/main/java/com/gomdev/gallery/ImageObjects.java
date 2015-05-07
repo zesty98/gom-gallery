@@ -166,6 +166,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         if (texture != null) {
             TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(texture.getIndex());
+
             final ImageObject object = (ImageObject) textureMappingInfo.getObject();
             Bitmap bitmap = texture.getBitmapDrawable().getBitmap();
 

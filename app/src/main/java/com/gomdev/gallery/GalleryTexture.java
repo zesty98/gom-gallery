@@ -67,10 +67,6 @@ class GalleryTexture implements BitmapContainer {
             return;
         }
 
-        if (mDrawable instanceof RecyclingBitmapDrawable) {
-            ((RecyclingBitmapDrawable) mDrawable).setIsDisplayed(true);
-        }
-
         if (mIsTextureLoadingFinished == false) {
             synchronized (this) {
                 setState(State.QUEUING);

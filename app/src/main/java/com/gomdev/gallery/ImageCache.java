@@ -142,11 +142,7 @@ class ImageCache {
 
             @Override
             protected void entryRemoved(boolean evicted, String key, BitmapDrawable oldValue, BitmapDrawable newValue) {
-
-                if (RecyclingBitmapDrawable.class.isInstance(oldValue)) {
-                    ((RecyclingBitmapDrawable) oldValue).setIsCached(false);
-                }
-
+                oldValue.getBitmap().recycle();
 //                mReusableBitmaps.add
 //                        (new SoftReference<Bitmap>(oldValue.getBitmap()));
             }
@@ -164,12 +160,6 @@ class ImageCache {
         }
 
         if (mMemoryCache != null) {
-            if (RecyclingBitmapDrawable.class.isInstance(value)) {
-                // The removed entry is a recycling drawable, so notify it
-                // that it has been added into the memory cache
-                ((RecyclingBitmapDrawable) value).setIsCached(true);
-            }
-
             mMemoryCache.put(key, value);
         }
 
