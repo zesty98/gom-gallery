@@ -17,6 +17,7 @@ import android.view.animation.Interpolator;
 import android.widget.Scroller;
 import android.widget.Toast;
 
+import com.gomdev.gallery.GalleryTexture.TextureState;
 import com.gomdev.gles.GLESAnimator;
 import com.gomdev.gles.GLESAnimatorCallback;
 import com.gomdev.gles.GLESCamera;
@@ -37,8 +38,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-import com.gomdev.gallery.GalleryTexture.TextureState;
 
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
@@ -1306,7 +1305,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             }
             return true;
         }
-
 
 
         private void startScaleAnimation() {

@@ -260,9 +260,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
         GalleryTexture texture = textureMappingInfo.getTexture();
 //        if (texture == null) {
-            texture = new GalleryTexture(imageInfo.getWidth(), imageInfo.getHeight());
-            texture.setIndex(index);
-            texture.setImageLoadingListener(this);
+        texture = new GalleryTexture(imageInfo.getWidth(), imageInfo.getHeight());
+        texture.setIndex(index);
+        texture.setImageLoadingListener(this);
 //        }
 
         if ((texture != null && texture.isTextureLoadingNeeded() == true)) {
@@ -278,6 +278,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     private static final boolean DEBUG_IMAGE = false;
     private Bitmap mLoadingBitmap = null;
+
     void loadDebugImage(ImageInfo imageInfo, GalleryTexture texture) {
         if (mLoadingBitmap == null) {
             mLoadingBitmap = GLESUtils.makeBitmap(16, 16, Bitmap.Config.ARGB_8888, Color.LTGRAY);

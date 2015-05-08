@@ -392,7 +392,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         int size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mDateLabelObjects.get(i);
-            
+
             object.setTextureMapping(false);
 
             ImageObjects imageObjects = object.getImageObjects();
