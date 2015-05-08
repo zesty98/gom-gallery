@@ -440,6 +440,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         sDummyTexture = null;
 
+        cancelLoading();
+
         int size = mDateLabelInfo.getNumOfImages();
         for (int i = 0; i < size; i++) {
             mObjects.get(i).setTextureMapping(false);
