@@ -10,13 +10,6 @@ public class LargeImageObject extends GLESObject {
     private static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     private static final boolean DEBUG = GalleryConfig.DEBUG;
 
-    enum TextureState {
-        NONE,
-        DECODING,
-        QUEUED,
-        MAPPING
-    }
-
     private int mX = 0;
     private int mY = 0;
 
@@ -82,14 +75,6 @@ public class LargeImageObject extends GLESObject {
 
     void setTextureMapped(boolean isTextureMapped) {
         mIsTextureMapped = isTextureMapped;
-    }
-
-    void setTextureID(int textureID) {
-        mTextureID = textureID;
-    }
-
-    int getTextureID() {
-        return mTextureID;
     }
 
     boolean isTextureMapped() {
