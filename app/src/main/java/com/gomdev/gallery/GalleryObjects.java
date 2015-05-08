@@ -9,6 +9,7 @@ import android.opengl.GLES20;
 import android.util.Log;
 import android.util.SparseArray;
 
+import com.gomdev.gallery.GalleryTexture.TextureState;
 import com.gomdev.gles.GLESAnimator;
 import com.gomdev.gles.GLESAnimatorCallback;
 import com.gomdev.gles.GLESCamera;
@@ -22,8 +23,6 @@ import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVector3;
 import com.gomdev.gles.GLESVertexInfo;
-
-import com.gomdev.gallery.GalleryTexture.TextureState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -376,6 +375,12 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     void onResume() {
+        int size = mDateLabelObjects.size();
+        for (int i = 0; i < size; i++) {
+            DateLabelObject object = mDateLabelObjects.get(i);
+            ImageObjects imageObjects = object.getImageObjects();
+            imageObjects.onResume();
+        }
 
     }
 
@@ -385,6 +390,9 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         int size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mDateLabelObjects.get(i);
+
+            object.setTextureMapping(false);
+
             ImageObjects imageObjects = object.getImageObjects();
             imageObjects.onPause();
         }
@@ -712,13 +720,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
                     BitmapWorker.cancelWork(texture);
                     break;
             }
-        }
-
-        size = mDateLabelObjects.size();
-        for (int i = 0; i < size; i++) {
-            DateLabelObject object = mDateLabelObjects.get(i);
-            ImageObjects imageObjects = object.getImageObjects();
-            imageObjects.cancelLoading();
         }
     }
 

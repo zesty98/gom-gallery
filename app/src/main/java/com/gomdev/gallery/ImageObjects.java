@@ -3,11 +3,14 @@ package com.gomdev.gallery;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
 import android.opengl.GLES20;
 import android.util.Log;
 import android.util.SparseArray;
 
 import com.gomdev.gallery.GalleryConfig.AlbumViewMode;
+import com.gomdev.gallery.GalleryTexture.TextureState;
 import com.gomdev.gles.GLESCamera;
 import com.gomdev.gles.GLESConfig;
 import com.gomdev.gles.GLESGLState;
@@ -18,8 +21,6 @@ import com.gomdev.gles.GLESTexture;
 import com.gomdev.gles.GLESTransform;
 import com.gomdev.gles.GLESUtils;
 import com.gomdev.gles.GLESVertexInfo;
-
-import com.gomdev.gallery.GalleryTexture.TextureState;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -258,30 +259,49 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
         GalleryTexture texture = textureMappingInfo.getTexture();
-        if (texture == null) {
+//        if (texture == null) {
             texture = new GalleryTexture(imageInfo.getWidth(), imageInfo.getHeight());
             texture.setIndex(index);
             texture.setImageLoadingListener(this);
-        }
+//        }
 
         if ((texture != null && texture.isTextureLoadingNeeded() == true)) {
-            mImageLoader.loadThumbnail(imageInfo, texture);
+            if (DEBUG_IMAGE == true) {
+                loadDebugImage(imageInfo, texture);
+            } else {
+                mImageLoader.loadThumbnail(imageInfo, texture);
+            }
             textureMappingInfo.setTexture(texture);
             mSurfaceView.requestRender();
         }
     }
 
-    private void unmapTexture(int index, ImageObject object) {
-        if (DEBUG) {
-            if (sDummyTexture == null) {
-                Log.d(TAG, "unmapTexture() sDummyTexture is null");
-            } else {
-                int textureID = sDummyTexture.getTextureID();
-                if (GLES20.glIsTexture(textureID) == false) {
-                    Log.d(TAG, "unmapTexture() sDummyTexture is invalid");
-                }
-            }
+    private static final boolean DEBUG_IMAGE = false;
+    private Bitmap mLoadingBitmap = null;
+    void loadDebugImage(ImageInfo imageInfo, GalleryTexture texture) {
+        if (mLoadingBitmap == null) {
+            mLoadingBitmap = GLESUtils.makeBitmap(16, 16, Bitmap.Config.ARGB_8888, Color.LTGRAY);
         }
+
+        final DebugImageTask task = new DebugImageTask(mContext, texture);
+        final AsyncDrawable asyncDrawable =
+                new AsyncDrawable(mContext.getResources(),
+                        mLoadingBitmap, task);
+        texture.setBitmapDrawable(asyncDrawable);
+        task.execute(imageInfo);
+    }
+
+    private void unmapTexture(int index, ImageObject object) {
+//        if (DEBUG) {
+//            if (sDummyTexture == null) {
+//                Log.d(TAG, "unmapTexture() sDummyTexture is null");
+//            } else {
+//                int textureID = sDummyTexture.getTextureID();
+//                if (GLES20.glIsTexture(textureID) == false) {
+//                    Log.d(TAG, "unmapTexture() sDummyTexture is invalid");
+//                }
+//            }
+//        }
 
         object.setDummyTexture(sDummyTexture);
 
@@ -309,7 +329,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     void onSurfaceChanged(int width, int height) {
         if (DEBUG) {
-            Log.d(TAG, "onSurfaceChanged() width=" + width + " height=" + height);
+            Log.d(TAG, "onSurfaceChanged() DateLabel index=" + mDateLabelInfo.getIndex() + " width=" + width + " height=" + height);
         }
 
         mWidth = width;
@@ -381,7 +401,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     void onSurfaceCreated() {
         if (DEBUG) {
-            Log.d(TAG, "onSurfaceCreated()");
+            Log.d(TAG, "onSurfaceCreated() DateLabel index=" + mDateLabelInfo.getIndex());
         }
 
         cancelLoading();
@@ -408,11 +428,22 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     }
 
     void onResume() {
-
+        if (DEBUG) {
+            Log.d(TAG, "onResume() DateLabel index=" + mDateLabelInfo.getIndex());
+        }
     }
 
     void onPause() {
+        if (DEBUG) {
+            Log.d(TAG, "onPause() DateLabel index=" + mDateLabelInfo.getIndex());
+        }
+
         sDummyTexture = null;
+
+        int size = mDateLabelInfo.getNumOfImages();
+        for (int i = 0; i < size; i++) {
+            mObjects.get(i).setTextureMapping(false);
+        }
     }
 
     @Override
@@ -855,4 +886,63 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             }
         }
     };
+
+    class DebugImageTask extends BitmapWorker.BitmapWorkerTask<GalleryTexture> {
+        static final String CLASS = "DateLabelTask";
+        static final String TAG = GalleryConfig.TAG + "_" + CLASS;
+        static final boolean DEBUG = GalleryConfig.DEBUG;
+
+        private final float TEXT_SIZE = 40f;
+        private final float TEXT_SHADOW_RADIUS = 0.7f;
+        private final float TEXT_SHADOW_DX = 0.3f;
+        private final float TEXT_SHADOW_DY = 0.3f;
+        private final int TEXT_SHADOW_COLOR = 0x88444444;
+        private final int TEXT_COLOR = 0xFF0000FF;
+
+        private final Context mContext;
+
+        DebugImageTask(Context context, GalleryTexture texture) {
+            super(texture);
+            mContext = context;
+        }
+
+        @Override
+        protected BitmapDrawable doInBackground(GalleryInfo... params) {
+            ImageInfo imageInfo = (ImageInfo) params[0];
+
+            String str = "" + imageInfo.getIndex();
+
+            Paint textPaint = new Paint();
+            textPaint.setAntiAlias(true);
+            textPaint.setShadowLayer(
+                    GLESUtils.getPixelFromDpi(mContext, TEXT_SHADOW_RADIUS),
+                    GLESUtils.getPixelFromDpi(mContext, TEXT_SHADOW_DX),
+                    GLESUtils.getPixelFromDpi(mContext, TEXT_SHADOW_DY),
+                    TEXT_SHADOW_COLOR);
+            textPaint.setTextSize(GLESUtils.getPixelFromDpi(mContext, TEXT_SIZE));
+            textPaint.setARGB(0xFF, 0x00, 0x00, 0x00);
+            textPaint.setColor(TEXT_COLOR);
+
+            int ascent = (int) Math.ceil(-textPaint.ascent());
+            int descent = (int) Math.ceil(textPaint.descent());
+
+            int textHeight = ascent + descent;
+            int textWidth = (int) Math.ceil(textPaint.measureText(str));
+
+            int width = 1024;
+            int height = 1024;
+
+            int x = (width - textWidth) / 2;
+            int y = (height - textHeight) / 2 + ascent;
+
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+            bitmap = GLESUtils.drawTextToBitmap(x, y,
+                    str, textPaint, bitmap);
+
+            BitmapDrawable drawable = new BitmapDrawable(mContext.getResources(), bitmap);
+
+            return drawable;
+        }
+    }
 }

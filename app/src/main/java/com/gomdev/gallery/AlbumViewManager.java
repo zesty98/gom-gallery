@@ -282,6 +282,8 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
         if (DEBUG) {
             Log.d(TAG, "onResume()");
         }
+
+        mGalleryObjects.onResume();
     }
 
     void onPause() {
