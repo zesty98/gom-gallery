@@ -10,6 +10,8 @@ class ImageInfo implements Serializable, GalleryInfo {
     private final int mOrientation;
     private final long mImageID;
 
+    private DateLabelInfo mDateLabelInfo = null;
+
     private int mIndex = 0;
     private String mImagePath = null;
     private int mWidth;
@@ -58,6 +60,14 @@ class ImageInfo implements Serializable, GalleryInfo {
 
     void setHeight(int height) {
         mHeight = height;
+    }
+
+    void setDateLabelInfo(DateLabelInfo dateLabelInfo) {
+        mDateLabelInfo = dateLabelInfo;
+    }
+
+    DateLabelInfo getDateLabelInfo() {
+        return mDateLabelInfo;
     }
 
     @Override

@@ -266,6 +266,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         texture.setImageLoadingListener(this);
 
         if ((texture != null && texture.isTextureLoadingNeeded() == true)) {
+            texture.setState(TextureState.REQUEST);
             if (DEBUG_IMAGE == true) {
                 synchronized (texture) {
                     texture.setState(TextureState.DECODING);
@@ -277,6 +278,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
                     mImageLoader.loadThumbnail(imageInfo, texture);
                 }
             }
+
             textureMappingInfo.setTexture(texture);
             mSurfaceView.requestRender();
         }
@@ -752,6 +754,9 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             TextureState textureState = texture.getState();
 
             switch (textureState) {
+                case REQUEST:
+                    texture.setState(TextureState.CANCELED);
+                    break;
                 case DECODING:
                     BitmapWorker.cancelWork(texture);
                     texture.setState(TextureState.CANCELED);
@@ -760,6 +765,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
                     texture.setState(TextureState.CANCELED);
                     break;
             }
+
+            mWaitingTextures.clear();
         }
 
         mWaitingTextures.clear();

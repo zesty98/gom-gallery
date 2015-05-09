@@ -13,6 +13,7 @@ import android.text.format.DateUtils;
 import android.util.Log;
 
 import com.gomdev.gallery.GalleryConfig.SortBy;
+import com.gomdev.gallery.GalleryTexture.TextureState;
 
 import java.io.FileDescriptor;
 import java.util.HashSet;
@@ -279,8 +280,8 @@ public class ImageLoader {
                         new AsyncDrawable(mContext.getResources(),
                                 mLoadingBitmap, task);
                 container.setBitmapDrawable(asyncDrawable);
+
                 task.execute(imageInfo);
-//                AsyncTaskUtil.executeInParallel(task, imageInfo);
             }
         }
     }
@@ -492,8 +493,7 @@ public class ImageLoader {
                     bitmap = mImageLoader.getThumbnail(imageInfo, true);
                 } else {
                     if (DEBUG) {
-                        Log.d(TAG,
-                                "Disk cache hit " + imageInfo.getImagePath());
+                        Log.d(TAG, "Disk cache hit " + imageInfo.getImagePath());
                     }
                 }
 
