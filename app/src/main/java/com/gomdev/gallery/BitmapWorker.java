@@ -79,7 +79,14 @@ class BitmapWorker {
 
         @Override
         protected void onPostExecute(BitmapDrawable value) {
-            if (isCancelled()) {
+            if (isCancelled() == true) {
+                if (DEBUG) {
+                    if (mGalleryInfo instanceof ImageInfo) {
+                        ImageInfo imageInfo = (ImageInfo) mGalleryInfo;
+                        Log.d(TAG, "onPostExecute() canceld DateLabel index=" + imageInfo.getDateLabelInfo().getIndex() + " index=" + imageInfo.getIndex());
+                    }
+                }
+
                 value = null;
             }
 
@@ -89,6 +96,25 @@ class BitmapWorker {
                         getBitmapWorkerTask(container);
                 if (this == dateLabelTask && value != null) {
                     container.setBitmapDrawable(value);
+                }
+            }
+
+            if (DEBUG) {
+                if (isCancelled() == true) {
+                    if (mGalleryInfo instanceof ImageInfo) {
+                        ImageInfo imageInfo = (ImageInfo) mGalleryInfo;
+                        Log.d(TAG, "onPostExecute() 2 canceld DateLabel index=" + imageInfo.getDateLabelInfo().getIndex() + " index=" + imageInfo.getIndex());
+                    }
+                }
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            if (DEBUG) {
+                if (mGalleryInfo instanceof ImageInfo) {
+                    ImageInfo imageInfo = (ImageInfo) mGalleryInfo;
+                    Log.d(TAG, "onCancelled() DateLabel index=" + imageInfo.getDateLabelInfo().getIndex() + " index=" + imageInfo.getIndex());
                 }
             }
         }

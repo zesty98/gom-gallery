@@ -253,7 +253,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
 
         GalleryTexture texture = textureMappingInfo.getTexture();
-        if (texture != null && texture.getState() != TextureState.NONE) {
+        if (texture != null && (texture.getState() != TextureState.NONE && texture.getState() != TextureState.CANCELED)) {
             return;
         }
 
@@ -263,18 +263,19 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         texture.setImageLoadingListener(this);
 
         if ((texture != null && texture.isTextureLoadingNeeded() == true)) {
+            texture.setState(TextureState.REQUEST);
             if (DEBUG_IMAGE == true) {
                 loadDebugImage(imageInfo, texture);
             } else {
                 mImageLoader.loadThumbnail(imageInfo, texture);
             }
-            texture.setState(TextureState.DECODING);
+
             textureMappingInfo.setTexture(texture);
             mSurfaceView.requestRender();
 
             if (DEBUG) {
                 int count = sMappingCount.incrementAndGet();
-                Log.d(TAG, "mapTexture() index=" + index + " mappingCount=" + count);
+                Log.d(TAG, "mapTexture() dateLabel index=" + mDateLabelInfo.getIndex() + " index=" + index + " mappingCount=" + count + " state=" + texture.getState());
             }
         }
     }
@@ -309,7 +310,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
         GalleryTexture texture = textureMappingInfo.getTexture();
 
-        if (texture == null || texture.getState() == TextureState.NONE) {
+        if (texture == null || texture.getState() == TextureState.NONE || texture.getState() == TextureState.CANCELED) {
             return;
         }
 
@@ -327,7 +328,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
         if (DEBUG) {
             int count = sMappingCount.decrementAndGet();
-            Log.d(TAG, "unmapTexture() index=" + index + " mappingCount=" + count);
+            Log.d(TAG, "unmapTexture() dateLabel index=" + mDateLabelInfo.getIndex() + " index=" + index + " mappingCount=" + count);
         }
     }
 
@@ -750,10 +751,19 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             TextureState textureState = texture.getState();
 
             switch (textureState) {
+                case REQUEST:
+                    texture.setState(TextureState.CANCELED);
+                    break;
                 case DECODING:
                     BitmapWorker.cancelWork(texture);
+                    texture.setState(TextureState.CANCELED);
+                    break;
+                case QUEUING:
+                    texture.setState(TextureState.CANCELED);
                     break;
             }
+
+            mWaitingTextures.clear();
         }
     }
 
@@ -930,8 +940,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             int textHeight = ascent + descent;
             int textWidth = (int) Math.ceil(textPaint.measureText(str));
 
-            int width = 512;
-            int height = 512;
+            int width = 1024;
+            int height = 1024;
 
             int x = (width - textWidth) / 2;
             int y = (height - textHeight) / 2 + ascent;

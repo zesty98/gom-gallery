@@ -43,6 +43,7 @@ class DateLabelInfo implements Serializable, GalleryInfo {
     void add(ImageInfo imageInfo) {
         mImageInfos.add(imageInfo);
         imageInfo.setIndex(mImageIndex++);
+        imageInfo.setDateLabelInfo(this);
     }
 
     ImageInfo get(int position) {
