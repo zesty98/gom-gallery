@@ -755,6 +755,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             switch (textureState) {
                 case REQUEST:
+                    BitmapWorker.cancelWork(texture);
                     texture.setState(TextureState.CANCELED);
                     break;
                 case DECODING:
@@ -765,8 +766,6 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
                     texture.setState(TextureState.CANCELED);
                     break;
             }
-
-            mWaitingTextures.clear();
         }
 
         mWaitingTextures.clear();

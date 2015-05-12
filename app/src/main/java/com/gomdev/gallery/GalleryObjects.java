@@ -213,23 +213,20 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
 
         GalleryTexture texture = textureMappingInfo.getTexture();
-        if (texture != null && (texture.getState() != TextureState.NONE && texture.getState() != TextureState.CANCELED)) {
-            return;
-        }
-
-        DateLabelInfo dateLabelInfo = (DateLabelInfo) textureMappingInfo.getGalleryInfo();
-
-        if (texture == null) {
-            texture = new GalleryTexture(mWidth, mHeight);
-            texture.setIndex(index);
-            texture.setImageLoadingListener(this);
-            texture.setState(TextureState.NONE);
-        } else {
+        if (texture != null) {
             TextureState textureState = texture.getState();
             if (textureState != TextureState.NONE && textureState != TextureState.CANCELED) {
                 return;
             }
         }
+
+        DateLabelInfo dateLabelInfo = (DateLabelInfo) textureMappingInfo.getGalleryInfo();
+
+        texture = new GalleryTexture(mWidth, mHeight);
+        texture.setIndex(index);
+        texture.setImageLoadingListener(this);
+        texture.setState(TextureState.NONE);
+
 
         if ((texture != null && texture.isTextureLoadingNeeded() == true)) {
             texture.setState(TextureState.REQUEST);
@@ -726,6 +723,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             switch (textureState) {
                 case REQUEST:
+                    BitmapWorker.cancelWork(texture);
                     texture.setState(TextureState.CANCELED);
                     break;
                 case DECODING:
@@ -736,9 +734,9 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
                     texture.setState(TextureState.CANCELED);
                     break;
             }
-
-            mWaitingTextures.clear();
         }
+
+        mWaitingTextures.clear();
 
         if (cancelLoadingImageObjects == true) {
             size = mDateLabelObjects.size();
@@ -748,8 +746,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
                 imageObjects.cancelLoading();
             }
         }
-
-        mWaitingTextures.clear();
     }
 
     class DateLabelTask extends BitmapWorker.BitmapWorkerTask<GalleryTexture> {
