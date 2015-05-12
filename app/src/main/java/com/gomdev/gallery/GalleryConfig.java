@@ -2,7 +2,6 @@ package com.gomdev.gallery;
 
 public class GalleryConfig {
     static final boolean DEBUG = false;
-    static final boolean DEBUG_IMAGE = false;
     static final String TAG = "gomdev";
 
     enum ImageViewMode {

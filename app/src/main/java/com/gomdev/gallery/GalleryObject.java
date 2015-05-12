@@ -28,6 +28,8 @@ class GalleryObject extends GLESObject {
     private float mTranslateY = 0f;
     private float mTranslateZ = 0f;
 
+    private boolean mIsTextureMapped = false;
+
     GalleryObject(String name) {
         super(name);
         init();
@@ -127,5 +129,13 @@ class GalleryObject extends GLESObject {
 
     float getTranslateZ() {
         return mTranslateZ;
+    }
+
+    void setTextureMapping(boolean isTextureMapped) {
+        mIsTextureMapped = isTextureMapped;
+    }
+
+    boolean isTexturMapped() {
+        return mIsTextureMapped;
     }
 }

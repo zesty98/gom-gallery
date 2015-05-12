@@ -37,7 +37,6 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
     static final String CLASS = "GalleryObjects";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
-    private static final boolean DEBUG_IMAGE = GalleryConfig.DEBUG_IMAGE;
 
     private static GLESTexture sDummyTexture = null;
 
@@ -178,6 +177,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
                 if (parentNode.isVisibilityChanged() == true) {
                     unmapTexture(i, object);
+                    object.setTextureMapping(false);
                 }
                 continue;
             }
@@ -195,14 +195,20 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             if (bottom < viewportTop && top > viewportBottom) {
                 parentNode.setVisibility(true);
 
-                mapTexture(i);
+                if (object.isTexturMapped() == false) {
+                    mapTexture(i);
+                    object.setTextureMapping(true);
+                }
 
                 imageObjects.checkVisibility(true);
             } else {
                 parentNode.setVisibility(false);
 
                 if (parentNode.isVisibilityChanged() == true) {
-                    unmapTexture(i, object);
+                    if (object.isTexturMapped() == true) {
+                        unmapTexture(i, object);
+                        object.setTextureMapping(false);
+                    }
                 }
 
                 imageObjects.checkVisibility(false);
@@ -212,44 +218,40 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
     void mapTexture(int index) {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
-
-        GalleryTexture texture = textureMappingInfo.getTexture();
-        if (texture != null && texture.getState() != TextureState.NONE) {
-            return;
-        }
-
         DateLabelInfo dateLabelInfo = (DateLabelInfo) textureMappingInfo.getGalleryInfo();
 
-        texture = new GalleryTexture(mWidth, mHeight);
-        texture.setIndex(index);
-        texture.setImageLoadingListener(this);
+        GalleryTexture texture = textureMappingInfo.getTexture();
+        if (texture == null) {
+            texture = new GalleryTexture(mWidth, mHeight);
+            texture.setIndex(index);
+            texture.setImageLoadingListener(this);
+        }
 
         if ((texture != null && texture.isTextureLoadingNeeded() == true)) {
             makeDateLabel(dateLabelInfo, texture);
-            texture.setState(TextureState.DECODING);
             textureMappingInfo.setTexture(texture);
             mSurfaceView.requestRender();
         }
     }
 
     void unmapTexture(int index, GalleryObject object) {
-//        if (DEBUG) {
-//            if (sDummyTexture == null) {
-//                Log.d(TAG, "unmapTexture() sDummyTexture is null");
-//            } else {
-//                int textureID = sDummyTexture.getTextureID();
-//                if (GLES20.glIsTexture(textureID) == false) {
-//                    Log.d(TAG, "unmapTexture() sDummyTexture is invalid");
-//                }
-//            }
-//        }
+        if (DEBUG) {
+            if (sDummyTexture == null) {
+                Log.d(TAG, "unmapTexture() sDummyTexture is null");
+            } else {
+                int textureID = sDummyTexture.getTextureID();
+                if (GLES20.glIsTexture(textureID) == false) {
+                    Log.d(TAG, "unmapTexture() sDummyTexture is invalid");
+                }
+            }
+        }
 
         object.setDummyTexture(sDummyTexture);
 
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
         GalleryTexture texture = textureMappingInfo.getTexture();
 
-        if (texture == null || texture.getState() == TextureState.NONE) {
+        if (texture == null) {
             return;
         }
 
@@ -351,6 +353,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             DateLabelObject object = mDateLabelObjects.get(i);
             object.setShader(mShader);
             object.setDummyTexture(sDummyTexture);
+            object.setTextureMapping(false);
 
             ImageObjects imageObjects = object.getImageObjects();
             imageObjects.onSurfaceCreated();
@@ -389,6 +392,8 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
         int size = mDateLabelObjects.size();
         for (int i = 0; i < size; i++) {
             DateLabelObject object = mDateLabelObjects.get(i);
+
+            object.setTextureMapping(false);
 
             ImageObjects imageObjects = object.getImageObjects();
             imageObjects.onPause();
@@ -667,6 +672,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             final AsyncDrawable asyncDrawable =
                     new AsyncDrawable(mContext.getResources(),
                             mLoadingBitmap, task);
+            DateLabelObject object = (DateLabelObject) mTextureMappingInfos.get(dateLableInfo.getIndex()).getObject();
             texture.setBitmapDrawable(asyncDrawable);
             task.execute(dateLableInfo);
         }
@@ -778,13 +784,10 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
                 bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             }
 
-            if (DEBUG_IMAGE == true) {
-                bitmap = GLESUtils.drawTextToBitmap(x, y,
-                        "" + mDateLabelInfo.getIndex(), textPaint, bitmap);
-            } else {
-                bitmap = GLESUtils.drawTextToBitmap(x, y,
-                        mDateLabelInfo.getDate(), textPaint, bitmap);
-            }
+            bitmap = GLESUtils.drawTextToBitmap(x, y,
+                    mDateLabelInfo.getDate(), textPaint, bitmap);
+//            bitmap = GLESUtils.drawTextToBitmap(x, y,
+//                    "" + mDateLabelInfo.getIndex(), textPaint, bitmap);
 
             BitmapDrawable drawable = new BitmapDrawable(mContext.getResources(), bitmap);
 

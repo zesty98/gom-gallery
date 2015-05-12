@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by gomdev on 15. 1. 13..
@@ -36,7 +35,6 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     static final String CLASS = "ImageObjects";
     static final String TAG = GalleryConfig.TAG + "_" + CLASS;
     static final boolean DEBUG = GalleryConfig.DEBUG;
-    private static final boolean DEBUG_IMAGE = GalleryConfig.DEBUG_IMAGE;
 
     private static final int ALPAH_ANIMATION_DURATION = 300;
     private static final float VISIBILITY_PADDING_DP = 60f;    // dp
@@ -101,9 +99,6 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     private boolean mNeedToSetTranslate = false;
 
     private long mCurrentTime = 0L;
-
-    private Bitmap mLoadingBitmap = null;   // for debugging
-    private static AtomicInteger sMappingCount = new AtomicInteger(0);
 
     ImageObjects(Context context, GridInfo gridInfo, DateLabelInfo dateLabelInfo) {
         mContext = context;
@@ -215,7 +210,10 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             if (mInvisibleObjects.get(i) != null) {
                 if (object.isVisibilityChanged() == true) {
-                    unmapTexture(i, object);
+                    if (object.isTexturMapped() == true) {
+                        unmapTexture(i, object);
+                        object.setTextureMapping(false);
+                    }
                 }
                 continue;
             }
@@ -227,12 +225,18 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
                 object.setVisibility(true);
 
-                mapTexture(i);
+                if (object.isTexturMapped() == false) {
+                    mapTexture(i);
+                    object.setTextureMapping(true);
+                }
             } else {
                 object.setVisibility(false);
 
                 if (object.isVisibilityChanged() == true) {
-                    unmapTexture(i, object);
+                    if (object.isTexturMapped() == true) {
+                        unmapTexture(i, object);
+                        object.setTextureMapping(false);
+                    }
                 }
             }
         }
@@ -246,21 +250,20 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setVisibility(false);
 
             unmapTexture(i, object);
+            object.setTextureMapping(false);
         }
     }
 
     private void mapTexture(int index) {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
 
-        GalleryTexture texture = textureMappingInfo.getTexture();
-        if (texture != null && texture.getState() != TextureState.NONE) {
-            return;
-        }
-
         ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
+        GalleryTexture texture = textureMappingInfo.getTexture();
+//        if (texture == null) {
         texture = new GalleryTexture(imageInfo.getWidth(), imageInfo.getHeight());
         texture.setIndex(index);
         texture.setImageLoadingListener(this);
+//        }
 
         if ((texture != null && texture.isTextureLoadingNeeded() == true)) {
             if (DEBUG_IMAGE == true) {
@@ -268,16 +271,13 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             } else {
                 mImageLoader.loadThumbnail(imageInfo, texture);
             }
-            texture.setState(TextureState.DECODING);
             textureMappingInfo.setTexture(texture);
             mSurfaceView.requestRender();
-
-            if (DEBUG) {
-                int count = sMappingCount.incrementAndGet();
-                Log.d(TAG, "mapTexture() index=" + index + " mappingCount=" + count);
-            }
         }
     }
+
+    private static final boolean DEBUG_IMAGE = false;
+    private Bitmap mLoadingBitmap = null;
 
     void loadDebugImage(ImageInfo imageInfo, GalleryTexture texture) {
         if (mLoadingBitmap == null) {
@@ -309,7 +309,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
         GalleryTexture texture = textureMappingInfo.getTexture();
 
-        if (texture == null || texture.getState() == TextureState.NONE) {
+        if (texture == null) {
             return;
         }
 
@@ -324,11 +324,6 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
                 break;
         }
         textureMappingInfo.setTexture(null);
-
-        if (DEBUG) {
-            int count = sMappingCount.decrementAndGet();
-            Log.d(TAG, "unmapTexture() index=" + index + " mappingCount=" + count);
-        }
     }
 
     // onSurfaceChanged
@@ -420,6 +415,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         int size = mObjects.size();
         for (int i = 0; i < size; i++) {
             ImageObject object = mObjects.get(i);
+            object.setTextureMapping(false);
             object.setVisibility(false);
             object.setShader(mShader);
 
@@ -446,6 +442,11 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         sDummyTexture = null;
 
         cancelLoading();
+
+        int size = mDateLabelInfo.getNumOfImages();
+        for (int i = 0; i < size; i++) {
+            mObjects.get(i).setTextureMapping(false);
+        }
     }
 
     @Override
@@ -596,6 +597,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setListener(mObjectListener);
             object.setIndex(i);
             object.setVisibility(false);
+            object.setTextureMapping(false);
 
             GLESVertexInfo vertexInfo = new GLESVertexInfo();
             vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
@@ -930,8 +932,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             int textHeight = ascent + descent;
             int textWidth = (int) Math.ceil(textPaint.measureText(str));
 
-            int width = 512;
-            int height = 512;
+            int width = 1024;
+            int height = 1024;
 
             int x = (width - textWidth) / 2;
             int y = (height - textHeight) / 2 + ascent;

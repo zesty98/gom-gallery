@@ -64,13 +64,10 @@ class GalleryTexture implements BitmapContainer {
 
         if (drawable instanceof AsyncDrawable) {
             synchronized (this) {
+                setState(TextureState.DECODING);
                 mIsTextureLoadingStarted = true;
                 mIsTextureLoadingFinished = false;
             }
-            return;
-        }
-
-        if (drawable == null) {
             return;
         }
 
@@ -114,7 +111,7 @@ class GalleryTexture implements BitmapContainer {
         return (mIsTextureLoadingFinished == false) && (mIsTextureLoadingStarted == false);
     }
 
-    void setState(TextureState textureState) {
+    private void setState(TextureState textureState) {
         mTextureState = textureState;
     }
 
