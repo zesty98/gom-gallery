@@ -672,17 +672,19 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         if (isThumbnail == true) {
             if (texture.isTextureLoadingNeeded() == true) {
                 object.setDummyTexture(mDummyTexture);
-                ImageLoader.getInstance().loadThumbnail(imageInfo, texture);
+                synchronized (texture) {
+                    texture.setState(TextureState.DECODING);
+                    ImageLoader.getInstance().loadThumbnail(imageInfo, texture);
+                }
             }
         } else {
             if (texture.isTextureLoadingNeeded() == true) {
-                ImageLoader.getInstance().loadBitmap(imageInfo, texture, mRequestWidth, mRequestHeight);
+                synchronized (texture) {
+                    texture.setState(TextureState.DECODING);
+                    ImageLoader.getInstance().loadBitmap(imageInfo, texture, mRequestWidth, mRequestHeight);
+                }
             }
         }
-    }
-
-    private void loadOriginalSizeBitmap(ImageInfo imageInfo, GLESTexture texture) {
-
     }
 
     private void setPositionCoord(int index, ImageInfo imageInfo) {

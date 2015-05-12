@@ -39,6 +39,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     private static final int ALPAH_ANIMATION_DURATION = 300;
     private static final float VISIBILITY_PADDING_DP = 60f;    // dp
 
+    private static final boolean DEBUG_IMAGE = false;
+
     private static final float DUMMY_TEXTURE_R = 0.8f;
     private static final float DUMMY_TEXTURE_G = 0.8f;
     private static final float DUMMY_TEXTURE_B = 0.8f;
@@ -99,6 +101,8 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
     private boolean mNeedToSetTranslate = false;
 
     private long mCurrentTime = 0L;
+
+    private Bitmap mLoadingBitmap = null;
 
     ImageObjects(Context context, GridInfo gridInfo, DateLabelInfo dateLabelInfo) {
         mContext = context;
@@ -210,10 +214,7 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             if (mInvisibleObjects.get(i) != null) {
                 if (object.isVisibilityChanged() == true) {
-                    if (object.isTexturMapped() == true) {
-                        unmapTexture(i, object);
-                        object.setTextureMapping(false);
-                    }
+                    unmapTexture(i, object);
                 }
                 continue;
             }
@@ -225,18 +226,12 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
 
                 object.setVisibility(true);
 
-                if (object.isTexturMapped() == false) {
-                    mapTexture(i);
-                    object.setTextureMapping(true);
-                }
+                mapTexture(i);
             } else {
                 object.setVisibility(false);
 
                 if (object.isVisibilityChanged() == true) {
-                    if (object.isTexturMapped() == true) {
-                        unmapTexture(i, object);
-                        object.setTextureMapping(false);
-                    }
+                    unmapTexture(i, object);
                 }
             }
         }
@@ -250,34 +245,42 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setVisibility(false);
 
             unmapTexture(i, object);
-            object.setTextureMapping(false);
         }
     }
 
     private void mapTexture(int index) {
         TextureMappingInfo textureMappingInfo = mTextureMappingInfos.get(index);
 
-        ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
         GalleryTexture texture = textureMappingInfo.getTexture();
-//        if (texture == null) {
+        if (texture != null) {
+            TextureState textureState = texture.getState();
+            if (textureState != TextureState.NONE && textureState != TextureState.CANCELED) {
+                return;
+            }
+        }
+
+        ImageInfo imageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
+
         texture = new GalleryTexture(imageInfo.getWidth(), imageInfo.getHeight());
         texture.setIndex(index);
         texture.setImageLoadingListener(this);
-//        }
 
         if ((texture != null && texture.isTextureLoadingNeeded() == true)) {
             if (DEBUG_IMAGE == true) {
-                loadDebugImage(imageInfo, texture);
+                synchronized (texture) {
+                    texture.setState(TextureState.DECODING);
+                    loadDebugImage(imageInfo, texture);
+                }
             } else {
-                mImageLoader.loadThumbnail(imageInfo, texture);
+                synchronized (texture) {
+                    texture.setState(TextureState.DECODING);
+                    mImageLoader.loadThumbnail(imageInfo, texture);
+                }
             }
             textureMappingInfo.setTexture(texture);
             mSurfaceView.requestRender();
         }
     }
-
-    private static final boolean DEBUG_IMAGE = false;
-    private Bitmap mLoadingBitmap = null;
 
     void loadDebugImage(ImageInfo imageInfo, GalleryTexture texture) {
         if (mLoadingBitmap == null) {
@@ -316,11 +319,15 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         TextureState textureState = texture.getState();
 
         switch (textureState) {
+            case NONE:
+                break;
             case DECODING:
                 BitmapWorker.cancelWork(texture);
                 break;
             case QUEUING:
                 mWaitingTextures.remove(texture);
+                break;
+            case CANCELED:
                 break;
         }
         textureMappingInfo.setTexture(null);
@@ -415,7 +422,6 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         int size = mObjects.size();
         for (int i = 0; i < size; i++) {
             ImageObject object = mObjects.get(i);
-            object.setTextureMapping(false);
             object.setVisibility(false);
             object.setShader(mShader);
 
@@ -442,11 +448,6 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
         sDummyTexture = null;
 
         cancelLoading();
-
-        int size = mDateLabelInfo.getNumOfImages();
-        for (int i = 0; i < size; i++) {
-            mObjects.get(i).setTextureMapping(false);
-        }
     }
 
     @Override
@@ -597,7 +598,6 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             object.setListener(mObjectListener);
             object.setIndex(i);
             object.setVisibility(false);
-            object.setTextureMapping(false);
 
             GLESVertexInfo vertexInfo = new GLESVertexInfo();
             vertexInfo.setRenderType(GLESVertexInfo.RenderType.DRAW_ARRAYS);
@@ -754,9 +754,15 @@ class ImageObjects implements ImageLoadingListener, GridInfoChangeListener {
             switch (textureState) {
                 case DECODING:
                     BitmapWorker.cancelWork(texture);
+                    texture.setState(TextureState.CANCELED);
+                    break;
+                case QUEUING:
+                    texture.setState(TextureState.CANCELED);
                     break;
             }
         }
+
+        mWaitingTextures.clear();
     }
 
     void invalidateObjects() {

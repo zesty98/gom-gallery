@@ -18,7 +18,8 @@ class GalleryTexture implements BitmapContainer {
         NONE,
         DECODING,
         QUEUING,
-        LOADED
+        LOADED,
+        CANCELED
     }
 
     private GLESTexture mTexture = null;
@@ -64,7 +65,6 @@ class GalleryTexture implements BitmapContainer {
 
         if (drawable instanceof AsyncDrawable) {
             synchronized (this) {
-                setState(TextureState.DECODING);
                 mIsTextureLoadingStarted = true;
                 mIsTextureLoadingFinished = false;
             }
@@ -91,8 +91,8 @@ class GalleryTexture implements BitmapContainer {
     }
 
     synchronized void load(Bitmap bitmap) {
-        setState(TextureState.LOADED);
         mTexture = mBuilder.load(bitmap);
+        setState(TextureState.LOADED);
     }
 
     void setIndex(int index) {
@@ -111,7 +111,7 @@ class GalleryTexture implements BitmapContainer {
         return (mIsTextureLoadingFinished == false) && (mIsTextureLoadingStarted == false);
     }
 
-    private void setState(TextureState textureState) {
+    synchronized void setState(TextureState textureState) {
         mTextureState = textureState;
     }
 
