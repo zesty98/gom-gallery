@@ -296,6 +296,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
     // touch
 
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (mIsOnAnimation == true) {
@@ -574,7 +575,7 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
     }
 
     void cancelLoading() {
-        mGalleryObjects.cancelLoading(true);
+        mGalleryObjects.cancelLoading();
     }
 
     void deleteDateLabel(int index) {

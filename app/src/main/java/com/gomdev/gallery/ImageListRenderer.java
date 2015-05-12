@@ -324,14 +324,10 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         GLESVertexInfo vertexInfo = selectedObject.getVertexInfo();
         vertexInfo.getBuffer(mTextureCustomShader.getPositionAttribIndex());
 
-        synchronized (GalleryContext.sLockObject) {
-            mViewManager = mDetailViewManager;
+        mDetailViewManager.onImageSelected(selectedObject);
 
-            mAlbumViewManager.cancelLoading();
-            mDetailViewManager.onImageSelected(selectedObject);
-
-            mGalleryContext.setImageViewMode(GalleryConfig.ImageViewMode.DETAIL_VIEW_MODE);
-        }
+        mViewManager = mDetailViewManager;
+        mGalleryContext.setImageViewMode(GalleryConfig.ImageViewMode.DETAIL_VIEW_MODE);
 
         mHandler.sendEmptyMessage(ImageListActivity.SET_SYSTEM_UI_FLAG_LOW_PROFILE);
     }

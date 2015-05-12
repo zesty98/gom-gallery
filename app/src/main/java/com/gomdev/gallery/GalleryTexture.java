@@ -16,11 +16,9 @@ class GalleryTexture implements BitmapContainer {
 
     enum TextureState {
         NONE,
-        REQUEST,
         DECODING,
         QUEUING,
-        LOADED,
-        CANCELED
+        LOADED
     }
 
     private GLESTexture mTexture = null;
