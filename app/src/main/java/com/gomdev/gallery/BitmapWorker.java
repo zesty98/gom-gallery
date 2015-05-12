@@ -34,7 +34,7 @@ class BitmapWorker {
         return true;
     }
 
-    static <T extends BitmapContainer> void cancelWork(T container) {
+    static <T extends BitmapContainer> void cancelWork(T container, boolean mayInterruptIfRunning) {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(container);
         if (bitmapWorkerTask != null) {
             bitmapWorkerTask.cancel(false);

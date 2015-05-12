@@ -643,7 +643,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             GalleryTexture.TextureState textureState = texture.getState();
             switch (textureState) {
                 case DECODING:
-                    BitmapWorker.cancelWork(texture);
+                    BitmapWorker.cancelWork(texture, false);
                     break;
                 case QUEUING:
                     mWaitingTextures.remove(texture);

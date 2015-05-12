@@ -263,7 +263,7 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
             case NONE:
                 break;
             case DECODING:
-                BitmapWorker.cancelWork(texture);
+                BitmapWorker.cancelWork(texture, false);
                 break;
             case QUEUING:
                 mWaitingTextures.remove(texture);
@@ -723,11 +723,11 @@ class GalleryObjects implements ImageLoadingListener, GridInfoChangeListener {
 
             switch (textureState) {
                 case REQUEST:
-                    BitmapWorker.cancelWork(texture);
+                    BitmapWorker.cancelWork(texture, true);
                     texture.setState(TextureState.CANCELED);
                     break;
                 case DECODING:
-                    BitmapWorker.cancelWork(texture);
+                    BitmapWorker.cancelWork(texture, true);
                     texture.setState(TextureState.CANCELED);
                     break;
                 case QUEUING:
