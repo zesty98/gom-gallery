@@ -13,10 +13,8 @@ import android.text.format.DateUtils;
 import android.util.Log;
 
 import com.gomdev.gallery.GalleryConfig.SortBy;
-import com.gomdev.gallery.GalleryTexture.TextureState;
 
 import java.io.FileDescriptor;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -473,11 +471,9 @@ public class ImageLoader {
                 bitmap = mImageCache.getBitmapFromDiskCache(imageInfo);
                 if (bitmap == null && isCancelled() == false) {
                     long imageID = imageInfo.getImageID();
-                    synchronized (this) {
-                        bitmap = MediaStore.Images.Thumbnails.getThumbnail(
-                                mContext.getContentResolver(), imageID,
-                                MediaStore.Images.Thumbnails.MINI_KIND, null);
-                    }
+                    bitmap = MediaStore.Images.Thumbnails.getThumbnail(
+                            mContext.getContentResolver(), imageID,
+                            MediaStore.Images.Thumbnails.MINI_KIND, null);
                     if (bitmap == null) {
                         bitmap = decodeSampledBitmapFromFile(imageInfo, 512, 512, mImageCache);
                     }
