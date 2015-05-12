@@ -23,9 +23,8 @@ class BitmapWorker {
             final GalleryInfo data = bitmapWorkerTask.getData();
             // If bitmapData is not yet set or it differs from the new data
             if (data == null || data != galleryInfo) {
-                synchronized (bitmapWorkerTask) {
-                    bitmapWorkerTask.cancel(true);
-                }
+                // Cancel previous task
+                bitmapWorkerTask.cancel(true);
             } else {
                 // The same work is already in progress
                 return false;
@@ -39,9 +38,7 @@ class BitmapWorker {
     static <T extends BitmapContainer> void cancelWork(T container) {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(container);
         if (bitmapWorkerTask != null) {
-            synchronized (bitmapWorkerTask) {
-                bitmapWorkerTask.cancel(true);
-            }
+            bitmapWorkerTask.cancel(true);
             if (DEBUG) {
                 final Object bitmapData = bitmapWorkerTask.getData();
                 Log.d(TAG, "cancelWork - cancelled work for " + bitmapData);
