@@ -67,6 +67,7 @@ class Scrollbar implements GridInfoChangeListener {
     private int mSpacing;
     private int mNumOfColumns;
     private int mColumnWidth;
+    private float mScrollableHeight = 0f;
 
     private float mScrollbarRegionTop = 0f;
     private float mScrollbarRegionLeft = 0f;
@@ -101,6 +102,7 @@ class Scrollbar implements GridInfoChangeListener {
         mNumOfColumns = gridInfo.getNumOfColumns();
         mColumnWidth = gridInfo.getColumnWidth();
         mSystemBarHeight = gridInfo.getSystemBarHeight();
+        mScrollableHeight = gridInfo.getScrollableHeight();
 
         gridInfo.addListener(this);
     }
@@ -207,7 +209,8 @@ class Scrollbar implements GridInfoChangeListener {
 
     private void calcScrollableDistance() {
         float bottom = mScrollbarRegionTop - mScrollbarHeight;
-        mScrollableDistance = bottom + (mHeight * 0.5f - mSpacing);
+        float screenBottom = -mHeight * 0.5f;
+        mScrollableDistance = bottom - screenBottom - mSpacing;
     }
 
     void onSurfaceChanged(int width, int height) {
@@ -250,6 +253,7 @@ class Scrollbar implements GridInfoChangeListener {
 
         mColumnWidth = mGridInfo.getColumnWidth();
         mNumOfColumns = mGridInfo.getNumOfColumns();
+        mScrollableHeight = mGridInfo.getScrollableHeight();
 
         if (mObject == null) {
             return;
@@ -257,7 +261,6 @@ class Scrollbar implements GridInfoChangeListener {
 
         int index = ScrollbarMode.NORMAL.getIndex();
         mScrollbarRegionLeft = mWidth * 0.5f - mScrollbarRegionWidth[index] - mSpacing * 2;
-        ;
 
         GLESVertexInfo vertexInfo = mObject.getVertexInfo();
         FloatBuffer position = (FloatBuffer) vertexInfo.getBuffer(mShader.getPositionAttribIndex());
@@ -269,8 +272,6 @@ class Scrollbar implements GridInfoChangeListener {
 
         position.put(1, bottom);
         position.put(4, bottom);
-
-        mScrollableDistance = bottom + (mHeight * 0.5f - mSpacing);
     }
 
     @Override
@@ -396,14 +397,12 @@ class Scrollbar implements GridInfoChangeListener {
             }
 
             GLESTransform transform = object.getTransform();
-
             transform.setIdentity();
 
-            float scrollableHeight = mGridInfo.getScrollableHeight();
             float translateY = mGridInfo.getTranslateY();
 
-            if (scrollableHeight > mHeight) {
-                float scrollDistance = (translateY / (scrollableHeight - mHeight)) * mScrollableDistance;
+            if (mScrollableHeight > mHeight) {
+                float scrollDistance = (translateY / (mScrollableHeight - mHeight)) * mScrollableDistance;
                 transform.setTranslate(mScrollbarRegionLeft, -scrollDistance + mScrollbarRegionTop, 0f);
                 mScrollDistance = -scrollDistance;
             } else {
