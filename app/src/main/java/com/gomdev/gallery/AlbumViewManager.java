@@ -324,8 +324,9 @@ class AlbumViewManager implements GridInfoChangeListener, ViewManager {
 
             mAlbumViewGestureDetector.setScrollbarMode(mScrollbar.getScrollbarMode());
             mAlbumViewGestureDetector.setScrollbarHeight(mScrollbar.getScrollbarHeight());
-            retVal = mAlbumViewGestureDetector.onTouchEvent(event) || retVal;
         }
+
+        retVal = mAlbumViewGestureDetector.onTouchEvent(event) || retVal;
 
         return retVal;
     }

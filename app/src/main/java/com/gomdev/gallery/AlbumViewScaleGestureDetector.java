@@ -86,6 +86,7 @@ class AlbumViewScaleGestureDetector implements GridInfoChangeListener {
         @Override
         public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
             mLastSpan = scaleGestureDetector.getCurrentSpan();
+            mAlbumViewManager.onScaleBegin();
 
             return true;
         }
@@ -102,12 +103,7 @@ class AlbumViewScaleGestureDetector implements GridInfoChangeListener {
             float dragDistance = span - mLastSpan;
             float absDragDistance = Math.abs(dragDistance);
 
-            if (absDragDistance > mThresholdToRecognizingScale) {
-                mAlbumViewManager.onScaleBegin();
-            }
-
             if (absDragDistance > mMinDragDistanceToScale) {
-
 
                 mLastSpan = span;
 
@@ -125,9 +121,7 @@ class AlbumViewScaleGestureDetector implements GridInfoChangeListener {
                     mAlbumViewManager.resize(focusX, focusY);
                     mGridInfo.resize(numOfColumns);
                 }
-            }
 
-            if (absDragDistance > mThresholdToRecognizingScale) {
                 mAlbumViewManager.onScaleEnd();
             }
 
@@ -138,7 +132,7 @@ class AlbumViewScaleGestureDetector implements GridInfoChangeListener {
 
         @Override
         public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
-//            mAlbumViewManager.onScaleEnd();
+            mAlbumViewManager.onScaleEnd();
         }
     };
 }
