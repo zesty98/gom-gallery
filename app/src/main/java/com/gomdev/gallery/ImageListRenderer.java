@@ -122,10 +122,10 @@ class ImageListRenderer implements GLSurfaceView.Renderer, GridInfoChangeListene
         synchronized (GalleryContext.sLockObject) {
             mViewManager.updateAnimation(mCurrentTime);
             mViewManager.update(mCurrentTime);
-        }
 
-        mGLESRenderer.updateScene(mSM);
-        mGLESRenderer.drawScene(mSM);
+            mGLESRenderer.updateScene(mSM);
+            mGLESRenderer.drawScene(mSM);
+        }
 
         if (mNeedToClearDetailView == true) {
             mNeedToClearDetailView = false;

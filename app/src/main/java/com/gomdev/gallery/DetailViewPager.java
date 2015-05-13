@@ -756,7 +756,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         mViewPagerNode.setListener(mViewPagerNodeListener);
 
         for (int i = 0; i < NUM_OF_DETAIL_OBJECTS; i++) {
-            ImageObject object = new ImageObject("DetailObject_" + i);
+            ImageObject object = new ImageObject("Object_" + i);
             mViewPagerNode.addChild(object);
 
             GLESVertexInfo vertexInfo = new GLESVertexInfo();
@@ -789,7 +789,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             mDetailTextureMappingInfo = new TextureMappingInfo(mDetailObject);
         }
 
-        mLargeImageNode = new GLESNode("ViewPagerNode");
+        mLargeImageNode = new GLESNode("LargeImageNode");
         node.addChild(mLargeImageNode);
 
         hideLargeImage();
@@ -1005,8 +1005,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     }
 
     private void loadDetailTexture() {
-
-
         hideDetailObject();
         loadTexture(CURRENT_DETAIL_INDEX, mCurrentImageIndexingInfo, false);
         ImageInfo imageInfo = ImageManager.getInstance().getImageInfo(mCurrentImageIndexingInfo);
@@ -1151,7 +1149,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
     private void showDetailObject() {
         mTextureMappingInfos.get(CURRENT_INDEX).getObject().hide();
-        mDetailObject.show();
+        if (mVisibility == true) {
+            mDetailObject.show();
+        }
+
         mIsDetailObjectShown = true;
     }
 
@@ -1310,86 +1311,85 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
 
         private void startScaleAnimation() {
-            GalleryTexture texture = mDetailTextureMappingInfo.getTexture();
-            if (texture != null && texture.getState() == TextureState.LOADED) {
-                mIsDetailObjectShown = true;
+            synchronized (GalleryContext.sLockObject) {
 
-                mCurrentObject = mDetailObject;
-                mCurrentImageInfo = (ImageInfo) mDetailTextureMappingInfo.getGalleryInfo();
-                showDetailObject();
+                GalleryTexture texture = mDetailTextureMappingInfo.getTexture();
+                if (texture != null && texture.getState() == TextureState.LOADED) {
+                    mCurrentObject = mDetailObject;
+                    mCurrentImageInfo = (ImageInfo) mDetailTextureMappingInfo.getGalleryInfo();
 
-            } else {
-                mIsDetailObjectShown = false;
-
-                mCurrentObject = (ImageObject) mTextureMappingInfos.get(CURRENT_INDEX).getObject();
-                mCurrentImageInfo = (ImageInfo) mTextureMappingInfos.get(CURRENT_INDEX).getGalleryInfo();
-
-                hideDetailObject();
-            }
-
-            int width = mCurrentImageInfo.getWidth();
-            int height = mCurrentImageInfo.getHeight();
-            float imageRatio = (float) width / height;
-
-            if (mDetailViewState == DetailViewState.FIT_SCREEN) {
-
-                mPrevScale = 1f;
-                if (imageRatio >= mScreenRatio) {
-                    mNextScale = (float) width / mWidth;
+                    showDetailObject();
                 } else {
-                    mNextScale = (float) height / mHeight;
+                    mCurrentObject = (ImageObject) mTextureMappingInfos.get(CURRENT_INDEX).getObject();
+                    mCurrentImageInfo = (ImageInfo) mTextureMappingInfos.get(CURRENT_INDEX).getGalleryInfo();
+
+                    hideDetailObject();
                 }
 
-                if (mNextScale > 1f) {
-                    mDetailViewState = DetailViewState.ORIGINAL_SIZE_LARGE;
-                } else {
-                    mDetailViewState = DetailViewState.ORIGINAL_SIZE_SMALL;
-                }
+                int width = mCurrentImageInfo.getWidth();
+                int height = mCurrentImageInfo.getHeight();
+                float imageRatio = (float) width / height;
 
-                mPrevTranslateX = 0f;
-                mPrevTranslateY = 0f;
-            } else {
-                mPrevScale = 1f;
-                if (imageRatio >= mScreenRatio) {
-                    mNextScale = (float) mWidth / width;
-                } else {
-                    mNextScale = (float) mHeight / height;
-                }
+                if (mDetailViewState == DetailViewState.FIT_SCREEN) {
 
-                if (mDetailViewState == DetailViewState.ORIGINAL_SIZE_LARGE) {
-                    mPrevTranslateX = mLargeImage.getTranslateX();
-                    mPrevTranslateY = mLargeImage.getTranslateY();
-                } else {
+                    mPrevScale = 1f;
+                    if (imageRatio >= mScreenRatio) {
+                        mNextScale = (float) width / mWidth;
+                    } else {
+                        mNextScale = (float) height / mHeight;
+                    }
+
+                    if (mNextScale > 1f) {
+                        mDetailViewState = DetailViewState.ORIGINAL_SIZE_LARGE;
+                    } else {
+                        mDetailViewState = DetailViewState.ORIGINAL_SIZE_SMALL;
+                    }
+
                     mPrevTranslateX = 0f;
                     mPrevTranslateY = 0f;
+                } else {
+                    mPrevScale = 1f;
+                    if (imageRatio >= mScreenRatio) {
+                        mNextScale = (float) mWidth / width;
+                    } else {
+                        mNextScale = (float) mHeight / height;
+                    }
+
+                    if (mDetailViewState == DetailViewState.ORIGINAL_SIZE_LARGE) {
+                        mPrevTranslateX = mLargeImage.getTranslateX();
+                        mPrevTranslateY = mLargeImage.getTranslateY();
+                    } else {
+                        mPrevTranslateX = 0f;
+                        mPrevTranslateY = 0f;
+                    }
+
+                    mDetailViewState = DetailViewState.FIT_SCREEN;
                 }
 
-                mDetailViewState = DetailViewState.FIT_SCREEN;
+                if (mDetailViewState == DetailViewState.FIT_SCREEN) {
+                    mOriginalSizeToast.cancel();
+                    mFitScreenToast.show();
+                } else {
+                    mFitScreenToast.cancel();
+                    mOriginalSizeToast.show();
+                }
+
+                mScaleAnimator = new GLESAnimator(mScaleAnimationCB);
+                mScaleAnimator.setValues(0f, 1f);
+                mScaleAnimator.setDuration(0L, SCALE_ANIMATION_DURATION);
+                mScaleAnimator.start();
+
+                hideLargeImage();
+
+                if (DEBUG) {
+                    Log.d(TAG, "startScaleAnimation() mDetailViewState=" + mDetailViewState);
+                    Log.d(TAG, "\t image width=" + width + " height=" + height);
+                    Log.d(TAG, "\t screen mWidth=" + mWidth + " mHeight=" + mHeight);
+                    Log.d(TAG, "\t mPrevScale=" + mPrevScale + " mNextScale=" + mNextScale);
+                }
+
+                mIsOnScaleAnimation = true;
             }
-
-            if (mDetailViewState == DetailViewState.FIT_SCREEN) {
-                mOriginalSizeToast.cancel();
-                mFitScreenToast.show();
-            } else {
-                mFitScreenToast.cancel();
-                mOriginalSizeToast.show();
-            }
-
-            mScaleAnimator = new GLESAnimator(mScaleAnimationCB);
-            mScaleAnimator.setValues(0f, 1f);
-            mScaleAnimator.setDuration(0L, SCALE_ANIMATION_DURATION);
-            mScaleAnimator.start();
-
-            hideLargeImage();
-
-            if (DEBUG) {
-                Log.d(TAG, "startScaleAnimation() mDetailViewState=" + mDetailViewState);
-                Log.d(TAG, "\t image width=" + width + " height=" + height);
-                Log.d(TAG, "\t screen mWidth=" + mWidth + " mHeight=" + mHeight);
-                Log.d(TAG, "\t mPrevScale=" + mPrevScale + " mNextScale=" + mNextScale);
-            }
-
-            mIsOnScaleAnimation = true;
         }
 
         @Override
@@ -1445,6 +1445,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         @Override
         public void apply(GLESObject object) {
+            int location = mTextureShader.getUniformLocation("uAlpha");
+            GLES20.glUniform1f(location, 1f);
         }
     };
 
@@ -1479,18 +1481,16 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             mCurrentObject.setScale(1f);
             mIsOnScaleAnimation = false;
 
-            if (mIsDetailObjectShown == true) {
-                setPositionCoord(CURRENT_DETAIL_INDEX, mCurrentImageInfo);
-            } else {
+            setPositionCoord(CURRENT_INDEX, mCurrentImageInfo);
+            setPositionCoord(CURRENT_DETAIL_INDEX, mCurrentImageInfo);
+
+            if (mIsDetailObjectShown == false) {
                 GalleryTexture texture = mDetailTextureMappingInfo.getTexture();
                 if (texture != null && texture.getState() == TextureState.LOADED) {
                     mCurrentObject = mDetailObject;
                     mCurrentImageInfo = (ImageInfo) mDetailTextureMappingInfo.getGalleryInfo();
-                    showDetailObject();
 
-                    setPositionCoord(CURRENT_DETAIL_INDEX, mCurrentImageInfo);
-                } else {
-                    setPositionCoord(CURRENT_INDEX, mCurrentImageInfo);
+                    showDetailObject();
                 }
             }
 
