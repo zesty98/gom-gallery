@@ -127,7 +127,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
     private Queue<GalleryTexture> mWaitingTextures = new ConcurrentLinkedQueue<>();
 
     private FocusDirection mFocusDirection = FocusDirection.NONE;
-    private ScrollState mScrollState = ScrollState.STABLE;
+    private volatile ScrollState mScrollState = ScrollState.STABLE;
     private DetailViewState mDetailViewState = DetailViewState.FIT_SCREEN;
 
     private boolean mIsFirstImage = false;
@@ -184,6 +184,8 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
     private Toast mFitScreenToast = null;
     private Toast mOriginalSizeToast = null;
+
+    private boolean mNeedToChangePosition = false;
 
     DetailViewPager(Context context, GridInfo gridInfo) {
         mContext = context;
@@ -354,9 +356,18 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         }
     }
 
+
     private void onSwipingFinished() {
         if (DEBUG) {
             Log.d(TAG, "onSwipingFinished()");
+        }
+
+        synchronized (this) {
+            if (mNeedToChangePosition == true) {
+                mNeedToChangePosition = false;
+            } else {
+                return;
+            }
         }
 
         mScrollState = ScrollState.STABLE;
@@ -384,7 +395,6 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
         }
 
         if (mFocusDirection == FocusDirection.LEFT) {
-            int size = mTextureMappingInfos.size();
             TextureMappingInfo textureMappingInfo = mTextureMappingInfos.remove(NUM_OF_DETAIL_OBJECTS - 1);
 
             textureMappingInfo.setTexture(null);
@@ -638,19 +648,20 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             textureMappingInfo = mTextureMappingInfos.get(index);
         }
 
+        // 왜 텍스쳐를 클리어시키고 있었나????
         GalleryTexture texture = textureMappingInfo.getTexture();
-        if (texture != null) {
-            GalleryTexture.TextureState textureState = texture.getState();
-            switch (textureState) {
-                case DECODING:
-                    BitmapWorker.cancelWork(texture, false);
-                    break;
-                case QUEUING:
-                    mWaitingTextures.remove(texture);
-                    break;
-            }
-            textureMappingInfo.setTexture(null);
-        }
+//        if (texture != null) {
+//            GalleryTexture.TextureState textureState = texture.getState();
+//            switch (textureState) {
+//                case DECODING:
+//                    BitmapWorker.cancelWork(texture, false);
+//                    break;
+//                case QUEUING:
+//                    mWaitingTextures.remove(texture);
+//                    break;
+//            }
+//            textureMappingInfo.setTexture(null);
+//        }
 
         ImageInfo prevImageInfo = (ImageInfo) textureMappingInfo.getGalleryInfo();
 
@@ -839,6 +850,9 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             case ACTION_DOWN:
                 if (mScrollState == ScrollState.STABLE) {
                     mScrollState = ScrollState.ON_SCROLL;
+                } else if (mScrollState == ScrollState.ON_FLING) {
+                    onSwipingFinished();
+                    mScrollState = ScrollState.ON_SCROLL;
                 }
 
                 mIsDown = true;
@@ -911,6 +925,10 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
 
         mNeedToPopulate = true;
         mScrollState = ScrollState.ON_FLING;
+
+        synchronized (this) {
+            mNeedToChangePosition = true;
+        }
     }
 
     private void handleEdgeAnimation() {
@@ -1423,7 +1441,7 @@ public class DetailViewPager implements GridInfoChangeListener, ImageLoadingList
             GLESTransform transform = node.getTransform();
             transform.setIdentity();
 
-            transform.setTranslate(mDragDistance, 0f, 0f);
+            transform.setPreTranslate(mDragDistance, 0f, 0f);
         }
     };
 
